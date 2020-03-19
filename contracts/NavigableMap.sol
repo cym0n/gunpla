@@ -40,9 +40,5 @@ contract NavigableMap {
         armyCounter++;
         mecha_positions[_name] = wps[spawn_points[_faction]];
     }
-
-    function getMechaTag(uint _id) public view returns (string memory _tag) {
-        return armies[_id].name;
-    }
 }
 

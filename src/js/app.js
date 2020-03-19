@@ -41,18 +41,21 @@ App = {
       gunplaInstance = instance;
     }).then(function() { $('#mechas').empty(); })
       .then(function() { return gunplaInstance.armies(0)}).then(function(mecha) {
-            template =  '<p>'+mecha[0] + ' (' + mecha[1] + ')</p>';
-            $('#mechas').append(template); })
+            $('#mechas').append(App.mechaTemplate(0, mecha[0], mecha[1])); 
+            return gunplaInstance.mecha_positions(mecha[0]); })
+      .then(function(pos) {
+            $('#mecha0').append(App.positionTemplate(pos)) })
       .then(function() { return gunplaInstance.armies(1)}).then(function(mecha) {
-            template =  '<p>'+mecha[0] + ' (' + mecha[1] + ')</p>';
-            $('#mechas').append(template); });
+            $('#mechas').append(App.mechaTemplate(1, mecha[0], mecha[1])); 
+            return gunplaInstance.mecha_positions(mecha[0]); })
+      .then(function(pos) {
+            $('#mecha1').append(App.positionTemplate(pos)) })
   },
-  mechaTemplate: function(instance, id) {
-        console.log(instance);
-        instance.armies(id).then(function(mecha) {
-        template =  '<p>'+mecha[0] + ' (' + mecha[1] + ')</p>';
-        $('#mechas').append(template);
-    });
+  mechaTemplate: function(id, name, faction) {
+        return  '<p id="mecha' + id + '">'+ name + ' (' + faction + ')</p>';
+  },
+  positionTemplate: function(pos) {
+        return  '<br />[' + pos[0] +', '+pos[1] +', '+pos[2] + ']';
   }
 
 };
