@@ -61,8 +61,8 @@ App = {
   },
   commandsForm : function(id) {
     return `
-        <form>
-            <input type="hidden" id="id" name="id" value="${id}">
+        <form onSubmit="App.addCommand(this); return false;" id="comms${id}">
+            <input type="hidden" name="mechaid" value="${id}">
             <div class="form-group">
                 <label for="commands">Select Command</label>
                 <select class="form-control" name="commands" onchange="App.commandParams(this, ${id})">
@@ -87,18 +87,32 @@ App = {
             gunplaInstance = instance;
         }).then(function() { return gunplaInstance.waypointCounter() })
         .then(function(counter) {
-             console.log(counter);
              for (var i = 0; i < counter; i++) {
                 gunplaInstance.wps_names(i).then(function(wp) {
-                    console.log(wp);
-                    console.log($( "#params"+id));
                     $( "#params"+id).append('<option value="'+wp+'">'+wp+'</option>');
                 });
             }
         });
     }
-
-
+  },
+  addCommand : function(el) {
+    var form = $( el )
+    var mid = $( form.children('input[name="mechaid"]')).attr('value');
+    var cmd = form.find('select[name="commands"]').children('option:selected').attr('value');
+    if(cmd == 'flywp')
+    {
+        var wp = form.find('select[name="waypoint"]').children('option:selected').attr('value');
+        App.contracts.Gunpla.deployed().then(function(instance) {
+            gunplaInstance = instance;
+        }).then(function() { var command = "FLY TO WAYPOINT "+wp;
+            console.log("Adding command "+command+" to mecha "+mid);
+            gunplaInstance.addCommand(mid, "FLY TO WAYPOINT "+wp) })
+        .then(function(result) {
+            $("#mecha"+mid).append("<p>Command added</p>");
+        }).catch(function(err) {
+            console.error(err);
+        });
+    }
   }
 
 };
