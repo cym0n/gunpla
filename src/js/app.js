@@ -108,6 +108,7 @@ App = {
             console.log("Adding command "+command+" to mecha "+mid);
             gunplaInstance.addCommand(mid, "FLY TO WAYPOINT "+wp) })
         .then(function(result) {
+            console.log(result);
             $("#mecha"+mid).append("<p>Command added</p>");
         }).catch(function(err) {
             console.error(err);

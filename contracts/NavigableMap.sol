@@ -30,13 +30,10 @@ contract NavigableMap {
     }
 
     function _buildWayPoints() private {
-        wps["Center"] = Position(0, 0, 0);
-        wps_names[0] = "Center";
-        wps["Blue"] = Position(-100000, 0, 0);
-        wps_names[1] = "Blue";
-        wps["Red"] = Position(100000, 0, 0);
-        wps_names[2] = "Red";
-        waypointCounter = 3;
+        _addWayPoint("Center", Position(0, 0, 0));
+        _addWayPoint("Blue", Position(-100000, 0, 0));
+        _addWayPoint("Red", Position(100000, 0, 0));
+
         spawn_points["Red"] = "Red";
         spawn_points["Blue"] = "Blue";
     }
@@ -51,6 +48,12 @@ contract NavigableMap {
         armies[armyCounter] = Mecha(_name, _faction);
         mecha_positions[armyCounter] = wps[spawn_points[_faction]];
         armyCounter++;
+    }
+
+    function _addWayPoint(string memory _name, Position memory _pos) private {
+        wps[_name] = _pos;
+        wps_names[waypointCounter] = _name;
+        waypointCounter++;
     }
 
     function addCommand(uint _id, string calldata _command) external {
