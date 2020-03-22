@@ -22,12 +22,11 @@ App = {
 
   },
   initContract: function() {
-    $.getJSON("NavigableMap.json", function(election) {
+    $.getJSON("NavigableMap.json", function(gunpla) {
       // Instantiate a new truffle contract from the artifact
-      App.contracts.Gunpla = TruffleContract(election);
+      App.contracts.Gunpla = TruffleContract(gunpla);
       // Connect provider to interact with contract
       App.contracts.Gunpla.setProvider(App.web3Provider);
-      console.log("Contract instantiated");
       return App.render();
     });
   },
@@ -41,7 +40,11 @@ App = {
     // Load contract data
     App.contracts.Gunpla.deployed().then(function(instance) {
       gunplaInstance = instance;
-    }).then(function() { $('#mechas').empty(); })
+    }).then(function() { 
+            gunplaInstance.CommandReceived().watch(function(error, result){ 
+                console.log("Event recieved "+result.args.mecha);
+                $( "#comms"+result.args.mecha ).replaceWith("<p>ORDERS GIVEN</p>"); });
+            $('#mechas').empty(); })
       .then(function() { return gunplaInstance.armies(0)}).then(function(mecha) {
             $('#mechas').append(App.mechaTemplate(0, mecha[0], mecha[1])); 
             return gunplaInstance.mecha_positions(0); })
@@ -110,8 +113,7 @@ App = {
             console.log("Adding command "+command+" to mecha "+mid);
             gunplaInstance.addCommand(mid, "FLY TO WAYPOINT "+wp) })
         .then(function(result) {
-            console.log(result);
-            $("#mecha"+mid).append("<p>Command added</p>");
+            //Nothing to do, managed by event
         }).catch(function(err) {
             console.error(err);
         });
