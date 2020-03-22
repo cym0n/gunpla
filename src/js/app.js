@@ -43,26 +43,45 @@ App = {
     }).then(function() { 
             gunplaInstance.CommandReceived().watch(function(error, result){ 
                 console.log("Event recieved "+result.args.mecha);
-                $( "#comms"+result.args.mecha ).replaceWith("<p>ORDERS GIVEN</p>"); });
+                App.buildCommandsForm(result.args.mecha);
+            });
             $('#mechas').empty(); })
       .then(function() { return gunplaInstance.armies(0)}).then(function(mecha) {
             $('#mechas').append(App.mechaTemplate(0, mecha[0], mecha[1])); 
             return gunplaInstance.mecha_positions(0); })
       .then(function(pos) {
             $('#mecha0').append(App.positionTemplate(pos));
-            $('#mecha0').append(App.commandsForm(0)); })
+            $('#mecha0').append('<div id="commpanel0"></div>'); 
+            App.buildCommandsForm(0); })
       .then(function() { return gunplaInstance.armies(1)}).then(function(mecha) {
             $('#mechas').append(App.mechaTemplate(1, mecha[0], mecha[1])); 
             return gunplaInstance.mecha_positions(1); })
       .then(function(pos) {
             $('#mecha1').append(App.positionTemplate(pos));
-            $('#mecha1').append(App.commandsForm(1)); })
+            $('#mecha1').append('<div id="commpanel1"></div>'); 
+            App.buildCommandsForm(1); })
   },
   mechaTemplate: function(id, name, faction) {
     return  '<p id="mecha' + id + '">'+ name + ' (' + faction + ')</p>';
   },
   positionTemplate: function(pos) {
     return  '<br />[' + pos[0] +', '+pos[1] +', '+pos[2] + ']';
+  },
+  buildCommandsForm: function(id) {
+    var mid = id;
+    App.contracts.Gunpla.deployed().then(function(instance) {
+        gunplaInstance = instance;
+    }).then(function() { return gunplaInstance.commands(mid) }).then(function(comm) {
+        $( "#commpanel"+mid ).empty();
+        if(comm)
+        {
+            $( "#commpanel"+mid ).append('<p>ORDERS GIVEN: '+comm+'</p>');
+        }
+        else
+        {
+            $( "#commpanel"+mid ).append(App.commandsForm(mid));
+        }
+    });
   },
   commandsForm : function(id) {
     return `
