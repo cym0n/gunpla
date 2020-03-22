@@ -14,5 +14,15 @@ contract("NavigableMap", function(accounts) {
             assert.equal(count, 3);
         })
     });
+
+    it("Add an order to a mecha", function() {
+        return NavigableMap.deployed().then(function(instance) {
+            gunplaInstance = instance;
+            gunplaInstance.addCommand(0, "FLY TO WAYPOINT Center");
+            return gunplaInstance.commands(0);
+        }).then(function(command) {
+            assert.equal(command, "FLY TO WAYPOINT Center");
+        })
+    });
 });
 

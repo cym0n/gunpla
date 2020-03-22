@@ -22,7 +22,8 @@ contract NavigableMap {
     
     uint public armyCounter = 0;
     uint public waypointCounter = 0;
-    
+
+    event CommandReceived(uint mecha);
 
     constructor() public {
         _buildWayPoints();
@@ -58,6 +59,7 @@ contract NavigableMap {
 
     function addCommand(uint _id, string calldata _command) external {
         commands[_id] = _command;
+        emit CommandReceived(_id);
     }
 
 }
