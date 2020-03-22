@@ -1,3 +1,4 @@
+require('truffle-test-utils').init();
 var NavigableMap = artifacts.require("./NavigableMap.sol");
 
 contract("NavigableMap", function(accounts) {
@@ -18,11 +19,13 @@ contract("NavigableMap", function(accounts) {
     it("Add an order to a mecha", function() {
         return NavigableMap.deployed().then(function(instance) {
             gunplaInstance = instance;
-            gunplaInstance.addCommand(0, "FLY TO WAYPOINT Center");
+            return gunplaInstance.addCommand(0, "FLY TO WAYPOINT Center");
+        }).then(function(commandres) {
+            assert.web3Event(commandres, { event: 'CommandReceived', args: { "0":0, "__length__": 1, mecha: 0 } }, 'CommandReceived event emitted');
             return gunplaInstance.commands(0);
         }).then(function(command) {
             assert.equal(command, "FLY TO WAYPOINT Center");
-        })
+        });
     });
 });
 
