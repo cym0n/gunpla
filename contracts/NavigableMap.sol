@@ -1,6 +1,9 @@
 pragma solidity >=0.4.21 <0.7.0;
+import "ext/BytesLib.sol";
 
 contract NavigableMap {
+
+    using BytesLib for bytes;
 
     struct Position {
         int256 X;
@@ -11,11 +14,14 @@ contract NavigableMap {
     struct Mecha {
         string name;
         string faction;
+        bool waiting;
     }
 
     mapping(uint   => Mecha) public armies;
     mapping(uint => Position) public mecha_positions;
     mapping(uint => string) public commands;
+    mapping(uint => Position) public mecha_destinations;
+    
     mapping(string => Position) public wps;
     mapping(uint => string) public wps_names;
     mapping(string => string) public spawn_points;
@@ -46,7 +52,7 @@ contract NavigableMap {
     
 
     function _createMecha(string memory _name, string memory _faction) private {
-        armies[armyCounter] = Mecha(_name, _faction);
+        armies[armyCounter] = Mecha(_name, _faction, true);
         mecha_positions[armyCounter] = wps[spawn_points[_faction]];
         armyCounter++;
     }
@@ -57,10 +63,42 @@ contract NavigableMap {
         waypointCounter++;
     }
 
-    function addCommand(uint _id, string calldata _command) external {
-        commands[_id] = _command;
+    function addCommand(uint _id, string calldata _command, string calldata _target) external {
+        bytes memory result = bytes(_command).concat(bytes(" "));
+        result = result.concat(bytes(_target));
+        commands[_id] = string(result); 
+        if(bytes(_command).equal(bytes("FLY TO WAYPOINT")))
+        {
+            mecha_destinations[_id] = wps[_target];
+        }
         emit CommandReceived(_id);
+        //if(_actionReady())
+        //{
+        //    _doAction();
+        //}
     }
+
+    function _actionReady() private view returns(bool)
+    {
+        for(uint8 i=0; i<= armyCounter; i++){
+            if(armies[i].waiting)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+//    function _doAction() private
+//    {
+//        for(uint8 i=0; i<= armyCounter; i++){
+//        } 
+//    }
+
+    function _comparePositions(Position memory _a, Position memory _b) private pure returns(bool) {
+        return _a.X == _b.X && _a.Y == _b.Y && _a.Z == _b.Z;
+    }
+
 
 }
 

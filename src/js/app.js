@@ -130,7 +130,7 @@ App = {
             gunplaInstance = instance;
         }).then(function() { var command = "FLY TO WAYPOINT "+wp;
             console.log("Adding command "+command+" to mecha "+mid);
-            gunplaInstance.addCommand(mid, "FLY TO WAYPOINT "+wp) })
+            gunplaInstance.addCommand(mid, "FLY TO WAYPOINT ", wp) })
         .then(function(result) {
             //Nothing to do, managed by event
         }).catch(function(err) {
