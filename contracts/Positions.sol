@@ -6,6 +6,15 @@ contract Positions {
     uint constant Y = 2;
     uint constant Z = 3;
 
+ 
+    int256 constant X_UP = 6;
+    int256 constant X_DOWN = 11;
+    int256 constant Y_UP = 7;
+    int256 constant Y_DOWN = 12;
+    int256 constant Z_UP = 8;
+    int256 constant Z_DOWN = 13;
+
+
     struct Position {
         int256 X;
         int256 Y;
@@ -45,6 +54,10 @@ contract Positions {
         return pos;
     }
 
+    function _comparePositions(Position memory _a, Position memory _b) internal pure returns(bool) {
+        return _a.X == _b.X && _a.Y == _b.Y && _a.Z == _b.Z;
+    }
+
     function _calculateVector(Position memory _a, Position memory _b) private pure returns(Position[] memory) {
         Position memory out = Position(0, 0, 0);
         Position memory cursor = Position(0, 0, 0);
@@ -67,11 +80,39 @@ contract Positions {
         outdata[1] = cursor;
         return outdata;
     }
-    
 
-
-
-
-
+    function _calculateCourse(Position memory _a, Position memory _b) internal pure returns(int256[] memory) {
+        Position[] memory vector = _calculateVector(_a, _b);
+        uint8 max = 0;
+        int256 max_value = 0;
+        for(uint8 i=1; i<= 3; i++){
+            if(_getCoo(vector[0], i) > max_value)
+            {
+                max = i;
+                max_value = _getCoo(vector[0], i);
+            }
+        }
+        int256 max_gap = 0;
+        for(uint8 i=1; i<= 3; i++){
+            if(i != max)
+            {
+                if(max_gap < max_value / _getCoo(vector[0], i))
+                {
+                    max_gap = max_value / _getCoo(vector[0], i);
+                }
+            }
+        }
+        int256[] memory out;
+        out[0] = max_gap;
+        if(_getCoo(vector[1], max) == 1)
+        {
+            out[1] = 5 + max;
+        }
+        else if(_getCoo(vector[1], max) == -1)
+        {
+            out[1] = (5 * 2) + max;
+        }
+        return out;
+    }
 }
 
