@@ -23,6 +23,9 @@ contract NavigableMap is Positions {
     mapping(string => Position) public wps;
     mapping(uint => string) public wps_names;
     mapping(string => string) public spawn_points;
+
+    mapping(string => uint) public available_commands;
+
     
     uint public armyCounter = 0;
     uint public waypointCounter = 0;
@@ -32,12 +35,14 @@ contract NavigableMap is Positions {
     constructor() public {
         _buildWayPoints();
         _buildArmies();
+        
+        available_commands["FLY TO WAYPOINT"] = 1;
     }
 
     function _buildWayPoints() private {
         _addWayPoint("Center", Position(0, 0, 0));
-        _addWayPoint("Blue", Position(-100000, 0, 0));
-        _addWayPoint("Red", Position(100000, 0, 0));
+        _addWayPoint("Blue", Position(-500000, 0, 0));
+        _addWayPoint("Red", Position(500000, 0, 0));
 
         spawn_points["Red"] = "Red";
         spawn_points["Blue"] = "Blue";
@@ -65,12 +70,13 @@ contract NavigableMap is Positions {
     function addCommand(uint _id, string calldata _command, string calldata _target) external {
         bytes memory result = bytes(_command).concat(bytes(" "));
         result = result.concat(bytes(_target));
-        commands[_id] = string(result); 
-        if(bytes(_command).equal(bytes("FLY TO WAYPOINT")))
+        if(available_commands[_command] == 1)
         {
             mecha_destinations[_id] = wps[_target];
+            armies[_id].waiting = false;
+            emit CommandReceived(_id);
+            commands[_id] = string(result); 
         }
-        emit CommandReceived(_id);
         if(_actionReady())
         {
             _doAction();
@@ -90,22 +96,19 @@ contract NavigableMap is Positions {
 
     function _doAction() private
     {
-        for(uint turns = 0; turns <= 100; turns++)
-        {
-            for(uint8 i=0; i<= armyCounter; i++){
-                if(armies[i].steps > 0)
-                {
-                    _moveMecha(i);
-                }
-                else
-                {
-                }
+        for(uint8 i=0; i< armyCounter; i++){
+            if(armies[i].steps > 0)
+            {
+                _moveMecha(i);
+            }
+            else
+            {
                 if(! _comparePositions(mecha_destinations[i], mecha_positions[i]))
                 {
                     _setCourseMecha(i);
                     _moveMecha(i);
                 }
-            } 
+            }
         }
     }
 

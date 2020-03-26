@@ -13,7 +13,17 @@ contract("NavigableMap", function(accounts) {
             return gunplaInstance.waypointCounter();
         }).then(function(count) {
             assert.equal(count, 3);
-        })
+            return gunplaInstance.mecha_positions(0);
+        }).then(function(pos) {
+            assert.equal(pos[0], -500000);
+            assert.equal(pos[1], 0);
+            assert.equal(pos[2], 0);
+            return gunplaInstance.mecha_positions(1);
+        }).then(function(pos) {
+            assert.equal(pos[0], 500000);
+            assert.equal(pos[1], 0);
+            assert.equal(pos[2], 0);
+        });
     });
 
     it("Add an order to a mecha", function() {
@@ -27,5 +37,19 @@ contract("NavigableMap", function(accounts) {
             assert.equal(command, "FLY TO WAYPOINT Center");
         });
     });
+
+    it("Add an order to the second mecha - all mechas not in waiting", function() {
+        return NavigableMap.deployed().then(function(instance) {
+            gunplaInstance = instance;
+            return gunplaInstance.addCommand(1, "FLY TO WAYPOINT", "Center");
+        }).then(function(commandres) {
+            assert.web3Event(commandres, { event: 'CommandReceived', args: { "0":1, "__length__": 1, mecha: 1 } }, 'CommandReceived event emitted');
+            return gunplaInstance.commands(1);
+        }).then(function(command) {
+            assert.equal(command, "FLY TO WAYPOINT Center");
+        });
+    });
+
+ 
 });
 

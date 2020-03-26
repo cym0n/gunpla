@@ -16,6 +16,7 @@
     "lite-server": "^2.3.0"
   },
   "dependencies": {
+    "@0x/sol-trace": "^3.0.8",
     "solidity-bytes-utils": "0.0.6",
     "truffle-test-utils": "^0.1.0"
   }
