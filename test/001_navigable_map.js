@@ -47,6 +47,16 @@ contract("NavigableMap", function(accounts) {
             return gunplaInstance.commands(1);
         }).then(function(command) {
             assert.equal(command, "FLY TO WAYPOINT");
+            return gunplaInstance.mecha_positions(0);
+        }).then(function(pos) {
+            assert.equal(pos[0], -499999);
+            assert.equal(pos[1], 0);
+            assert.equal(pos[2], 0);
+            return gunplaInstance.mecha_positions(1);
+        }).then(function(pos) {
+            assert.equal(pos[0], 499999);
+            assert.equal(pos[1], 0);
+            assert.equal(pos[2], 0);
         });
     });
 

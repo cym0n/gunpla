@@ -27,6 +27,8 @@ contract NavigableMap is Positions {
     uint public waypointCounter = 0;
 
     event CommandReceived(uint mecha);
+    event BlockingEvent(string description);
+
 
     constructor() public {
         _buildWayPoints();
@@ -90,19 +92,35 @@ contract NavigableMap is Positions {
 
     function _doAction() private
     {
-        for(uint8 i=0; i< armyCounter; i++){
-            if(armies[i].steps > 0)
-            {
-                _moveMecha(i);
-            }
-            else
-            {
-                if(! _comparePositions(mecha_destinations[i], mecha_positions[i]))
+        while(_actionReady())
+        {
+            for(uint8 i=0; i< armyCounter; i++){
+                if(armies[i].steps > 0)
                 {
-                    _setCourseMecha(i);
                     _moveMecha(i);
                 }
+                else
+                {
+                    if(! _comparePositions(mecha_destinations[i], mecha_positions[i]))
+                    {
+                        _setCourseMecha(i);
+                        _moveMecha(i);
+                    }
+                    else
+                    {
+                        emit BlockingEvent("Mecha arrived");
+                        armies[i].waiting = true;
+                    }
+                }
             }
+            if(_calculateDistance(mecha_positions[0], mecha_positions[1]) < 50000)
+            {
+                armies[0].waiting = true;
+                armies[1].waiting = true;
+                emit BlockingEvent("Enemy sighted");
+            }
+            //armies[0].waiting = true;
+            //emit BlockingEvent("Step done");
         }
     }
 

@@ -21,8 +21,6 @@ contract Positions {
         int256 Z;
     }
 
-    event SettingCoo(uint coo, int256 value);
-
     function _getCoo(Position memory pos, uint coo) private pure returns(int256)
     {
         if(coo == X)
@@ -60,38 +58,26 @@ contract Positions {
         return _a.X == _b.X && _a.Y == _b.Y && _a.Z == _b.Z;
     }
 
-    function _calculateVector(Position memory _a, Position memory _b) private returns(Position[2] memory) {
+    function _calculateVector(Position memory _a, Position memory _b) private pure returns(Position[2] memory) {
         Position memory steps = Position(0, 0, 0);
         Position memory cursor = Position(0, 0, 0);
         
         for(uint8 i=1; i<= 3; i++){
             int256 value;
-            if( _getCoo(_a, i) == _getCoo(_b, i))
-            {
-                value = 0;
-            }
-            else
-            {
-                value = _getCoo(_a, i) - _getCoo(_b, i);
-            }
+            value = _getCoo(_a, i) - _getCoo(_b, i);
             if(value < 0)
             {
                 value = value * -1;
-                cursor = _setCoo(cursor, i, -1);
             }
-            else
+            if(_getCoo(_a, i) < _getCoo(_b, i))
             {
                 cursor = _setCoo(cursor, i, 1);
             }
-            emit SettingCoo(i, value);
-            //if(value == 0)
-            //{
-            //    value = 1;
-            //}
-            if(value > 0)
+            else
             {
-                steps = _setCoo(steps, i, value);
+                cursor = _setCoo(cursor, i, -1);
             }
+            steps = _setCoo(steps, i, value);
         }
         Position[2] memory outdata;
         outdata[0] = steps;
@@ -99,11 +85,8 @@ contract Positions {
         return outdata;
     }
 
-    function _calculateCourse(Position memory _a, Position memory _b) internal returns(int256[2] memory) {
+    function _calculateCourse(Position memory _a, Position memory _b) internal pure returns(int256[2] memory) {
         Position[2] memory vector = _calculateVector(_a, _b);
-        //Position[2] memory vector; 
-        //vector[0] = Position(5, 3, 2);
-        //vector[1] = Position(1, 1, 1);
         uint8 max = 0;
         int256 max_value = 0;
         for(uint8 i=1; i<= 3; i++){
@@ -115,13 +98,17 @@ contract Positions {
         }
         int256 max_gap = 0;
         for(uint8 i=1; i<= 3; i++){
-            if(i != max)
+            if(i != max && _getCoo(vector[0], i) > 0)
             {
                 if(max_gap < max_value / _getCoo(vector[0], i))
                 {
                     max_gap = max_value / _getCoo(vector[0], i);
                 }
             }
+        }
+        if(max_gap == 0)
+        {
+            max_gap = 10; //Arbitrary
         }
         int256[2] memory out;
         out[0] = max_gap;
@@ -134,6 +121,25 @@ contract Positions {
             out[1] = (5 * 2) + max;
         }
         return out;
+    }
+
+    function _calculateDistance(Position memory _a, Position memory _b) internal pure returns(int256) {
+        Position[2] memory vector = _calculateVector(_a, _b);
+        int256 x = _getCoo(vector[0], 1);
+        int256 y = _getCoo(vector[0], 2);
+        int256 z = _getCoo(vector[0], 3);
+        int256 squaredout = (x * x) + (y * y) + (z * z);
+        return sqrt(squaredout);
+    }
+
+    //Babylonian method square root
+    function sqrt(int256 x) private pure returns (int256 y) {
+        int256 z = (x + 1) / 2;
+        y = x;
+        while (z < y) {
+            y = z;
+            z = (x / z + z) / 2;
+        }
     }
 }
 
