@@ -21,6 +21,8 @@ contract Positions {
         int256 Z;
     }
 
+    event SettingCoo(uint coo, int256 value);
+
     function _getCoo(Position memory pos, uint coo) private pure returns(int256)
     {
         if(coo == X)
@@ -49,7 +51,7 @@ contract Positions {
         }
         else if(coo == Z)
         {
-            pos.Z == value;
+            pos.Z = value;
         }
         return pos;
     }
@@ -58,31 +60,50 @@ contract Positions {
         return _a.X == _b.X && _a.Y == _b.Y && _a.Z == _b.Z;
     }
 
-    function _calculateVector(Position memory _a, Position memory _b) private pure returns(Position[] memory) {
-        Position memory out = Position(0, 0, 0);
+    function _calculateVector(Position memory _a, Position memory _b) private returns(Position[2] memory) {
+        Position memory steps = Position(0, 0, 0);
         Position memory cursor = Position(0, 0, 0);
         
         for(uint8 i=1; i<= 3; i++){
-            int256 value = _getCoo(_a, i) - _getCoo(_b, i);
-            if(value < 0)
+            int256 value;
+            if( _getCoo(_a, i) == _getCoo(_b, i))
             {
-                value = value * -1;
-                _setCoo(cursor, i, -1);
+                value = 0;
             }
             else
             {
-                _setCoo(cursor, i, 1);
+                value = _getCoo(_a, i) - _getCoo(_b, i);
             }
-            _setCoo(out, i, value);
+            if(value < 0)
+            {
+                value = value * -1;
+                cursor = _setCoo(cursor, i, -1);
+            }
+            else
+            {
+                cursor = _setCoo(cursor, i, 1);
+            }
+            emit SettingCoo(i, value);
+            //if(value == 0)
+            //{
+            //    value = 1;
+            //}
+            if(value > 0)
+            {
+                steps = _setCoo(steps, i, value);
+            }
         }
-        Position[] memory outdata;
-        outdata[0] = out;
+        Position[2] memory outdata;
+        outdata[0] = steps;
         outdata[1] = cursor;
         return outdata;
     }
 
-    function _calculateCourse(Position memory _a, Position memory _b) internal pure returns(int256[] memory) {
-        Position[] memory vector = _calculateVector(_a, _b);
+    function _calculateCourse(Position memory _a, Position memory _b) internal returns(int256[2] memory) {
+        Position[2] memory vector = _calculateVector(_a, _b);
+        //Position[2] memory vector; 
+        //vector[0] = Position(5, 3, 2);
+        //vector[1] = Position(1, 1, 1);
         uint8 max = 0;
         int256 max_value = 0;
         for(uint8 i=1; i<= 3; i++){
@@ -102,7 +123,7 @@ contract Positions {
                 }
             }
         }
-        int256[] memory out;
+        int256[2] memory out;
         out[0] = max_gap;
         if(_getCoo(vector[1], max) == 1)
         {

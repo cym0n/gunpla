@@ -34,7 +34,7 @@ contract("NavigableMap", function(accounts) {
             assert.web3Event(commandres, { event: 'CommandReceived', args: { "0":0, "__length__": 1, mecha: 0 } }, 'CommandReceived event emitted');
             return gunplaInstance.commands(0);
         }).then(function(command) {
-            assert.equal(command, "FLY TO WAYPOINT Center");
+            assert.equal(command, "FLY TO WAYPOINT");
         });
     });
 
@@ -46,7 +46,7 @@ contract("NavigableMap", function(accounts) {
             assert.web3Event(commandres, { event: 'CommandReceived', args: { "0":1, "__length__": 1, mecha: 1 } }, 'CommandReceived event emitted');
             return gunplaInstance.commands(1);
         }).then(function(command) {
-            assert.equal(command, "FLY TO WAYPOINT Center");
+            assert.equal(command, "FLY TO WAYPOINT");
         });
     });
 

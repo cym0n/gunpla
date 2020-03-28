@@ -1,11 +1,7 @@
 pragma solidity >=0.4.21 <0.7.0;
 import "contracts/Positions.sol";
-import "ext/BytesLib.sol";
 
 contract NavigableMap is Positions {
-
-    using BytesLib for bytes;
-
 
     struct Mecha {
         string name;
@@ -68,14 +64,12 @@ contract NavigableMap is Positions {
     }
 
     function addCommand(uint _id, string calldata _command, string calldata _target) external {
-        bytes memory result = bytes(_command).concat(bytes(" "));
-        result = result.concat(bytes(_target));
         if(available_commands[_command] == 1)
         {
             mecha_destinations[_id] = wps[_target];
             armies[_id].waiting = false;
             emit CommandReceived(_id);
-            commands[_id] = string(result); 
+            commands[_id] = _command; 
         }
         if(_actionReady())
         {
@@ -114,7 +108,7 @@ contract NavigableMap is Positions {
 
     function _setCourseMecha(uint i) private
     {
-        int256[] memory course_data = _calculateCourse(mecha_positions[i], mecha_destinations[i]);
+        int256[2] memory course_data = _calculateCourse(mecha_positions[i], mecha_destinations[i]);
         armies[i].course = course_data[1];
         armies[i].steps = course_data[0];   
     }
