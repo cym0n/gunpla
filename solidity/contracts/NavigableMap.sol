@@ -28,6 +28,7 @@ contract NavigableMap is Positions {
 
     event CommandReceived(uint mecha);
     event BlockingEvent(string description);
+    event Distance(int256 distance);
 
 
     constructor() public {
@@ -92,74 +93,86 @@ contract NavigableMap is Positions {
 
     function _doAction() private
     {
-        while(_actionReady())
+        //mapping(uint => Position) memory temp_mecha_positions;
+        //mapping(uint => int256) memory steps;
+        //mapping(uint => int256) memory course;
+        
+        Position[2] memory temp_mecha_positions;
+        int256[2] memory steps;
+        int256[2] memory course;
+
+        for(uint8 i=0; i< armyCounter; i++){
+            temp_mecha_positions[i] = mecha_positions[i];
+        }
+
+        uint counter = 0;
+        while(_actionReady() && counter < 100)
         {
-            for(uint8 i=0; i< armyCounter; i++){
-                if(armies[i].steps > 0)
+            for(uint8 i=0; i< armyCounter; i++) {
+                if(! _comparePositions(mecha_destinations[i], temp_mecha_positions[i]))
                 {
-                    _moveMecha(i);
+                    if(steps[i] == 0)
+                    {
+                        int256[2] memory course_data = _calculateCourse(temp_mecha_positions[i], mecha_destinations[i]);
+                        steps[i] = course_data[0];
+                        course[i] = course_data[1];
+                    }  
+                    Position memory new_position = _moveMecha(temp_mecha_positions[i], course[i]);
+                    temp_mecha_positions[i] = new_position;
+                    steps[i] = steps[i] - 1;
                 }
                 else
                 {
-                    if(! _comparePositions(mecha_destinations[i], mecha_positions[i]))
-                    {
-                        _setCourseMecha(i);
-                        _moveMecha(i);
-                    }
-                    else
-                    {
-                        emit BlockingEvent("Mecha arrived");
-                        armies[i].waiting = true;
-                    }
+                    emit BlockingEvent("Mecha arrived");
+                    armies[i].waiting = true;
                 }
             }
-            if(_calculateDistance(mecha_positions[0], mecha_positions[1]) < 50000)
+            int256 distance = _calculateDistance(temp_mecha_positions[0], temp_mecha_positions[1]);
+            if(distance < 999900)
             {
                 armies[0].waiting = true;
                 armies[1].waiting = true;
                 emit BlockingEvent("Enemy sighted");
             }
-            //armies[0].waiting = true;
-            //emit BlockingEvent("Step done");
+            else
+            {
+                //emit Distance(distance);
+            }
+            counter++;
         }
+        for(uint8 i=0; i< armyCounter; i++){
+            mecha_positions[i] = temp_mecha_positions[i];
+        }
+        
     }
 
-    function _setCourseMecha(uint i) private
+    function _moveMecha(Position memory pos_in, int256 course) private pure returns(Position memory)
     {
-        int256[2] memory course_data = _calculateCourse(mecha_positions[i], mecha_destinations[i]);
-        armies[i].course = course_data[1];
-        armies[i].steps = course_data[0];   
-    }
-
-
-    function _moveMecha(uint i) private
-    {
-        assert(armies[i].steps > 0);
-        if(armies[i].course == X_UP)
+        if(course == X_UP)
         {
-            mecha_positions[i].X += 1;
+            pos_in.X += 1;
         }
-        else if(armies[i].course == X_DOWN)
+        else if(course == X_DOWN)
         {
-            mecha_positions[i].X -= 1;
+            pos_in.X -= 1;
         }
-        else if(armies[i].course == Y_UP)
+        else if(course == Y_UP)
         {
-            mecha_positions[i].Y += 1;
+            pos_in.Y += 1;
         }
-        else if(armies[i].course == Y_DOWN)
+        else if(course == Y_DOWN)
+        { 
+            pos_in.Y -= 1;
+        }
+        else if(course == Z_UP)
         {
-            mecha_positions[i].Y -= 1;
+            pos_in.Z += 1;
         }
-        else if(armies[i].course == Z_UP)
+        else if(course == Z_DOWN)
         {
-            mecha_positions[i].Z += 1;
+            pos_in.Z -= 1;
         }
-        else if(armies[i].course == Z_DOWN)
-        {
-            mecha_positions[i].Z -= 1;
-        }
-        armies[i].steps -= 1;
+        return pos_in;
     }
 
 }
