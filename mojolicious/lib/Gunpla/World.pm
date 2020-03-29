@@ -153,17 +153,18 @@ sub save
     foreach my $m (@{$self->armies})
     {
         $db->get_collection('mecha')->insert_one($m->to_mongo);
-        foreach my $wp (keys %{$self->waypoints})
-        {
-            my $wp_mongo = {
-                name => $wp,
-                type => 'waypoint',
-                position => $self->waypoints->{$wp}->to_mongo(),
-                spawn_point => $self->is_spawn_point($wp)
-            };
-            $db->get_collection('map')->insert_one($wp_mongo);
-        }
     }
+    foreach my $wp (keys %{$self->waypoints})
+    {
+        my $wp_mongo = {
+            name => $wp,
+            type => 'waypoint',
+            position => $self->waypoints->{$wp}->to_mongo(),
+            spawn_point => $self->is_spawn_point($wp)
+        };
+        $db->get_collection('map')->insert_one($wp_mongo);
+    }
+
 }
 
 sub load
@@ -171,10 +172,10 @@ sub load
     my $self = shift;
     my $mongo = MongoDB->connect();
     my $db = $mongo->get_database('gunpla_' . $self->name);
-    my @mecha = $db->get_collection('nations')->find()->all();
+    my @mecha = $db->get_collection('mecha')->find()->all();
     for(@mecha)
     {
-        push @{$self->armied}, Gunpla::Mecha->from_mongo($_);
+        push @{$self->armies}, Gunpla::Mecha->from_mongo($_);
     }
     my @map_points = $db->get_collection('map')->find()->all();
     foreach my $mapp (@map_points)
