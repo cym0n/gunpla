@@ -16,6 +16,7 @@ sub startup {
 
   # Normal route to controller
   $r->get('/')->to('example#welcome');
+  $r->get('/fe')->to('fe#main');
   $r->get('/game/mechas')->to('game#all_mechas');
 }
 
