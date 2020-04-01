@@ -7,7 +7,7 @@ App = {
         $('#mechas').empty();
         fetch('/game/mechas?game=autotest')
         .then(function(response) { return response.json(); })
-        .then(function(data) { console.log(data.mechas[0]); 
+        .then(function(data) { 
             data.mechas.forEach(function(m, index, array) {
                 $('#mechas').append(App.mechaTemplate(index, m.name, m.faction, m.position, m.command));  
             });
@@ -58,22 +58,25 @@ App = {
   },
   addCommand : function(el) {
     var form = $( el )
-    var mid = $( form.children('input[name="mechaid"]')).attr('value');
+    var mid = $( form.children('input[name="mechaname"]')).attr('value');
     var cmd = form.find('select[name="commands"]').children('option:selected').attr('value');
+    var command;
+    var params;
     if(cmd == 'flywp')
     {
         var wp = form.find('select[name="waypoint"]').children('option:selected').attr('value');
-        App.contracts.Gunpla.deployed().then(function(instance) {
-            gunplaInstance = instance;
-        }).then(function() { var command = "FLY TO WAYPOINT "+wp;
-            console.log("Adding command "+command+" to mecha "+mid);
-            gunplaInstance.addCommand(mid, "FLY TO WAYPOINT ", wp) })
-        .then(function(result) {
-            //Nothing to do, managed by event
-        }).catch(function(err) {
-            console.error(err);
-        });
+        command = "FLY TO WAYPOINT";
+        params = wp;
     }
+    console.log("Adding command "+command+" with params "+params+" to mecha "+mid);
+    fetch('/game/command', {
+        method: 'post',
+        body: JSON.stringify({
+            'command': command,
+            'params': params,
+            'mecha': mid,
+            'game': 'autotest' }) 
+    });
   }
 
 };

@@ -19,6 +19,7 @@ sub startup {
   $r->get('/fe')->to('fe#main');
   $r->get('/game/mechas')->to('game#all_mechas');
   $r->get('/game/waypoints')->to('game#all_waypoints');
+  $r->post('/game/command')->to('game#add_command');
 }
 
 1;
