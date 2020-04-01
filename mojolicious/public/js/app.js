@@ -14,7 +14,7 @@ App = {
         });
   },
   mechaTemplate: function(id, name, faction, pos, command) {
-    var mechaview = '<div id="mecha_' + name + '"><p>'+ name + ' (' + faction + ')</p><p>[' + pos.x +', '+pos.y +', '+pos.z + ']</p>';
+    var mechaview = '<div id="mecha_' + name + '"><p>'+ name + ' (' + faction + ')<br />[' + pos.x +', '+pos.y +', '+pos.z + ']</p>';
     if(command == '')
     {
         mechaview = mechaview +`
@@ -22,7 +22,7 @@ App = {
             <input type="hidden" name="mechaname" value="${name}">
             <div class="form-group">
                 <label for="commands">Select Command</label>
-                <select class="form-control" name="commands" onchange="App.commandParams(this, ${name})">
+                <select class="form-control" name="commands" onchange="App.commandParams(this, '${name}')">
                     <option value="">Select...</option>
                     <option value="flywp">FLY TO WAYPOINT</option>
                 </select>
@@ -40,22 +40,19 @@ App = {
     mechaview = mechaview +'</div> ';
     return mechaview;
   },
-  commandParams : function(select, id) {
+  commandParams : function(select, name) {
     var paramDiv = $( select ).parent().next();
     paramDiv.empty();
     if(select.value == 'flywp')
     {
         paramDiv.append('<label for="waypoint">Select Waypoint</label>');
-        paramDiv.append('<select class="form-control" name="waypoint" id="params'+id+'"></select>');
-        App.contracts.Gunpla.deployed().then(function(instance) {
-            gunplaInstance = instance;
-        }).then(function() { return gunplaInstance.waypointCounter() })
-        .then(function(counter) {
-             for (var i = 0; i < counter; i++) {
-                gunplaInstance.wps_names(i).then(function(wp) {
-                    $( "#params"+id).append('<option value="'+wp+'">'+wp+'</option>');
-                });
-            }
+        paramDiv.append('<select class="form-control" name="waypoint" id="params_'+name+'"></select>');
+        fetch('/game/waypoints?game=autotest')
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            data.waypoints.forEach(function(wp, index, array) {
+                $( "#params_"+name).append('<option value="'+wp.name+'">'+wp.name+'</option>');
+            });
         });
     }
   },

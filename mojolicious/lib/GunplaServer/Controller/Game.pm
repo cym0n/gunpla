@@ -12,4 +12,13 @@ sub all_mechas {
     $c->render(json => { mechas => \@mecha });
 }
 
+sub all_waypoints {
+    my $c = shift;
+    my $game = $c->param('game');
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $game);
+    my @wp = $db->get_collection('map')->find({ type => 'waypoint' } )->all();
+    $c->render(json => { waypoints => \@wp });
+}
+
 1;
