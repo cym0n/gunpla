@@ -8,10 +8,17 @@ sub all_mechas {
     my $game = $c->param('game');
     my $client = MongoDB->connect();
     my $db = $client->get_database('gunpla_' . $game);
-    #TODO: get rid of the not interesting informations
     #TODO: implemente the fetch for just one mecha
     my @mecha = $db->get_collection('mecha')->find()->all();
-    $c->render(json => { mechas => \@mecha });
+    my @out = ();
+    for(@mecha)
+    {
+        push @out, { name     => $_->{name},
+                     faction  => $_->{faction},
+                     position => $_->{position},
+                     waiting  => $_->{waiting} }
+    }
+    $c->render(json => { mechas => \@out });
 }
 
 sub all_waypoints {
@@ -19,10 +26,17 @@ sub all_waypoints {
     my $game = $c->param('game');
     my $client = MongoDB->connect();
     my $db = $client->get_database('gunpla_' . $game);
-    #TODO: get rid of the not interesting informations
     #TODO: implemente the fetch for just one waypoint 
     my @wp = $db->get_collection('map')->find({ type => 'waypoint' } )->all();
-    $c->render(json => { waypoints => \@wp });
+    my @out = ();
+    for(@wp)
+    {
+        push @out, { name => $_->{name},
+                     x => $_->{x},
+                     y => $_->{y},
+                     z => $_->{z}, };
+    }
+    $c->render(json => { waypoints => \@out });
 }
 
 sub add_command
@@ -31,12 +45,20 @@ sub add_command
     my $params = $c->req->json;
     my $client = MongoDB->connect();
     my $db = $client->get_database('gunpla_' . $params->{game});
-    #TODO: verifiy no other commands are present for that mecha
-    #Put the mecha on waiting
-    $db->get_collection('commands')->insert_one({   command => $params->{command},
-                                                    params => $params->{params},
-                                                    mecha => $params->{mecha} });
-    $c->render(json => { result => 'OK' });
+    my ( $mecha ) = $db->get_collection('mecha')->find({ name => $params->{mecha} })->all();
+    if(! $mecha->waiting) #Strong enough?
+    {
+        $c->render(json => { result => 'error', description => 'mecha not waiting for commands'});
+    }
+    else
+    {
+        $db->get_collection('commands')->insert_one({ command => $params->{command},
+                                                      params => $params->{params},
+                                                      mecha => $params->{mecha},
+                                                      cmd_index => $mecha->{cmd_index} });
+        $db->get_collection('mecha')->update( { name => $params->{mecha} }, { '$set' => { 'waiting' => 1 } } );
+        $c->render(json => { result => 'OK' });
+    }
 }
 
 1;

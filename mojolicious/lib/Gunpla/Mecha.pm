@@ -13,12 +13,10 @@ has waiting => (
     is => 'rw',
     default => 1
 );
-has command => (
+has cmd_index => (
     is => 'rw',
-    default => ''
+    default => 0
 );
-
-
 has position => (
     is => 'rw',
 );
@@ -69,10 +67,10 @@ sub to_mongo
         name => $self->name,
         faction => $self->faction,
         waiting => $self->waiting,
-        command => $self->command,
         position => $self->position->to_mongo(),
         course => $self->course,
         destination => $self->destination->to_mongo(),
+        cmd_index => $self->cmd_index,
     }
 }
 

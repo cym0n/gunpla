@@ -1,5 +1,6 @@
 package Gunpla::World;
 
+use v5.10;
 use Moo;
 use MongoDB;
 use Gunpla::Position;
@@ -74,7 +75,6 @@ sub add_command
     my $m = $self->get_mecha_by_name($mecha);
     if($command eq 'FLY TO WAYPOINT')
     {
-        $m->command($command . " " . $params);
         $m->destination($self->waypoints->{$params}->clone());
         $m->waiting(0);
     }
