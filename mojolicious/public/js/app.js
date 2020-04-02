@@ -1,21 +1,23 @@
 App = {
   init: function() {
+    console.log("Game is "+game);
+    App.game = game;
     return App.render();
   },
 
   render: function() {
         $('#mechas').empty();
-        fetch('/game/mechas?game=autotest')
+        fetch('/game/mechas?game='+App.game)
         .then(function(response) { return response.json(); })
         .then(function(data) { 
             data.mechas.forEach(function(m, index, array) {
-                $('#mechas').append(App.mechaTemplate(index, m.name, m.faction, m.position, m.command));  
+                $('#mechas').append(App.mechaTemplate(index, m.name, m.faction, m.position, m.waiting));  
             });
         });
   },
-  mechaTemplate: function(id, name, faction, pos, command) {
+  mechaTemplate: function(id, name, faction, pos, waiting) {
     var mechaview = '<div id="mecha_' + name + '"><p>'+ name + ' (' + faction + ')<br />[' + pos.x +', '+pos.y +', '+pos.z + ']</p>';
-    if(command == '')
+    if(waiting)
     {
         mechaview = mechaview +`
          <form onSubmit="App.addCommand(this); return false;" id="comms_${name}">
@@ -47,7 +49,7 @@ App = {
     {
         paramDiv.append('<label for="waypoint">Select Waypoint</label>');
         paramDiv.append('<select class="form-control" name="waypoint" id="params_'+name+'"></select>');
-        fetch('/game/waypoints?game=autotest')
+        fetch('/game/waypoints?game='+App.game)
         .then(function(response) { return response.json(); })
         .then(function(data) {
             data.waypoints.forEach(function(wp, index, array) {
@@ -75,7 +77,7 @@ App = {
             'command': command,
             'params': params,
             'mecha': mid,
-            'game': 'autotest' }) 
+            'game': App.game }) 
     });
   }
 
@@ -87,6 +89,6 @@ App = {
 $(function() {
 //  $(window).load(function() {
   $(window).on('load', (function() {
-    App.init();
+    App.init(game);
   }));
 });
