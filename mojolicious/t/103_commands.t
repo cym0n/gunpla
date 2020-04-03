@@ -21,15 +21,26 @@ $world->save();
 my $t = Test::Mojo->new('GunplaServer');
 
 diag("Adding a command to Diver");
-$t->post_ok('/game/command' => {Accept => '*/*'} => json => {game => 'autotest',
-                                                             mecha => 'Diver', 
-                                                             command => 'FLY TO WAYPOINT',
-                                                             params => 'center' })
+$t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
+                                                              mecha => 'Diver', 
+                                                              command => 'FLY TO WAYPOINT',
+                                                              params => 'center' })
     ->status_is(200)
     ->json_is({ result => 'OK' });
 
 diag("Veriying waiting mecha flag");
 $t->get_ok('/game/mechas?game=autotest&mecha=Diver')->status_is(200)->json_is("/mecha/waiting" => 0);
+
+diag("Getting the command");
+$t->get_ok('/game/command?game=autotest&mecha=Diver')->status_is(200)->json_is(
+    {
+        'command' => {
+            'params' => 'center',
+            'command' => 'FLY TO WAYPOINT',
+            'mecha' => 'Diver'
+        }
+    }
+);
 
 
 
@@ -39,9 +50,9 @@ $t->get_ok('/game/mechas?game=autotest&mecha=Diver')->status_is(200)->json_is("/
 open(my $log, "> /tmp/out1.log");
 print {$log} Dumper($t->tx->res->json) . "\n";
 close($log);
-diag("Drop gunpla_autotest db on local mongodb for final cleanup");
-$db = $mongo->get_database('gunpla_autotest');
-$db->drop();
+#diag("Drop gunpla_autotest db on local mongodb for final cleanup");
+#$db = $mongo->get_database('gunpla_autotest');
+#$db->drop();
 
 
 done_testing();

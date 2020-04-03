@@ -65,7 +65,6 @@ sub add_command
 {
     my $c = shift;
     my $params = $c->req->json;
-    $c->app->log->debug("Adding command");
     my $client = MongoDB->connect();
     my $db = $client->get_database('gunpla_' . $params->{game});
     my ( $mecha ) = $db->get_collection('mecha')->find({ name => $params->{mecha} })->all();
@@ -75,11 +74,12 @@ sub add_command
     }
     else
     {
-        $db->get_collection('commands')->insert_one({ command => $params->{command},
-                                                      params => $params->{params},
-                                                      mecha => $params->{mecha},
+        $c->app->log->debug("Adding command " . $params->{mecha} . '-' . $mecha->{cmd_index});
+        $db->get_collection('commands')->insert_one({ command   => $params->{command},
+                                                      params    => $params->{params},
+                                                      mecha     => $params->{mecha},
                                                       cmd_index => $mecha->{cmd_index} });
-        $db->get_collection('mecha')->update_one( { name => $params->{mecha} }, { '$set' => { 'waiting' => 1 } } );
+        $db->get_collection('mecha')->update_one( { 'name' => $params->{mecha} }, { '$set' => { 'waiting' => 0 } } );
         $c->render(json => { result => 'OK' });
     }
 }
@@ -92,10 +92,11 @@ sub read_command
     my $client = MongoDB->connect();
     my $db = $client->get_database('gunpla_' . $game);
     my ( $mecha ) = $db->get_collection('mecha')->find({ name => $mecha_name })->all();
-    my ( $command ) = $db->get_collection('commands')->find({ name => $mecha->{name}, cmd_index => $mecha->{cmd_index} })->all();
+    $c->app->log->debug("Getting command " . $mecha->{name} . '-' . $mecha->{cmd_index});
+    my ( $command ) = $db->get_collection('commands')->find({ mecha => $mecha->{name}, cmd_index => $mecha->{cmd_index} })->all();
     $c->render(json => { command => { command => $command->{command},
-                                      params => $command->{params},
-                                      mecha => $command->{mecha} } });
+                                      params  => $command->{params},
+                                      mecha   => $command->{mecha} } });
 }
 
 1;
