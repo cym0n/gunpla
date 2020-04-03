@@ -9,7 +9,6 @@ sub all_mechas {
     my $mecha_name = $c->param('mecha');
     my $client = MongoDB->connect();
     my $db = $client->get_database('gunpla_' . $game);
-    #TODO: implemente the fetch for just one mecha
     if($mecha_name)
     {
         my ( $mecha ) = $db->get_collection('mecha')->find({ name => $mecha_name })->all();
@@ -36,19 +35,30 @@ sub all_mechas {
 sub all_waypoints {
     my $c = shift;
     my $game = $c->param('game');
+    my $wp_name = $c->param('waypoint');
     my $client = MongoDB->connect();
     my $db = $client->get_database('gunpla_' . $game);
-    #TODO: implemente the fetch for just one waypoint 
-    my @wp = $db->get_collection('map')->find({ type => 'waypoint' } )->all();
-    my @out = ();
-    for(@wp)
+    if($wp_name)
     {
-        push @out, { name => $_->{name},
-                     x => $_->{x},
-                     y => $_->{y},
-                     z => $_->{z}, };
+        my ( $wp ) = $db->get_collection('map')->find({ type => 'waypoint', name => $wp_name } )->all();
+        $c->render(json => { waypoint => { name => $wp->{name},
+                                           x    => $wp->{position}->{x},
+                                           y    => $wp->{position}->{y},
+                                           z    => $wp->{position}->{z} } });
     }
-    $c->render(json => { waypoints => \@out });
+    else
+    {
+        my @wp = $db->get_collection('map')->find({ type => 'waypoint' } )->all();
+        my @out = ();
+        for(@wp)
+        {
+            push @out, { name => $_->{name},
+                        x => $_->{position}->{x},
+                        y => $_->{position}->{y},
+                        z => $_->{position}->{z}, };
+        }
+        $c->render(json => { waypoints => \@out });
+    }
 }
 
 sub add_command

@@ -36,6 +36,17 @@ $t->get_ok('/game/mechas?game=autotest&mecha=Diver')->status_is(200)->json_is(
 
 diag("Waypoints read API");
 $t->get_ok('/game/waypoints?game=autotest')->status_is(200)->json_has('/waypoints');
+diag("Waypoints read API - single");
+$t->get_ok('/game/waypoints?game=autotest&waypoint=center')->status_is(200)->json_is(
+    {
+        waypoint => {
+            name => 'center',
+            x => 0,
+            y => 0,
+            z => 0
+        }
+    }
+);
 open(my $log, "> /tmp/out1.log");
 print {$log} Dumper($t->tx->res->json) . "\n";
 close($log);
