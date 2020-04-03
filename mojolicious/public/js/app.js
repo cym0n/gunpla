@@ -11,15 +11,16 @@ App = {
         .then(function(response) { return response.json(); })
         .then(function(data) { 
             data.mechas.forEach(function(m, index, array) {
-                $('#mechas').append(App.mechaTemplate(index, m.name, m.faction, m.position, m.waiting));  
+                $('#mechas').append('<div id="mecha_' + m.name + '"></div>');
+                App.renderMechaTemplate(m.name, m.faction, m.position, m.waiting);  
             });
         });
   },
-  mechaTemplate: function(id, name, faction, pos, waiting) {
-    var mechaview = '<div id="mecha_' + name + '"><p>'+ name + ' (' + faction + ')<br />[' + pos.x +', '+pos.y +', '+pos.z + ']</p>';
+  renderMechaTemplate: function(name, faction, pos, waiting) {
+    $('#mecha_' + name).append('<p>'+ name + ' (' + faction + ')<br />[' + pos.x +', '+pos.y +', '+pos.z + ']</p>');
     if(waiting)
     {
-        mechaview = mechaview +`
+        $('#mecha_' + name).append(`
          <form onSubmit="App.addCommand(this); return false;" id="comms_${name}">
             <input type="hidden" name="mechaname" value="${name}">
             <div class="form-group">
@@ -32,15 +33,26 @@ App = {
             <div class="form-group">
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
-            <hr />
-        </form>`
+        </form>`);
+        $('#mecha_' + name).append('<hr />');
     }
     else
     {
-        mechaview = mechaview + '<p>ORDERS GIVEN: '+command+'</p>';
+        fetch('/game/command?game='+App.game+'&mecha='+name)
+        .then(function(response) { return response.json(); })
+        .then(function(data) { 
+            $('#mecha_' + data.command.mecha).append('<p>ORDERS GIVEN: ' + data.command.command + ' [' + data.command.params + ']</p>');
+            $('#mecha_' + name).append('<hr />');
+        })
     }
-    mechaview = mechaview +'</div> ';
-    return mechaview;
+  },
+  refreshMecha : function(name) {
+    $('#mecha_'+name).empty();
+    fetch('/game/mechas?game='+App.game+'&mecha='+name)
+    .then(function(response) { return response.json(); })
+    .then(function(data) { 
+         App.renderMechaTemplate(data.mecha.name, data.mecha.faction, data.mecha.position, data.mecha.waiting);
+    })
   },
   commandParams : function(select, name) {
     var paramDiv = $( select ).parent().next();
@@ -77,10 +89,13 @@ App = {
             'command': command,
             'params': params,
             'mecha': mid,
-            'game': App.game }) 
+            'game': App.game })
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) { 
+        App.refreshMecha(data.command.mecha)
     });
   }
-
 };
 
 

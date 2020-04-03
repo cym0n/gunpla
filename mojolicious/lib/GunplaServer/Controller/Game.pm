@@ -80,7 +80,11 @@ sub add_command
                                                       mecha     => $params->{mecha},
                                                       cmd_index => $mecha->{cmd_index} });
         $db->get_collection('mecha')->update_one( { 'name' => $params->{mecha} }, { '$set' => { 'waiting' => 0 } } );
-        $c->render(json => { result => 'OK' });
+        $c->render(json => { result => 'OK',
+                             command => { command => $params->{command},
+                                          params  => $params->{params},
+                                          mecha   => $params->{mecha} } });
+
     }
 }
 

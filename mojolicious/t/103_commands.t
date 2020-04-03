@@ -26,7 +26,12 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
                                                               command => 'FLY TO WAYPOINT',
                                                               params => 'center' })
     ->status_is(200)
-    ->json_is({ result => 'OK' });
+    ->json_is({ result => 'OK',
+                'command' => {
+                    'params' => 'center',
+                    'command' => 'FLY TO WAYPOINT',
+                    'mecha' => 'Diver'
+                } });
 
 diag("Veriying waiting mecha flag");
 $t->get_ok('/game/mechas?game=autotest&mecha=Diver')->status_is(200)->json_is("/mecha/waiting" => 0);
