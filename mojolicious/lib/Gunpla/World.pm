@@ -76,7 +76,23 @@ sub add_command
     if($command eq 'FLY TO WAYPOINT')
     {
         $m->destination($self->waypoints->{$params}->clone());
-        $m->waiting(0);
+    }
+    $m->cmd_fetched(1);
+}
+
+sub fetch_commands_from_mongo
+{
+    my $self = shift;
+    for(@{$self->armies})
+    {
+        my $m = $_;
+        if((! $m->waiting) && (! $m->cmd_fetched))
+        {
+            my $mongo = MongoDB->connect();
+            my $db = $mongo->get_database('gunpla_' . $self->name);
+            my ( $command ) = $db->get_collection('commands')->find({ mecha => $m->name, cmd_index => $m->cmd_index })->all();
+            $self->add_command($m->name, $command->{command}, $command->{params});
+        }
     }
 }
 
@@ -92,12 +108,23 @@ sub all_ready
     return 1;
 }
 
+sub all_ready_and_fetched
+{
+    my $self = shift;
+    for(@{$self->armies})
+    {
+        return 0 if ($_->waiting || (! $_->cmd_fetched));
+    }
+    return 1;
+}
+
 
 sub action
 {
     my $self = shift;
     my $steps = shift;
     my $counter = 0;
+    my $events = 0;
     while($self->all_ready &&
           (! $steps || $counter < $steps))
     {
@@ -110,23 +137,39 @@ sub action
             }
             else
             {
-                $m->waiting(1);
-                $self->event($m->name . " reached destination");
+                $events++;
+                $self->event($m->name . " reached destination", [ $m->name ]);
             }
         }
         $counter++;
     }
     if($steps && $counter >= $steps)
     {
-        $self->event("All steps executed");
+        $events++;
+        $self->event("All steps executed", []);
     }
+    return $events;
 }
 
 sub event
 {
     my $self = shift;
     my $message = shift;
-    say $message;
+    my $involved = shift;
+
+    my $mongo = MongoDB->connect(); 
+    my $db = $mongo->get_database('gunpla_' . $self->name);
+    for(@{$involved})
+    {
+        my $m = $self->get_mecha_by_name($_);
+        $db->get_collection('events')->insert_one({ message   => $message,
+                                                    cmd_index => $m->cmd_index,
+                                                    mecha     => $m->name,
+                                                    cmd_index => $m->cmd_index });
+        $_->waiting(1);
+        $_->cmd_fetched(0);
+        $_->cmd_index($_->cmd_index + 1);
+    }
 }
 
 sub is_spawn_point
@@ -152,7 +195,7 @@ sub save
     $db->drop();
     foreach my $m (@{$self->armies})
     {
-        $db->get_collection('mecha')->insert_one($m->to_mongo);
+        $db->get_collection('mechas')->insert_one($m->to_mongo);
     }
     foreach my $wp (keys %{$self->waypoints})
     {
@@ -172,7 +215,7 @@ sub load
     my $self = shift;
     my $mongo = MongoDB->connect();
     my $db = $mongo->get_database('gunpla_' . $self->name);
-    my @mecha = $db->get_collection('mecha')->find()->all();
+    my @mecha = $db->get_collection('mechas')->find()->all();
     for(@mecha)
     {
         push @{$self->armies}, Gunpla::Mecha->from_mongo($_);

@@ -11,7 +11,7 @@ sub all_mechas {
     my $db = $client->get_database('gunpla_' . $game);
     if($mecha_name)
     {
-        my ( $mecha ) = $db->get_collection('mecha')->find({ name => $mecha_name })->all();
+        my ( $mecha ) = $db->get_collection('mechas')->find({ name => $mecha_name })->all();
         $c->render(json => { mecha => {  name     => $mecha->{name},
                                          faction  => $mecha->{faction},
                                          position => $mecha->{position},
@@ -19,7 +19,7 @@ sub all_mechas {
     }
     else
     {
-        my @mecha = $db->get_collection('mecha')->find()->all();
+        my @mecha = $db->get_collection('mechas')->find()->all();
         my @out = ();
         for(@mecha)
         {
@@ -67,7 +67,7 @@ sub add_command
     my $params = $c->req->json;
     my $client = MongoDB->connect();
     my $db = $client->get_database('gunpla_' . $params->{game});
-    my ( $mecha ) = $db->get_collection('mecha')->find({ name => $params->{mecha} })->all();
+    my ( $mecha ) = $db->get_collection('mechas')->find({ name => $params->{mecha} })->all();
     if(! $mecha->{waiting}) #Strong enough?
     {
         $c->render(json => { result => 'error', description => 'mecha not waiting for commands'});
@@ -79,7 +79,7 @@ sub add_command
                                                       params    => $params->{params},
                                                       mecha     => $params->{mecha},
                                                       cmd_index => $mecha->{cmd_index} });
-        $db->get_collection('mecha')->update_one( { 'name' => $params->{mecha} }, { '$set' => { 'waiting' => 0 } } );
+        $db->get_collection('mechas')->update_one( { 'name' => $params->{mecha} }, { '$set' => { 'waiting' => 0 } } );
         $c->render(json => { result => 'OK',
                              command => { command => $params->{command},
                                           params  => $params->{params},

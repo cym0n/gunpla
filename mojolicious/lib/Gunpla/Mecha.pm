@@ -13,6 +13,10 @@ has waiting => (
     is => 'rw',
     default => 1
 );
+has cmd_fetched => (
+    is => 'rw',
+    default => 0
+);
 has cmd_index => (
     is => 'rw',
     default => 0
@@ -71,6 +75,7 @@ sub to_mongo
         course => $self->course,
         destination => $self->destination->to_mongo(),
         cmd_index => $self->cmd_index,
+        cmd_fetched => $self->cmd_fetched,
     }
 }
 
