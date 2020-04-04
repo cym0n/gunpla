@@ -60,6 +60,7 @@ sub init
     $self->waypoints->{'center'} = Gunpla::Position->new(x => 0, y => 0, z => 0);
     $self->waypoints->{'blue'} = Gunpla::Position->new(x => 500000, y => 0, z => 0);
     $self->waypoints->{'red'} = Gunpla::Position->new(x => -500000, y => 0, z => 0);
+    $self->waypoints->{'alpha'} = Gunpla::Position->new(x => 0, y => -200000, z => 0);
     $self->spawn_points->{'wolf'} = 'blue';
     $self->spawn_points->{'eagle'} = 'red';
     $self->add_mecha("Diver", "wolf");
@@ -162,13 +163,13 @@ sub event
     for(@{$involved})
     {
         my $m = $self->get_mecha_by_name($_);
+        say "Adding event for " . $m->name; 
+        $m->cmd_index($m->cmd_index + 1);
         $db->get_collection('events')->insert_one({ message   => $message,
-                                                    cmd_index => $m->cmd_index,
                                                     mecha     => $m->name,
                                                     cmd_index => $m->cmd_index });
-        $_->waiting(1);
-        $_->cmd_fetched(0);
-        $_->cmd_index($_->cmd_index + 1);
+        $m->waiting(1);
+        $m->cmd_fetched(0);
     }
 }
 
@@ -192,7 +193,8 @@ sub save
     my $self = shift;
     my $mongo = MongoDB->connect(); 
     my $db = $mongo->get_database('gunpla_' . $self->name);
-    $db->drop();
+    $db->get_collection('mechas')->drop();
+    $db->get_collection('map')->drop();
     foreach my $m (@{$self->armies})
     {
         $db->get_collection('mechas')->insert_one($m->to_mongo);

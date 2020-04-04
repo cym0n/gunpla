@@ -2,6 +2,7 @@ package GunplaServer::Controller::Game;
 use Mojo::Base 'Mojolicious::Controller';
 
 use MongoDB;
+use Data::Dumper;
 
 sub all_mechas {
     my $c = shift;
@@ -101,6 +102,23 @@ sub read_command
     $c->render(json => { command => { command => $command->{command},
                                       params  => $command->{params},
                                       mecha   => $command->{mecha} } });
+}
+
+sub read_event
+{
+    my $c = shift;
+    my $game = $c->param('game');
+    my $mecha_name = $c->param('mecha');
+    #my $index = $c->param('index');
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $game);
+    my ( $mecha ) = $db->get_collection('mechas')->find({ name => $mecha_name })->all();
+    my $index = $mecha->{cmd_index};
+    $c->app->log->debug("Getting event " . $mecha_name . '-' . $index);
+    my ( $event ) = $db->get_collection('events')->find({ mecha => $mecha_name, cmd_index => int($index)})->all();
+    $c->render(json => { event => { message => $event->{message},
+                                    mecha   => $event->{mecha} } });
+    
 }
 
 1;

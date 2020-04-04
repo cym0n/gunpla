@@ -11,8 +11,9 @@ App = {
         .then(function(response) { return response.json(); })
         .then(function(data) { 
             data.mechas.forEach(function(m, index, array) {
-                $('#mechas').append('<div id="mecha_' + m.name + '"></div>');
+                $('#mechas').append('<div class="well" id="mecha_' + m.name + '"></div>');
                 App.renderMechaTemplate(m.name, m.faction, m.position, m.waiting);  
+                App.getLastEvent(m.name);
             });
         });
   },
@@ -34,7 +35,6 @@ App = {
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>`);
-        $('#mecha_' + name).append('<hr />');
     }
     else
     {
@@ -42,7 +42,6 @@ App = {
         .then(function(response) { return response.json(); })
         .then(function(data) { 
             $('#mecha_' + data.command.mecha).append('<p>ORDERS GIVEN: ' + data.command.command + ' [' + data.command.params + ']</p>');
-            $('#mecha_' + name).append('<hr />');
         });
         poll(function() {
                 return fetch('/game/mechas?game='+App.game+'&mecha='+name)
@@ -51,8 +50,21 @@ App = {
              function(data) {
                 return data.mecha.waiting == 1
              },
-             3600000, 10000).then(function(data) { App.refreshMecha(data.mecha.name) });
+             3600000, 10000).then(function(data) { 
+                App.refreshMecha(data.mecha.name); 
+                App.getLastEvent(data.mecha.name); 
+            });
     }
+  },
+  getLastEvent: function(name) {
+    fetch('/game/event?game='+App.game+'&mecha='+name)
+    .then(function(response) { return response.json(); })
+    .then(function(data) { 
+        if(data.event.message)
+        {
+            $('#events').prepend('<p>'+name+': '+data.event.message);
+        }
+    })
   },
   refreshMecha : function(name) {
     $('#mecha_'+name).empty();

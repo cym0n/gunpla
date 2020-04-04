@@ -22,7 +22,7 @@ my $loaded_world = Gunpla::World->new(name => 'autotest');
 $loaded_world->load();
 
 diag("Checking waypoints created on load");
-is(keys %{$loaded_world->waypoints}, 3);
+is(keys %{$loaded_world->waypoints}, 4);
 
 diag("Checking mechas created on load");
 is(@{$loaded_world->armies}, 2);

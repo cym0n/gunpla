@@ -41,7 +41,8 @@ elsif($command eq 'action')
         {
             my $e = $world->action();
             say "$e events generated. Mechas ready for new commands";
-            say "Action done";
+            $world->save();
+            say "World saved. Action done";
         }
         else
         {

@@ -11,6 +11,8 @@ sub startup {
   # Configure the application
   $self->secrets($config->{secrets});
 
+  $self->defaults(layout => 'default');
+
   # Router
   my $r = $self->routes;
 
@@ -20,6 +22,7 @@ sub startup {
   $r->get('/game/mechas')->to('game#all_mechas');
   $r->get('/game/waypoints')->to('game#all_waypoints');
   $r->get('/game/command')->to('game#read_command');
+  $r->get('/game/event')->to('game#read_event');
   $r->post('/game/command')->to('game#add_command');
 }
 

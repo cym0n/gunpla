@@ -11,7 +11,7 @@ my $world = Gunpla::World->new();
 $world->init();
 
 diag("Checking waypoints created on init");
-is(keys %{$world->waypoints}, 3);
+is(keys %{$world->waypoints}, 4);
 
 diag("Checking mechas created on init");
 is(@{$world->armies}, 2);
