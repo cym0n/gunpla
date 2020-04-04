@@ -43,7 +43,15 @@ App = {
         .then(function(data) { 
             $('#mecha_' + data.command.mecha).append('<p>ORDERS GIVEN: ' + data.command.command + ' [' + data.command.params + ']</p>');
             $('#mecha_' + name).append('<hr />');
-        })
+        });
+        poll(function() {
+                return fetch('/game/mechas?game='+App.game+'&mecha='+name)
+                .then(function(response) { return response.json(); })
+             },
+             function(data) {
+                return data.mecha.waiting == 1
+             },
+             3600000, 10000).then(function(data) { App.refreshMecha(data.mecha.name) });
     }
   },
   refreshMecha : function(name) {
