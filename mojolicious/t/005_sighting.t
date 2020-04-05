@@ -25,7 +25,7 @@ $world->armies->[1]->destination(Gunpla::Position->new(x => 0, y => 0, z => 0));
 $world->armies->[0]->waiting(0);
 $world->armies->[1]->waiting(0);
 
-diag("Action until sighing event");
+diag("Action until sighting event");
 is($world->action(), 1);
 
 diag("Checking game status after the event");

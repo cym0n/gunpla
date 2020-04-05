@@ -26,6 +26,10 @@ has cmd_index => (
 );
 
 #Navigation
+has movement_target => (
+    is => 'rw',
+    default => sub { { } }
+);
 has position => (
     is => 'rw',
 );
@@ -84,6 +88,7 @@ sub to_mongo
         waiting => $self->waiting,
         position => $self->position->to_mongo(),
         course => $self->course,
+        movement_target => $self->movement_target,
         destination => $self->destination->to_mongo(),
         cmd_index => $self->cmd_index,
         cmd_fetched => $self->cmd_fetched,

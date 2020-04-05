@@ -81,7 +81,7 @@ $t2->get_ok('/game/event?game=autotest&mecha=Diver')->status_is(200)->json_is(
         events => [
             {
                 mecha => 'Diver',
-                message => 'Diver reached destination'
+                message => 'Diver reached destination: waypoint center'
             }
         ]
     }
@@ -93,9 +93,9 @@ $t2->get_ok('/game/event?game=autotest&mecha=Diver')->status_is(200)->json_is(
 open(my $log, "> /tmp/out1.log");
 print {$log} Dumper($t2->tx->res->json) . "\n";
 close($log);
-#diag("Drop gunpla_autotest db on local mongodb for final cleanup");
-#$db = $mongo->get_database('gunpla_autotest');
-#$db->drop();
+diag("Drop gunpla_autotest db on local mongodb for final cleanup");
+$db = $mongo->get_database('gunpla_autotest');
+$db->drop();
 
 
 done_testing();

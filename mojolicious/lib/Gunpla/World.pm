@@ -103,6 +103,7 @@ sub add_command
     if($command eq 'FLY TO WAYPOINT')
     {
         $m->destination($self->waypoints->{$params}->clone());
+        $m->movement_target({ type => 'waypoint', 'name' => $params });
     }
     $m->cmd_fetched(1);
 }
@@ -166,7 +167,7 @@ sub action
             else
             {
                 $events++;
-                $self->event($m->name . " reached destination", [ $m->name ]);
+                $self->event($m->name . " reached destination: " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
             }
             $self->calculate_sighting_matrix($m->name);
         }
