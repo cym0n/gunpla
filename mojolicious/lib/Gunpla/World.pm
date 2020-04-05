@@ -103,7 +103,14 @@ sub add_command
     if($command eq 'FLY TO WAYPOINT')
     {
         $m->destination($self->waypoints->{$params}->clone());
-        $m->movement_target({ type => 'waypoint', 'name' => $params });
+        $m->movement_target({ type => 'waypoint', 'name' => $params, class => 'fixed'  });
+    }
+    elsif($command eq 'FLY TO MECHA')
+    {
+        my $target = $self->get_mecha_by_name($params);
+    
+        $m->destination($target->position->clone());
+        $m->movement_target({ type => 'mecha', 'name' => $params, class => 'dynamic'  });
     }
     $m->cmd_fetched(1);
 }
@@ -154,12 +161,16 @@ sub action
     my $counter = 0;
     my $events = 0;
     $self->generated_events(0);
-    while($self->all_ready &&
-          (! $steps || $counter < $steps))
+    while($self->all_ready && (! $steps || $counter < $steps))
     {
         for(@{$self->armies})
         {
             my $m = $_;
+            if($m->movement_target->{type} eq 'mecha')
+            {
+                my $target = $self->get_mecha_by_name($m->movement_target->{name});
+                $m->destination($target->position->clone);
+            }
             if(! $m->destination->equals($m->position))
             {
                 $m->plan_and_move();

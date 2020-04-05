@@ -33,6 +33,33 @@ sub all_mechas {
     }
 }
 
+sub sighted_mechas {
+    my $c = shift;
+    my $game = $c->param('game');
+    my $mecha_name = $c->param('mecha');
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $game);
+    my ( $sighting_matrix ) = $db->get_collection('status')->find({ status_element => 'sighting_matrix' })->all();
+    my @sighted;
+    for(keys %{$sighting_matrix->{$mecha_name}})
+    {
+        if(exists $sighting_matrix->{$mecha_name}->{$_} && $sighting_matrix->{$mecha_name}->{$_} > 0)
+        {
+            push @sighted, $_;
+        }
+    }
+    my @mecha = $db->get_collection('mechas')->find({ name => { '$in' => \@sighted }})->all();
+    my @out = ();
+    for(@mecha)
+    {
+        push @out, { name     => $_->{name},
+                     faction  => $_->{faction},
+                     position => $_->{position},
+                     waiting  => $_->{waiting} }
+     }
+     $c->render(json => { mechas => \@out });
+}
+
 sub all_waypoints {
     my $c = shift;
     my $game = $c->param('game');

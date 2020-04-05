@@ -67,6 +67,11 @@ sub set_course
 {
     my $self = shift;
     $self->course($self->position->course($self->destination));
+    if($self->movement_target->{class} eq 'dynamic')
+    {
+        #Allow the mech to adjust the course more frequently in case of movable target
+        $self->course->{step} = 10 if $self->course->{step} > 10;
+    }
 }
 
 sub plan_and_move

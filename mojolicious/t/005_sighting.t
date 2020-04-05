@@ -20,10 +20,10 @@ my $world = Gunpla::World->new(name => 'autotest');
 $world->init();
 
 diag("Simulation of order received");
-$world->armies->[0]->destination(Gunpla::Position->new(x => 0, y => 0, z => 0));
-$world->armies->[1]->destination(Gunpla::Position->new(x => 0, y => 0, z => 0));
 $world->armies->[0]->waiting(0);
+$world->add_command('Diver', 'FLY TO WAYPOINT', 'center');
 $world->armies->[1]->waiting(0);
+$world->add_command('Zaku', 'FLY TO WAYPOINT', 'center');
 
 diag("Action until sighting event");
 is($world->action(), 1);
