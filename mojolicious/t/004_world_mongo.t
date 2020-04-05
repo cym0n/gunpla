@@ -15,6 +15,7 @@ $db->drop();
 diag("Generate a world and save it on db");
 my $world = Gunpla::World->new(name => 'autotest');
 $world->init();
+$world->sighting_matrix->{'Gelgoog'}->{'Guncannon'} = 500;
 $world->save();
 
 diag("Load the generated world");
@@ -26,6 +27,9 @@ is(keys %{$loaded_world->waypoints}, 4);
 
 diag("Checking mechas created on load");
 is(@{$loaded_world->armies}, 2);
+
+diag("Checkoing dummy entry on sighting matrix");
+is($loaded_world->sighting_matrix->{'Gelgoog'}->{'Guncannon'}, 500);
 
 diag("Drop gunpla_autotest db on local mongodb for final cleanup");
 $db = $mongo->get_database('gunpla_autotest');

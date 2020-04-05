@@ -27,7 +27,7 @@ has spawn_points => (
     default => sub { {} }
 );
 has sighting_matrix => (
-    is => 'ro',
+    is => 'rw',
     default => sub { {} }
 );
 has generated_events => (
@@ -238,6 +238,7 @@ sub save
     my $db = $mongo->get_database('gunpla_' . $self->name);
     $db->get_collection('mechas')->drop();
     $db->get_collection('map')->drop();
+    $db->get_collection('status')->drop();
     foreach my $m (@{$self->armies})
     {
         $db->get_collection('mechas')->insert_one($m->to_mongo);
@@ -252,7 +253,9 @@ sub save
         };
         $db->get_collection('map')->insert_one($wp_mongo);
     }
-
+    my $sighting_matrix = $self->sighting_matrix;
+    $sighting_matrix->{status_element} = 'sighting_matrix';
+    $db->get_collection('status')->insert_one($sighting_matrix);
 }
 
 sub load
@@ -277,6 +280,9 @@ sub load
             }
         }
     }
+    my ( $sighting_matrix ) = $db->get_collection('status')->find({ status_element => 'sighting_matrix' })->all();
+    delete $sighting_matrix->{status_element};
+    $self->sighting_matrix($sighting_matrix);
 
 }
 
