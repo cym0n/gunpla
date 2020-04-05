@@ -6,6 +6,8 @@ use MongoDB;
 use Gunpla::Position;
 use Gunpla::Mecha;
 
+use constant SIGHT_TOLERANCE => 10000;
+
 has name => (
     is => 'ro',
 );
@@ -24,6 +26,23 @@ has spawn_points => (
     is => 'ro',
     default => sub { {} }
 );
+has sighting_matrix => (
+    is => 'ro',
+    default => sub { {} }
+);
+
+
+
+#Dummy implementation of mecha characteristics
+has mecha_templates => (
+    is => 'ro',
+    default => sub {
+        {
+            'Diver' => { sensor_range => 140000 },
+            'Zaku'  => { sensor_range => 80000 }
+        }
+    }
+);
 
 
 
@@ -35,7 +54,10 @@ sub add_mecha
     my $name = shift;
     my $faction = shift;
     #TODO: check if mecha already exists
-    my $mecha = Gunpla::Mecha->new(name => $name, faction => $faction);
+    my $template = $self->mecha_templates->{$name};
+    $template->{name} = $name;
+    $template->{faction} = $faction;
+    my $mecha = Gunpla::Mecha->new($template);
     $mecha->position($self->waypoints->{$self->spawn_points->{$faction}}->clone());
     $mecha->destination($mecha->position->clone());
     push @{$self->armies}, $mecha;
@@ -144,12 +166,25 @@ sub action
         }
         $counter++;
     }
+    $self->cmd_index_up();
     if($steps && $counter >= $steps)
     {
         $events++;
         $self->event("All steps executed", []);
     }
     return $events;
+}
+
+sub cmd_index_up
+{
+    my $self = shift;
+    foreach my $m(@{$self->armies})
+    {
+        if($m->waiting)
+        {
+            $m->cmd_index($m->cmd_index+1);
+        }
+    }
 }
 
 sub event
@@ -164,10 +199,11 @@ sub event
     {
         my $m = $self->get_mecha_by_name($_);
         say "Adding event for " . $m->name; 
-        $m->cmd_index($m->cmd_index + 1);
+        #$m->cmd_index($m->cmd_index + 1);
+        my $cmd_index = $m->cmd_index + 1;
         $db->get_collection('events')->insert_one({ message   => $message,
                                                     mecha     => $m->name,
-                                                    cmd_index => $m->cmd_index });
+                                                    cmd_index => $cmd_index });
         $m->waiting(1);
         $m->cmd_fetched(0);
     }
@@ -236,6 +272,39 @@ sub load
     }
 
 }
+
+sub calculate_sighting_matrix
+{
+    my $self = shift;
+    my $mecha_name = shift;
+    my $m = $self->get_mecha_by_name($mecha_name);
+    foreach my $other (@{$self->armies})      
+    {
+        if($m->faction ne $other->facion) #Mechas of the same faction are always visible each other 
+        {
+            if($m->position->distance($other->position) < $m->sensore_range)
+            {
+                if($self->sighting_matrix->{$m->name}->{$other->name} == 0)
+                {
+                    $self->sighting_matrix->{$m->name}->{$other->name} = SIGHT_TOLERANCE;
+                    $self->event($m->name . " sighted " . $other->name, [ $m->name ]);
+                }
+            }
+            else
+            {
+                if($self->sighting_matrix->{$m->name}->{$other->name} > 0)
+                {
+                    $self->sighting_matrix->{$m->name}->{$other->name} -= 1;
+                    if($self->sighting_matrix->{$m->name}->{$other->name} == 0)
+                    {
+                        $self->event($m->name . " lost contact with  " . $other->name, [ $m->name ]);
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 1;
 

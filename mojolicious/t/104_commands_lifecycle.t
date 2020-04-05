@@ -78,10 +78,12 @@ $t2->get_ok('/game/mechas?game=autotest&mecha=Zaku')->status_is(200)->json_is(
 diag("Getting the event");
 $t2->get_ok('/game/event?game=autotest&mecha=Diver')->status_is(200)->json_is(
     {
-        event => {
-            mecha => 'Diver',
-            message => 'Diver reached destination'
-        }
+        events => [
+            {
+                mecha => 'Diver',
+                message => 'Diver reached destination'
+            }
+        ]
     }
 );
 

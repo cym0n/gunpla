@@ -3,12 +3,15 @@ package Gunpla::Mecha;
 use Moo;
 use Gunpla::Position;
 
+#Identity
 has name => (
     is => 'ro'
 );
 has faction => (
     is => 'ro'
 );
+
+#Command management
 has waiting => (
     is => 'rw',
     default => 1
@@ -21,6 +24,8 @@ has cmd_index => (
     is => 'rw',
     default => 0
 );
+
+#Navigation
 has position => (
     is => 'rw',
 );
@@ -31,6 +36,12 @@ has course => (
 has destination => (
     is => 'rw',
 );
+
+#Characteristics
+has sensor_range => (
+    is => 'ro',
+);
+
 
 sub move
 {
@@ -76,6 +87,7 @@ sub to_mongo
         destination => $self->destination->to_mongo(),
         cmd_index => $self->cmd_index,
         cmd_fetched => $self->cmd_fetched,
+        sensor_range => $self->sensor_range
     }
 }
 

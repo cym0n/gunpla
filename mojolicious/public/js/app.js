@@ -73,12 +73,11 @@ App = {
         {
             highlightclass='class="alert alert-secondary';
         }
-        if(data.event.message)
-        {
-            var event_node = '<p '+highlightclass+'>'+name+': '+data.event.message+'</p>';
+        data.events.forEach(function(e, index, array) {
+            var event_node = '<p '+highlightclass+'>'+name+': '+e.message+'</p>';
             console.log("Appending "+event_node);
-            $('#events').prepend('<p '+highlightclass+'>'+name+': '+data.event.message+'</p>');
-        }
+            $('#events').prepend(event_node);
+        })
     })
   },
   refreshAllMecha : function(to_poll) {
