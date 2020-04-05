@@ -30,6 +30,10 @@ has sighting_matrix => (
     is => 'ro',
     default => sub { {} }
 );
+has generated_events => (
+    is => 'rw',
+    default => 0
+);
 
 
 
@@ -148,6 +152,7 @@ sub action
     my $steps = shift;
     my $counter = 0;
     my $events = 0;
+    $self->generated_events(0);
     while($self->all_ready &&
           (! $steps || $counter < $steps))
     {
@@ -163,6 +168,7 @@ sub action
                 $events++;
                 $self->event($m->name . " reached destination", [ $m->name ]);
             }
+            $self->calculate_sighting_matrix($m->name);
         }
         $counter++;
     }
@@ -172,7 +178,7 @@ sub action
         $events++;
         $self->event("All steps executed", []);
     }
-    return $events;
+    return $self->generated_events();
 }
 
 sub cmd_index_up
@@ -207,6 +213,7 @@ sub event
         $m->waiting(1);
         $m->cmd_fetched(0);
     }
+    $self->generated_events($self->generated_events + 1);
 }
 
 sub is_spawn_point
@@ -280,9 +287,13 @@ sub calculate_sighting_matrix
     my $m = $self->get_mecha_by_name($mecha_name);
     foreach my $other (@{$self->armies})      
     {
-        if($m->faction ne $other->facion) #Mechas of the same faction are always visible each other 
+        if($m->faction ne $other->faction) #Mechas of the same faction are always visible each other 
         {
-            if($m->position->distance($other->position) < $m->sensore_range)
+            if(! exists $self->sighting_matrix->{$m->name}->{$other->name})
+            {
+                $self->sighting_matrix->{$m->name}->{$other->name} = 0;
+            }
+            if($m->position->distance($other->position) < $m->sensor_range)
             {
                 if($self->sighting_matrix->{$m->name}->{$other->name} == 0)
                 {
