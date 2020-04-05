@@ -24,24 +24,24 @@ if($command eq 'init')
     say "Any data about old game $world will be lost...";
     my $db = $mongo->get_database('gunpla_' . $world);
     $db->drop();
-    my $world = Gunpla::World->new(name => $world);
-    $world->init();
-    $world->save();
+    my $world_obj = Gunpla::World->new(name => $world);
+    $world_obj->init();
+    $world_obj->save();
     say "New world $world initiated";
 }
 elsif($command eq 'action')
 {
     say "Loading world $world...";
-    my $world = Gunpla::World->new(name => $world);
-    $world->load();
-    if($world->all_ready())
+    my $world_obj = Gunpla::World->new(name => $world);
+    $world_obj->load();
+    if($world_obj->all_ready())
     {
-        $world->fetch_commands_from_mongo();
-        if($world->all_ready_and_fetched())
+        $world_obj->fetch_commands_from_mongo();
+        if($world_obj->all_ready_and_fetched())
         {
-            my $e = $world->action();
+            my $e = $world_obj->action();
             say "$e events generated. Mechas ready for new commands";
-            $world->save();
+            $world_obj->save();
             say "World saved. Action done";
         }
         else

@@ -11,7 +11,6 @@ function poll(fn, fn_check, timeout, interval) {
         ajax.then( function(response){
             // If the condition is met, we're done!
             if(fn_check(response)) {
-                console.log("event");
                 resolve(response);
             }
             // If the condition isn't met but the timeout hasn't elapsed, go again

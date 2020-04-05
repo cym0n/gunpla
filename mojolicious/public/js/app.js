@@ -12,12 +12,12 @@ App = {
         .then(function(data) { 
             data.mechas.forEach(function(m, index, array) {
                 $('#mechas').append('<div class="well" id="mecha_' + m.name + '"></div>');
-                App.renderMechaTemplate(m.name, m.faction, m.position, m.waiting);  
-                App.getLastEvent(m.name);
+                App.renderMechaTemplate(m.name, m.faction, m.position, m.waiting, true);  
+                App.getLastEvent(m.name, false);
             });
         });
   },
-  renderMechaTemplate: function(name, faction, pos, waiting) {
+  renderMechaTemplate: function(name, faction, pos, waiting, poll_needed) {
     $('#mecha_' + name).append('<p>'+ name + ' (' + faction + ')<br />[' + pos.x +', '+pos.y +', '+pos.z + ']</p>');
     if(waiting)
     {
@@ -43,35 +43,65 @@ App = {
         .then(function(data) { 
             $('#mecha_' + data.command.mecha).append('<p>ORDERS GIVEN: ' + data.command.command + ' [' + data.command.params + ']</p>');
         });
-        poll(function() {
+        if(poll_needed)
+        {
+            poll(function() {
                 return fetch('/game/mechas?game='+App.game+'&mecha='+name)
                 .then(function(response) { return response.json(); })
-             },
-             function(data) {
-                return data.mecha.waiting == 1
-             },
-             3600000, 10000).then(function(data) { 
-                App.refreshMecha(data.mecha.name); 
-                App.getLastEvent(data.mecha.name); 
+                },
+                function(data) {
+                    return data.mecha.waiting == 1
+                },
+                3600000, 10000).then(function(data) { 
+                    App.refreshAllMecha(); 
+                    App.getLastEvent(data.mecha.name, true); 
             });
+        }
     }
   },
-  getLastEvent: function(name) {
+  getLastEvent: function(name, highlight) {
     fetch('/game/event?game='+App.game+'&mecha='+name)
     .then(function(response) { return response.json(); })
     .then(function(data) { 
+        var highlightclass="";
+        if(highlight)
+        {
+            $('#events p').each(function(index) { $(this).removeClass("alert-danger").addClass("alert-secondary"); });
+            highlightclass='class="alert alert-danger"';
+        }
+        else
+        {
+            highlightclass='class="alert alert-secondary';
+        }
         if(data.event.message)
         {
-            $('#events').prepend('<p>'+name+': '+data.event.message);
+            var event_node = '<p '+highlightclass+'>'+name+': '+data.event.message+'</p>';
+            console.log("Appending "+event_node);
+            $('#events').prepend('<p '+highlightclass+'>'+name+': '+data.event.message+'</p>');
         }
     })
   },
-  refreshMecha : function(name) {
+  refreshAllMecha : function(to_poll) {
+        fetch('/game/mechas?game='+App.game)
+        .then(function(response) { return response.json(); })
+        .then(function(data) { 
+            data.mechas.forEach(function(m, index, array) {
+                $('#mecha_'+m.name).empty();
+                var poll = false;
+                if(m.name == to_poll)
+                {
+                    poll = true;
+                }
+                App.renderMechaTemplate(m.name, m.faction, m.position, m.waiting, poll);  
+            });
+        });
+  },
+  refreshMecha : function(name, poll) {
     $('#mecha_'+name).empty();
     fetch('/game/mechas?game='+App.game+'&mecha='+name)
     .then(function(response) { return response.json(); })
     .then(function(data) { 
-         App.renderMechaTemplate(data.mecha.name, data.mecha.faction, data.mecha.position, data.mecha.waiting);
+         App.renderMechaTemplate(data.mecha.name, data.mecha.faction, data.mecha.position, data.mecha.waiting, poll);
     })
   },
   commandParams : function(select, name) {
@@ -113,7 +143,7 @@ App = {
     })
     .then(function(response) { return response.json(); })
     .then(function(data) { 
-        App.refreshMecha(data.command.mecha)
+        App.refreshMecha(data.command.mecha, true)
     });
   }
 };
