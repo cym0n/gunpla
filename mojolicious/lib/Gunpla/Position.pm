@@ -36,6 +36,14 @@ sub vector
              $self->new(x => $value{x}, y => $value{y}, z => $value{z}) );
 }
 
+sub distance
+{
+    my $self = shift;
+    my $destination = shift;
+    my $vector = $self->vector($destination);
+    return int(sqrt(($vector->x ** 2) + ($vector->y ** 2) + ($vector->z ** 2)))
+}
+
 sub longest
 {
     my $self = shift;

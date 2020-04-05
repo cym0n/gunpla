@@ -42,6 +42,12 @@ is($course2->{'direction'}, 1);
 is($course2->{'axis'}, 'z');
 is($course2->{'steps'}, 2);
 
+diag("Distance calculatio - simple case");
+is($p1->distance($p2), 500000);
+
+
+diag("Distance calculatio - complex case");
+is($p3->distance($p4), 943);
 
 
 done_testing();
