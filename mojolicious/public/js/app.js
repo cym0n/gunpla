@@ -22,6 +22,7 @@ App = {
     if(waiting)
     {
         $('#mecha_' + name).append(`
+         <div class="well">
          <form onSubmit="App.addCommand(this); return false;" id="comms_${name}">
             <input type="hidden" name="mechaname" value="${name}">
             <div class="form-group">
@@ -34,7 +35,24 @@ App = {
             <div class="form-group">
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
-        </form>`);
+        </form></div>`);
+        fetch('/game/command?game='+App.game+'&mecha='+name+'&prev=1')
+        .then(function(response) { return response.json(); })
+        .then(function(data) { 
+            if(data.command.command)
+            {
+                $('#mecha_' + name).append(`
+                    <div class="well">
+                    <form onSubmit="App.resumeCommand(this); return false;" id="prevcomms_${name}">
+                        <input type="hidden" name="mechaname" value="${name}">
+                        <input type="hidden" name="commands" value="${data.command.command}">
+                        <input type="hidden" name="params" value="${data.command.params}">
+                        <label for="resume">Previous command: ${data.command.command} [${data.command.params}]</label>
+                        <button name="resume" type="submit" class="btn btn-primary">Resume</button>
+                    </form></div>`);
+            }
+        });
+
     }
     else
     {
@@ -71,7 +89,7 @@ App = {
         }
         else
         {
-            highlightclass='class="alert alert-secondary';
+            highlightclass='class="alert alert-secondary"';
         }
         data.events.forEach(function(e, index, array) {
             var event_node = '<p '+highlightclass+'>'+name+': '+e.message+'</p>';
@@ -144,7 +162,26 @@ App = {
     .then(function(data) { 
         App.refreshMecha(data.command.mecha, true)
     });
-  }
+  },
+  resumeCommand : function(el) {
+    var form = $( el )
+    var mid = $( form.children('input[name="mechaname"]')).attr('value');
+    var command = $( form.children('input[name="commands"]')).attr('value');
+    var params = $( form.children('input[name="params"]')).attr('value');
+    console.log("Adding command "+command+" with params "+params+" to mecha "+mid);
+    fetch('/game/command', {
+        method: 'post',
+        body: JSON.stringify({
+            'command': command,
+            'params': params,
+            'mecha': mid,
+            'game': App.game })
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) { 
+        App.refreshMecha(data.command.mecha, true)
+    });
+  } 
 };
 
 

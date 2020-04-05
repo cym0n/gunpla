@@ -94,11 +94,14 @@ sub read_command
     my $c = shift;
     my $game = $c->param('game');
     my $mecha_name = $c->param('mecha');
+    my $prev = $c->param('prev') || 0;
     my $client = MongoDB->connect();
     my $db = $client->get_database('gunpla_' . $game);
     my ( $mecha ) = $db->get_collection('mechas')->find({ name => $mecha_name })->all();
-    $c->app->log->debug("Getting command " . $mecha->{name} . '-' . $mecha->{cmd_index});
-    my ( $command ) = $db->get_collection('commands')->find({ mecha => $mecha->{name}, cmd_index => $mecha->{cmd_index} })->all();
+    my $cmd_index = $mecha->{cmd_index};
+    $cmd_index-- if $prev;
+    $c->app->log->debug("Getting command " . $mecha->{name} . '-' . $cmd_index);
+    my ( $command ) = $db->get_collection('commands')->find({ mecha => $mecha->{name}, cmd_index => $cmd_index })->all();
     $c->render(json => { command => { command => $command->{command},
                                       params  => $command->{params},
                                       mecha   => $command->{mecha} } });
