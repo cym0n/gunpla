@@ -31,6 +31,7 @@ App = {
                     <option value="">Select...</option>
                     <option value="flywp">FLY TO WAYPOINT</option>
                     <option value="flymec">FLY TO MECHA</option>
+                    <option value="sword">SWORD ATTACK</option>
                 </select>
             </div>
             <div class="form-group">
@@ -149,6 +150,18 @@ App = {
             });
         });
     }
+    else if(select.value == 'sword')
+    {
+        paramDiv.append('<label for="target">Select Mecha</label>');
+        paramDiv.append('<select class="form-control" name="target" id="params_'+name+'"></select>');
+        fetch('/game/sighted?game='+App.game+'&mecha='+name)
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            data.mechas.forEach(function(m, index, array) {
+                $( "#params_"+name).append('<option value="'+m.name+'">'+m.name+'</option>');
+            });
+        });
+    }
   },
   addCommand : function(el) {
     var form = $( el )
@@ -166,6 +179,12 @@ App = {
     {
         var m = form.find('select[name="target"]').children('option:selected').attr('value');
         command = "FLY TO MECHA";
+        params = m;
+    }
+    else if(cmd == 'sword')
+    {
+        var m = form.find('select[name="target"]').children('option:selected').attr('value');
+        command = "SWORD ATTACK";
         params = m;
     }
 

@@ -8,6 +8,7 @@ use Gunpla::Mecha;
 
 use constant SIGHT_TOLERANCE => 10000;
 use constant MECHA_NEARBY => 1000;
+use constant SLASH_DISTANCE => 10;
 
 has name => (
     is => 'ro',
@@ -113,6 +114,26 @@ sub add_command
         $m->destination($target->position->clone());
         $m->movement_target({ type => 'mecha', 'name' => $params, class => 'dynamic'  });
     }
+    elsif($command eq 'SWORD ATTACK')
+    {
+        my $attack = 'SWORD';
+        my $target_name = $params;
+        my $target = $self->get_mecha_by_name($params);
+
+        #Event only if:
+        #   command changed (avoid event on resume)
+        #   attacker sighted by target
+        if((($m->attack && $m->attack ne $attack) ||
+           ($m->attack_target->{name} && $m->attack_target->{name} ne $params)) &&
+            $self->sighting_matrix->{$target_name}->{$mecha} > 0)
+        {
+            $self->event("$mecha attacking: $attack", [ $target_name ]);
+        }
+        $m->attack($attack);
+        $m->destination($target->position->clone());
+        $m->movement_target({ type => 'mecha', 'name' => $params, class => 'dynamic'  });
+        $m->attack_target({ type => 'mecha', 'name' => $params, class => 'dynamic'  });
+    }
     $m->cmd_fetched(1);
 }
 
@@ -169,16 +190,33 @@ sub action
             my $m = $_;
             if($m->movement_target->{type} eq 'mecha')
             {
-                my $target = $self->get_mecha_by_name($m->movement_target->{name});
-                $m->destination($target->position->clone);
-                if($m->position->distance($target->position) > MECHA_NEARBY)
+                if($m->attack && $m->attack eq 'SWORD')
                 {
-                    $m->plan_and_move();
+                    my $target = $self->get_mecha_by_name($m->movement_target->{name});
+                    $m->destination($target->position->clone);
+                    if($m->position->distance($target->position) > SLASH_DISTANCE)
+                    {
+                        $m->plan_and_move();
+                    }
+                    else
+                    {
+                        $events++;
+                        $self->event($m->name . " slash with sword " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name, $m->movement_target->{name} ]);
+                    }
                 }
                 else
                 {
-                    $events++;
-                    $self->event($m->name . " reached the nearby of " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
+                    my $target = $self->get_mecha_by_name($m->movement_target->{name});
+                    $m->destination($target->position->clone);
+                    if($m->position->distance($target->position) > MECHA_NEARBY)
+                    {
+                        $m->plan_and_move();
+                    }
+                    else
+                    {
+                        $events++;
+                        $self->event($m->name . " reached the nearby of " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
+                    }
                 }
             }
             else
@@ -346,7 +384,6 @@ sub calculate_sighting_matrix
         }
     }
 }
-
 
 1;
 

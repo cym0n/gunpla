@@ -41,6 +41,16 @@ has destination => (
     is => 'rw',
 );
 
+#Combat
+has attack => (
+    is => 'rw'
+);
+has attack_target => (
+    is => 'rw',
+    default => sub { { } }
+);
+
+
 #Characteristics
 has sensor_range => (
     is => 'ro',
