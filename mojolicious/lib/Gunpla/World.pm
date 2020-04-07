@@ -7,6 +7,7 @@ use Gunpla::Position;
 use Gunpla::Mecha;
 
 use constant SIGHT_TOLERANCE => 10000;
+use constant MECHA_NEARBY => 1000;
 
 has name => (
     is => 'ro',
@@ -170,15 +171,27 @@ sub action
             {
                 my $target = $self->get_mecha_by_name($m->movement_target->{name});
                 $m->destination($target->position->clone);
-            }
-            if(! $m->destination->equals($m->position))
-            {
-                $m->plan_and_move();
+                if($m->position->distance($target->position) > MECHA_NEARBY)
+                {
+                    $m->plan_and_move();
+                }
+                else
+                {
+                    $events++;
+                    $self->event($m->name . " reached the nearby of " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
+                }
             }
             else
             {
-                $events++;
-                $self->event($m->name . " reached destination: " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
+                if(! $m->destination->equals($m->position))
+                {
+                    $m->plan_and_move();
+                }
+                else
+                {
+                    $events++;
+                    $self->event($m->name . " reached destination: " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
+                }
             }
             $self->calculate_sighting_matrix($m->name);
         }
