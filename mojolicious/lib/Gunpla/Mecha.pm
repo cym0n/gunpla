@@ -49,6 +49,16 @@ has attack_target => (
     is => 'rw',
     default => sub { { } }
 );
+has attack_time_limit => (
+    is => 'rw',
+);
+has impact_gauge => (
+    is => 'rw',
+);
+
+has life => (
+    is => 'rw'
+);
 
 
 #Characteristics
@@ -107,7 +117,8 @@ sub to_mongo
         destination => $self->destination->to_mongo(),
         cmd_index => $self->cmd_index,
         cmd_fetched => $self->cmd_fetched,
-        sensor_range => $self->sensor_range
+        sensor_range => $self->sensor_range,
+        life => $self->life,
     }
 }
 

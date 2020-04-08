@@ -4,6 +4,16 @@ use Mojo::Base 'Mojolicious::Controller';
 use MongoDB;
 use Data::Dumper;
 
+sub from_mongo_to_json
+{
+    my $mecha = shift;
+    return { name     => $mecha->{name},
+             life     => $mecha->{life},
+             faction  => $mecha->{faction},
+             position => $mecha->{position},
+             waiting  => $mecha->{waiting} };
+}
+
 sub all_mechas {
     my $c = shift;
     my $game = $c->param('game');
@@ -13,10 +23,7 @@ sub all_mechas {
     if($mecha_name)
     {
         my ( $mecha ) = $db->get_collection('mechas')->find({ name => $mecha_name })->all();
-        $c->render(json => { mecha => {  name     => $mecha->{name},
-                                         faction  => $mecha->{faction},
-                                         position => $mecha->{position},
-                                         waiting  => $mecha->{waiting} } });
+        $c->render(json => { mecha => from_mongo_to_json($mecha) });
     }
     else
     {
@@ -24,10 +31,7 @@ sub all_mechas {
         my @out = ();
         for(@mecha)
         {
-            push @out, { name     => $_->{name},
-                        faction  => $_->{faction},
-                        position => $_->{position},
-                        waiting  => $_->{waiting} }
+            push @out, from_mongo_to_json($_);
         }
         $c->render(json => { mechas => \@out });
     }
@@ -52,12 +56,9 @@ sub sighted_mechas {
     my @out = ();
     for(@mecha)
     {
-        push @out, { name     => $_->{name},
-                     faction  => $_->{faction},
-                     position => $_->{position},
-                     waiting  => $_->{waiting} }
-     }
-     $c->render(json => { mechas => \@out });
+        push @out, from_mongo_to_json($_);
+    }
+    $c->render(json => { mechas => \@out });
 }
 
 sub all_waypoints {

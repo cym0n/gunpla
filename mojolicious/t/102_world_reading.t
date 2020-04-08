@@ -27,6 +27,7 @@ $t->get_ok('/game/mechas?game=autotest&mecha=Diver')->status_is(200)->json_is(
     {
         mecha => {
             name => 'Diver',
+            life => 1000,
             faction => 'wolf',
             position => { x => 500000, y => 0, z => 0 },
             waiting => 1

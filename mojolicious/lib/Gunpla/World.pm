@@ -9,6 +9,8 @@ use Gunpla::Mecha;
 use constant SIGHT_TOLERANCE => 10000;
 use constant MECHA_NEARBY => 1000;
 use constant SLASH_DISTANCE => 10;
+use constant SWORD_ATTACK_TIME_LIMIT => 1500;
+use constant SLASH_WIN => 15;
 
 has name => (
     is => 'ro',
@@ -44,8 +46,9 @@ has mecha_templates => (
     is => 'ro',
     default => sub {
         {
-            'Diver' => { sensor_range => 140000 },
-            'Zaku'  => { sensor_range => 80000 }
+            'Diver' => { sensor_range => 140000, life => 1000  },
+            'Zaku'  => { sensor_range => 80000,  life => 1000 },
+            'Gelgoog'  => { sensor_range => 130000,  life => 1000 }
         }
     }
 );
@@ -133,6 +136,7 @@ sub add_command
         $m->destination($target->position->clone());
         $m->movement_target({ type => 'mecha', 'name' => $params, class => 'dynamic'  });
         $m->attack_target({ type => 'mecha', 'name' => $params, class => 'dynamic'  });
+        $m->attack_time_limit(SWORD_ATTACK_TIME_LIMIT);
     }
     $m->cmd_fetched(1);
 }
@@ -181,7 +185,6 @@ sub action
     my $self = shift;
     my $steps = shift;
     my $counter = 0;
-    my $events = 0;
     $self->generated_events(0);
     while($self->all_ready && (! $steps || $counter < $steps))
     {
@@ -194,14 +197,20 @@ sub action
                 {
                     my $target = $self->get_mecha_by_name($m->movement_target->{name});
                     $m->destination($target->position->clone);
+                    $m->impact_gauge($m->impact_gauge +1);
                     if($m->position->distance($target->position) > SLASH_DISTANCE)
                     {
                         $m->plan_and_move();
                     }
                     else
                     {
-                        $events++;
-                        $self->event($m->name . " slash with sword " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name, $m->movement_target->{name} ]);
+                        $self->manage_attack('SWORD', $m, $target);
+                    }
+                    $m->attack_time_limit($m->attack_time_limit -1);
+                    if($m->attack_time_limit == 0)
+                    {
+                        $m->impact_gauge(0);
+                        $self->event($m->name . " exhausted attack charge", [$m->name]);
                     }
                 }
                 else
@@ -214,7 +223,6 @@ sub action
                     }
                     else
                     {
-                        $events++;
                         $self->event($m->name . " reached the nearby of " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
                     }
                 }
@@ -227,7 +235,6 @@ sub action
                 }
                 else
                 {
-                    $events++;
                     $self->event($m->name . " reached destination: " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
                 }
             }
@@ -238,7 +245,6 @@ sub action
     $self->cmd_index_up();
     if($steps && $counter >= $steps)
     {
-        $events++;
         $self->event("All steps executed", []);
     }
     return $self->generated_events();
@@ -254,6 +260,56 @@ sub cmd_index_up
             $m->cmd_index($m->cmd_index+1);
         }
     }
+}
+
+sub manage_attack
+{
+    my $self = shift;
+    my $attack = shift;
+    my $attacker = shift;
+    my $defender = shift;
+    if($attack eq 'SWORD')
+    {
+        #If both are attacking with sword the one with more impact gauge wins
+        if($defender->attack eq 'SWORD' && $defender->attack_target->{name} eq $attacker->name)
+        {
+            if($defender->impact_gauge > $attacker->impact_gauge)
+            {
+                my $switch = $attacker;
+                $attacker = $defender;
+                $defender = $switch;
+            }
+            elsif($defender->impact_gauge == $attacker->impact_gauge)
+            {
+                $self->event($attacker->name . " and " . $defender->name . " attacks nullified");
+            }
+        }
+        my $impact_gauge_bonus = $attacker->impact_gauge < 300 ? 0 :
+                                    $attacker->impact_gauge < 500 ? 1 :
+                                        $attacker->impact_gauge < 1000 ? 2 :
+                                            $attacker->impact_gauge < 1400 ? 3 : 4;
+        my $roll = $self->dice(1, 20);
+        if($roll + $impact_gauge_bonus >= SLASH_WIN)
+        {
+            $self->event($attacker->name . " slash with sword mecha " .  $defender->name, [ $attacker->name, $defender->name ]);
+            my $damage = 100 + ($impact_gauge_bonus * 15);
+            $defender->life($defender->life - $damage);
+        }
+        else
+        {
+            $self->event($defender->name . " dodged " .  $attacker->name, [ $attacker->name, $defender->name ]);
+        }
+    }
+}
+
+sub dice
+{
+    my $self = shift;
+    my $min = shift;
+    my $max = shift;
+    my $random_range = $max - $min + 1;
+    my $out = int(rand($random_range)) + $min;
+    return $out;
 }
 
 sub event

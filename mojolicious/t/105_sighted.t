@@ -38,6 +38,7 @@ $t->get_ok('/game/sighted?game=autotest&mecha=Diver')
                           'waiting' => 1,
                           'faction' => 'eagle',
                           'name' => 'Zaku',
+                          'life' => 1000,
                           'position' => {
                                           'z' => 0,
                                           'y' => 0,
@@ -52,6 +53,7 @@ $t->get_ok('/game/sighted?game=autotest&mecha=Diver')
                                         },
                           'name' => 'Gelgoog',
                           'faction' => 'eagle',
+                          'life' => 1000,
                           'waiting' => 1
                         }
                       ]
@@ -64,6 +66,7 @@ $t->get_ok('/game/sighted?game=autotest&mecha=Zaku')
                           'waiting' => 1,
                           'faction' => 'wolf',
                           'name' => 'Diver',
+                          'life' => 1000,
                           'position' => {
                                           'z' => 0,
                                           'y' => 0,
