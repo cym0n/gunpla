@@ -12,22 +12,22 @@ App = {
         .then(function(data) { 
             data.mechas.forEach(function(m, index, array) {
                 $('#mechas').append('<div class="well" id="mecha_' + m.name + '"></div>');
-                App.renderMechaTemplate(m.name, m.faction, m.position, m.waiting, true);  
+                App.renderMechaTemplate(m, true);  
                 App.getLastEvent(m.name, false);
             });
         });
   },
-  renderMechaTemplate: function(name, faction, pos, waiting, poll_needed) {
-    $('#mecha_' + name).append('<p>'+ name + ' (' + faction + ')<br />[' + pos.x +', '+pos.y +', '+pos.z + ']</p>');
-    if(waiting)
+  renderMechaTemplate: function(m, poll_needed) {
+    $('#mecha_' + m.name).append('<p>'+ m.name + ' (' + m.faction + ')<br />[' + m.position.x +', '+ m.position.y +', '+ m.position.z + ']<br />Life: '+ m.life + '</p>');
+    if(m.waiting)
     {
-        $('#mecha_' + name).append(`
+        $('#mecha_' + m.name).append(`
          <div class="well">
-         <form onSubmit="App.addCommand(this); return false;" id="comms_${name}">
-            <input type="hidden" name="mechaname" value="${name}">
+         <form onSubmit="App.addCommand(this); return false;" id="comms_${m.name}">
+            <input type="hidden" name="mechaname" value="${m.name}">
             <div class="form-group">
                 <label for="commands">Select Command</label>
-                <select class="form-control" name="commands" onchange="App.commandParams(this, '${name}')">
+                <select class="form-control" name="commands" onchange="App.commandParams(this, '${m.name}')">
                     <option value="">Select...</option>
                     <option value="flywp">FLY TO WAYPOINT</option>
                     <option value="flymec">FLY TO MECHA</option>
@@ -38,15 +38,15 @@ App = {
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form></div>`);
-        fetch('/game/command?game='+App.game+'&mecha='+name+'&prev=1')
+        fetch('/game/command?game='+App.game+'&mecha='+m.name+'&prev=1')
         .then(function(response) { return response.json(); })
         .then(function(data) { 
             if(data.command.command)
             {
-                $('#mecha_' + name).append(`
+                $('#mecha_' + m.name).append(`
                     <div class="well">
-                    <form onSubmit="App.resumeCommand(this); return false;" id="prevcomms_${name}">
-                        <input type="hidden" name="mechaname" value="${name}">
+                    <form onSubmit="App.resumeCommand(this); return false;" id="prevcomms_${m.name}">
+                        <input type="hidden" name="mechaname" value="${m.name}">
                         <input type="hidden" name="commands" value="${data.command.command}">
                         <input type="hidden" name="params" value="${data.command.params}">
                         <label for="resume">Previous command: ${data.command.command} [${data.command.params}]</label>
@@ -58,7 +58,7 @@ App = {
     }
     else
     {
-        fetch('/game/command?game='+App.game+'&mecha='+name)
+        fetch('/game/command?game='+App.game+'&mecha='+m.name)
         .then(function(response) { return response.json(); })
         .then(function(data) { 
             $('#mecha_' + data.command.mecha).append('<p>ORDERS GIVEN: ' + data.command.command + ' [' + data.command.params + ']</p>');
@@ -66,7 +66,7 @@ App = {
         if(poll_needed)
         {
             poll(function() {
-                return fetch('/game/mechas?game='+App.game+'&mecha='+name)
+                return fetch('/game/mechas?game='+App.game+'&mecha='+m.name)
                 .then(function(response) { return response.json(); })
                 },
                 function(data) {
@@ -111,7 +111,7 @@ App = {
                 {
                     poll = true;
                 }
-                App.renderMechaTemplate(m.name, m.faction, m.position, m.waiting, poll);  
+                App.renderMechaTemplate(m, poll);  
             });
         });
   },
@@ -120,7 +120,7 @@ App = {
     fetch('/game/mechas?game='+App.game+'&mecha='+name)
     .then(function(response) { return response.json(); })
     .then(function(data) { 
-         App.renderMechaTemplate(data.mecha.name, data.mecha.faction, data.mecha.position, data.mecha.waiting, poll);
+         App.renderMechaTemplate(data.mecha, poll);
     })
   },
   commandParams : function(select, name) {
@@ -137,6 +137,7 @@ App = {
                 $( "#params_"+name).append('<option value="'+wp.name+'">'+wp.name+'</option>');
             });
         });
+        App.machinegunForm(name, paramDiv);
     }
     else if(select.value == 'flymec')
     {
@@ -149,6 +150,7 @@ App = {
                 $( "#params_"+name).append('<option value="'+m.name+'">'+m.name+'</option>');
             });
         });
+        App.machinegunForm(name, paramDiv);
     }
     else if(select.value == 'sword')
     {
@@ -162,6 +164,27 @@ App = {
             });
         });
     }
+  },
+  machinegunForm : function(name, div) {
+    console.log(div);
+    $(`
+        <div class="form-group">
+        <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="machinegun" name="machinegun">
+        <label class="form-check-label" for="machinegun">Fire machinegun</label>
+        </div>
+        <label for="target">Select Mecha</label>
+        <select class="form-control" name="secondarytarget" id="secparams_${name}"></select>
+        </div>
+    `).insertAfter(div);
+     fetch('/game/sighted?game='+App.game+'&mecha='+name)
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            console.log("populate " + name);
+            data.mechas.forEach(function(m, index, array) {
+                $( "#secparams_"+name).append('<option value="'+m.name+'">'+m.name+'</option>');
+            });
+        });
   },
   addCommand : function(el) {
     var form = $( el )
