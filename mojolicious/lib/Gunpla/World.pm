@@ -10,7 +10,8 @@ use constant SIGHT_TOLERANCE => 10000;
 use constant MECHA_NEARBY => 1000;
 use constant SLASH_DISTANCE => 10;
 use constant SWORD_ATTACK_TIME_LIMIT => 1500;
-use constant SLASH_WIN => 15;
+use constant SLASH_WIN => 12;
+use constant SLASH_BOUNCE => 200;
 
 has name => (
     is => 'ro',
@@ -271,7 +272,7 @@ sub manage_attack
     if($attack eq 'SWORD')
     {
         #If both are attacking with sword the one with more impact gauge wins
-        if($defender->attack eq 'SWORD' && $defender->attack_target->{name} eq $attacker->name)
+        if($defender->attack && $defender->attack eq 'SWORD' && $defender->attack_target->{name} eq $attacker->name)
         {
             if($defender->impact_gauge > $attacker->impact_gauge)
             {
@@ -294,10 +295,18 @@ sub manage_attack
             $self->event($attacker->name . " slash with sword mecha " .  $defender->name, [ $attacker->name, $defender->name ]);
             my $damage = 100 + ($impact_gauge_bonus * 15);
             $defender->life($defender->life - $damage);
+            my @dirs = qw(x y z);
+            my $bounce_direction = $dirs[$self->dice(0, 2)];
+            $attacker->position->$bounce_direction($attacker->position->$bounce_direction - SLASH_BOUNCE);
+            $defender->position->$bounce_direction($defender->position->$bounce_direction + SLASH_BOUNCE);
         }
         else
         {
+            my @dirs = qw(x y z);
+            my $bounce_direction = $dirs[$self->dice(0, 2)];
             $self->event($defender->name . " dodged " .  $attacker->name, [ $attacker->name, $defender->name ]);
+            $attacker->position->$bounce_direction($attacker->position->$bounce_direction - SLASH_BOUNCE);
+            $defender->position->$bounce_direction($defender->position->$bounce_direction + SLASH_BOUNCE);
         }
     }
 }
