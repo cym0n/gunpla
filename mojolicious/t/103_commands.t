@@ -47,6 +47,37 @@ $t->get_ok('/game/command?game=autotest&mecha=Diver')->status_is(200)->json_is(
     }
 );
 
+diag("Adding a command to Zaku");
+$t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
+                                                              mecha => 'Zaku', 
+                                                              command => 'FLY TO WAYPOINT',
+                                                              params => 'center',
+                                                              secondarycommand => 'MACHINEGUN',
+                                                              secondaryparams => 'Diver' })
+    ->status_is(200)
+    ->json_is({ result => 'OK',
+                'command' => {
+                    'params' => 'center',
+                    'command' => 'FLY TO WAYPOINT',
+                    'mecha' => 'Zaku'
+                } });
+
+diag("Veriying waiting mecha flag");
+$t->get_ok('/game/mechas?game=autotest&mecha=Zaku')->status_is(200)->json_is("/mecha/waiting" => 0);
+
+diag("Getting the command");
+$t->get_ok('/game/command?game=autotest&mecha=Zaku')->status_is(200)->json_is(
+    {
+        'command' => {
+            'params' => 'center',
+            'command' => 'FLY TO WAYPOINT',
+            'mecha' => 'Zaku'
+        }
+    }
+);
+
+
+
 
 
 
