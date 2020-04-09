@@ -193,17 +193,29 @@ App = {
     var cmd = form.find('select[name="commands"]').children('option:selected').attr('value');
     var command;
     var params;
+    var secondarycommand;
+    var secondaryparams;
     if(cmd == 'flywp')
     {
         var wp = form.find('select[name="waypoint"]').children('option:selected').attr('value');
         command = "FLY TO WAYPOINT";
         params = wp;
+        if($( form.children('input[name="machinegun"]').checked))
+        {
+            secondarycommand = 'MACHINEGUN';
+            secondaryparams = form.find('select[name="secondarytarget"]').children('option:selected').attr('value');
+        }
     }
     else if(cmd == 'flymec')
     {
         var m = form.find('select[name="target"]').children('option:selected').attr('value');
         command = "FLY TO MECHA";
         params = m;
+        if($( form.children('input[name="machinegun"]').checked))
+        {
+            secondarycommand = 'MACHINEGUN';
+            secondaryparams = form.find('select[name="secondarytarget"]').children('option:selected').attr('value');
+        }
     }
     else if(cmd == 'sword')
     {
@@ -218,6 +230,8 @@ App = {
         body: JSON.stringify({
             'command': command,
             'params': params,
+            'secondarycommand': secondarycommand,
+            'secondaryparams': secondaryparams,
             'mecha': mid,
             'game': App.game })
     })

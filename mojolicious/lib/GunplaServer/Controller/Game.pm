@@ -95,6 +95,7 @@ sub add_command
     my $c = shift;
     my $params = $c->req->json;
     my $client = MongoDB->connect();
+    $c->app->log->debug(Dumper($params));
     my $db = $client->get_database('gunpla_' . $params->{game});
     my ( $mecha ) = $db->get_collection('mechas')->find({ name => $params->{mecha} })->all();
     if(! $mecha->{waiting}) #Strong enough?
@@ -106,6 +107,8 @@ sub add_command
         $c->app->log->debug("Adding command " . $params->{mecha} . '-' . $mecha->{cmd_index});
         $db->get_collection('commands')->insert_one({ command   => $params->{command},
                                                       params    => $params->{params},
+                                                      secondarycommand   => $params->{secondarycommand},
+                                                      secondaryparams    => $params->{secondaryparams},
                                                       mecha     => $params->{mecha},
                                                       cmd_index => $mecha->{cmd_index} });
         $db->get_collection('mechas')->update_one( { 'name' => $params->{mecha} }, { '$set' => { 'waiting' => 0 } } );
