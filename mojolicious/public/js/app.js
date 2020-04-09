@@ -126,6 +126,7 @@ App = {
   commandParams : function(select, name) {
     var paramDiv = $( select ).parent().next();
     paramDiv.empty();
+    $('#machinegunform').remove()
     if(select.value == 'flywp')
     {
         paramDiv.append('<label for="waypoint">Select Waypoint</label>');
@@ -168,7 +169,7 @@ App = {
   machinegunForm : function(name, div) {
     console.log(div);
     $(`
-        <div class="form-group">
+        <div class="form-group" id="machinegunform">
         <div class="form-check">
         <input type="checkbox" class="form-check-input" id="machinegun" name="machinegun">
         <label class="form-check-label" for="machinegun">Fire machinegun</label>
