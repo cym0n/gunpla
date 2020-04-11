@@ -109,7 +109,7 @@ is($world->armies->[1]->life, 960);
 
 
 diag("MongoDB cleanup");
-#$db->drop();
+$db->drop();
 
 
 

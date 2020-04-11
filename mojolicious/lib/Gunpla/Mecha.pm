@@ -3,6 +3,7 @@ package Gunpla::Mecha;
 use v5.10;
 use Moo;
 use Gunpla::Position;
+use Data::Dumper;
 
 #Identity
 has name => (
@@ -90,7 +91,7 @@ sub set_course
     if($self->movement_target->{class} eq 'dynamic')
     {
         #Allow the mech to adjust the course more frequently in case of movable target
-        $self->course->{step} = 10 if $self->course->{step} > 10;
+        $self->course->{steps} = 10 if $self->course->{steps} > 10;
     }
 }
 

@@ -169,6 +169,7 @@ sub add_command
         $m->movement_target({ type => 'mecha', 'name' => $params, class => 'dynamic'  });
         $m->attack_target({ type => 'mecha', 'name' => $params, class => 'dynamic'  });
         $m->attack_limit(SWORD_ATTACK_TIME_LIMIT);
+        $m->gauge(0);
     }
     elsif($command eq 'WAITING')
     {
@@ -253,16 +254,16 @@ sub action
                         if($m->position->distance($target->position) > SWORD_DISTANCE)
                         {
                             $m->plan_and_move();
+                            $m->attack_limit($m->attack_limit -1);
+                            if($m->attack_limit == 0)
+                            {
+                                $m->gauge(0);
+                                $self->event($m->name . " exhausted attack charge", [$m->name]);
+                            }
                         }
                         else
                         {
                             $self->manage_attack('SWORD', $m);
-                        }
-                        $m->attack_limit($m->attack_limit -1);
-                        if($m->attack_limit == 0)
-                        {
-                            $m->gauge(0);
-                            $self->event($m->name . " exhausted attack charge", [$m->name]);
                         }
                     }
                     else
@@ -351,7 +352,9 @@ sub manage_attack
             elsif($defender->gauge == $attacker->gauge)
             {
                 $attacker->gauge(0);
+                $attacker->attack_limit(0);
                 $defender->gauge(0);
+                $defender->attack_limit(0);
                 $self->event($attacker->name . " and " . $defender->name . " attacks nullified");
                 $clash = 0;
             }
@@ -368,13 +371,13 @@ sub manage_attack
                 $self->event($attacker->name . " slash with sword mecha " .  $defender->name, [ $attacker->name, $defender->name ]);
                 my $damage = SWORD_DAMAGE + ($gauge_bonus * SWORD_DAMAGE_BONUS_FACTOR);
                 $defender->life($defender->life - $damage);
-                $attacker->gauge(0);
             }
             else
             {
                 $self->event($defender->name . " dodged " .  $attacker->name, [ $attacker->name, $defender->name ]);
-                $attacker->gauge(0);
             }
+            $attacker->gauge(0);
+            $attacker->attack_limit(0);
         }
         my @dirs = qw(x y z);
         my $bounce_direction = $dirs[$self->dice(0, 2)];
@@ -441,8 +444,8 @@ sub event
                                                     cmd_index => $cmd_index });
         $m->waiting(1);
         $m->cmd_fetched(0);
+        $self->generated_events($self->generated_events + 1);
     }
-    $self->generated_events($self->generated_events + 1);
 }
 
 sub is_spawn_point
