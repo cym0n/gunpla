@@ -17,7 +17,7 @@ $db->drop();
 
 
 diag("Generate a world and save it on db");
-my $world = Gunpla::World->new(name => 'autotest', dice_results => [20, 20, 20]);
+my $world = Gunpla::World->new(name => 'autotest', dice_results => [20, 3, 20]);
 $world->init_test();
 
 my $t = Test::Mojo->new('GunplaServer');
@@ -55,26 +55,25 @@ is($world->armies->[0]->attack_limit, 2);
 is($world->armies->[0]->gauge, 0);
 is($world->armies->[1]->life, 980);
 
-resume(1);
-diag("=== Second shot");
-diag("Checking event generation (using API)");
-$t->get_ok('/game/event?game=autotest&mecha=Dummy')->status_is(200)->json_is(
-    {
-        events => [
-            {
-                mecha => 'Dummy',
-                message => 'Diver hits with machine gun Dummy'
-            }
-        ]
-    }
-);
-diag("Checking mechas stats");
-is($world->armies->[0]->position->x, 800);
-is($world->armies->[0]->attack_limit, 1);
-is($world->armies->[0]->gauge, 0);
-is($world->armies->[1]->life, 960);
-
 resume(2);
+diag("=== Second shot misses, no events");
+#diag("Checking event generation (using API)");
+#$t->get_ok('/game/event?game=autotest&mecha=Dummy')->status_is(200)->json_is(
+#    {
+#        events => [
+#            {
+#                mecha => 'Dummy',
+#                message => 'Diver hits with machine gun Dummy'
+#            }
+#        ]
+#    }
+#);
+#diag("Checking mechas stats");
+#is($world->armies->[0]->position->x, 800);
+#is($world->armies->[0]->attack_limit, 1);
+#is($world->armies->[0]->gauge, 0);
+#is($world->armies->[1]->life, 960);
+
 diag("=== Third shot - action ended");
 diag("Checking event generation (using API)");
 $t->get_ok('/game/event?game=autotest&mecha=Dummy')->status_is(200)->json_is(
@@ -102,7 +101,7 @@ diag("Checking mechas stats");
 is($world->armies->[0]->position->x, 600);
 is($world->armies->[0]->attack_limit, 0);
 is($world->armies->[0]->gauge, 0);
-is($world->armies->[1]->life, 940);
+is($world->armies->[1]->life, 960);
 
 
 
@@ -110,7 +109,7 @@ is($world->armies->[1]->life, 940);
 
 
 diag("MongoDB cleanup");
-$db->drop();
+#$db->drop();
 
 
 
