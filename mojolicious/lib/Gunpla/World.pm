@@ -49,6 +49,13 @@ has generated_events => (
     default => 0
 );
 
+#Only for test purpose
+has dice_results => (
+    is => 'ro',
+    default => sub { [] }
+);
+
+
 
 
 #Dummy implementation of mecha characteristics
@@ -58,7 +65,8 @@ has mecha_templates => (
         {
             'Diver' => { sensor_range => 140000, life => 1000  },
             'Zaku'  => { sensor_range => 80000,  life => 1000 },
-            'Gelgoog'  => { sensor_range => 130000,  life => 1000 }
+            'Gelgoog'  => { sensor_range => 130000,  life => 1000 },
+            'Dummy'  => { sensor_range => 0,  life => 1000 }
         }
     }
 );
@@ -97,7 +105,7 @@ sub get_mecha_by_name
 sub init
 {
     my $self = shift;
-    print "Init...\n";
+    say "Init...\n";
     $self->waypoints->{'center'} = Gunpla::Position->new(x => 0, y => 0, z => 0);
     $self->waypoints->{'blue'} = Gunpla::Position->new(x => 500000, y => 0, z => 0);
     $self->waypoints->{'red'} = Gunpla::Position->new(x => -500000, y => 0, z => 0);
@@ -107,6 +115,18 @@ sub init
     $self->add_mecha("Diver", "wolf");
     $self->add_mecha("Zaku", "eagle");
 }
+sub init_test
+{
+    my $self = shift;
+    say "Init (test mode)...\n";
+    $self->waypoints->{'center'} = Gunpla::Position->new(x => 0, y => 0, z => 0);
+    $self->waypoints->{'blue'} = Gunpla::Position->new(x => 20000, y => 0, z => 0);
+    $self->spawn_points->{'wolf'} = 'blue';
+    $self->spawn_points->{'testing ground'} = 'center';
+    $self->add_mecha("Diver", "wolf");
+    $self->add_mecha("Dummy", "testing ground");
+}
+
 
 sub add_command
 {
@@ -149,6 +169,11 @@ sub add_command
         $m->movement_target({ type => 'mecha', 'name' => $params, class => 'dynamic'  });
         $m->attack_target({ type => 'mecha', 'name' => $params, class => 'dynamic'  });
         $m->attack_limit(SWORD_ATTACK_TIME_LIMIT);
+    }
+    elsif($command eq 'WAITING')
+    {
+        say $m->name . " on waiting status";
+        $m->movement_target(undef);
     }
     if($secondary_command)
     {
@@ -215,51 +240,55 @@ sub action
         for(@{$self->armies})
         {
             my $m = $_;
-            if($m->movement_target->{type} eq 'mecha')
+            if($m->movement_target)
             {
-                if($m->attack && $m->attack eq 'SWORD')
+                say "Moving " . $m->name;
+                if($m->movement_target->{type} eq 'mecha')
                 {
-                    my $target = $self->get_mecha_by_name($m->movement_target->{name});
-                    $m->destination($target->position->clone);
-                    $m->gauge($m->gauge +1);
-                    if($m->position->distance($target->position) > SWORD_DISTANCE)
+                    if($m->attack && $m->attack eq 'SWORD')
+                    {
+                        my $target = $self->get_mecha_by_name($m->movement_target->{name});
+                        $m->destination($target->position->clone);
+                        $m->gauge($m->gauge +1);
+                        if($m->position->distance($target->position) > SWORD_DISTANCE)
+                        {
+                            $m->plan_and_move();
+                        }
+                        else
+                        {
+                            $self->manage_attack('SWORD', $m);
+                        }
+                        $m->attack_limit($m->attack_limit -1);
+                        if($m->attack_limit == 0)
+                        {
+                            $m->gauge(0);
+                            $self->event($m->name . " exhausted attack charge", [$m->name]);
+                        }
+                    }
+                    else
+                    {
+                        my $target = $self->get_mecha_by_name($m->movement_target->{name});
+                        $m->destination($target->position->clone);
+                        if($m->position->distance($target->position) > MECHA_NEARBY)
+                        {
+                            $m->plan_and_move();
+                        }
+                        else
+                        {
+                            $self->event($m->name . " reached the nearby of " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
+                        }
+                    }
+                }
+                else
+                {
+                    if(! $m->destination->equals($m->position))
                     {
                         $m->plan_and_move();
                     }
                     else
                     {
-                        $self->manage_attack('SWORD', $m);
+                        $self->event($m->name . " reached destination: " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
                     }
-                    $m->attack_limit($m->attack_limit -1);
-                    if($m->attack_limit == 0)
-                    {
-                        $m->gauge(0);
-                        $self->event($m->name . " exhausted attack charge", [$m->name]);
-                    }
-                }
-                else
-                {
-                    my $target = $self->get_mecha_by_name($m->movement_target->{name});
-                    $m->destination($target->position->clone);
-                    if($m->position->distance($target->position) > MECHA_NEARBY)
-                    {
-                        $m->plan_and_move();
-                    }
-                    else
-                    {
-                        $self->event($m->name . " reached the nearby of " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
-                    }
-                }
-            }
-            else
-            {
-                if(! $m->destination->equals($m->position))
-                {
-                    $m->plan_and_move();
-                }
-                else
-                {
-                    $self->event($m->name . " reached destination: " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
                 }
             }
             if($m->attack && $m->attack eq 'MACHINEGUN')
@@ -384,6 +413,10 @@ sub dice
     my $self = shift;
     my $min = shift;
     my $max = shift;
+    if(@{$self->dice_results})
+    {
+        return shift @{$self->dice_results};
+    }
     my $random_range = $max - $min + 1;
     my $out = int(rand($random_range)) + $min;
     return $out;
