@@ -1,6 +1,7 @@
 package Gunpla::World;
 
 use v5.10;
+use POSIX;
 use Moo;
 use MongoDB;
 use Gunpla::Position;
@@ -8,10 +9,18 @@ use Gunpla::Mecha;
 
 use constant SIGHT_TOLERANCE => 10000;
 use constant MECHA_NEARBY => 1000;
-use constant SLASH_DISTANCE => 10;
+use constant SWORD_DISTANCE => 10;
 use constant SWORD_ATTACK_TIME_LIMIT => 1500;
-use constant SLASH_WIN => 12;
-use constant SLASH_BOUNCE => 200;
+use constant SWORD_WIN => 12;
+use constant SWORD_BOUNCE => 200;
+use constant SWORD_DAMAGE => 100;
+use constant SWORD_DAMAGE_BONUS_FACTOR => 15;
+use constant MACHINEGUN_GAUGE => 200;
+use constant MACHINEGUN_SHOTS => 3;
+use constant MACHINEGUN_RANGE => 1000;
+use constant MACHINEGUN_WIN => 10;
+use constant MACHINEGUN_DAMAGE => 20;
+use constant MACHINEGUN_SWORD_GAUGE_DAMAGE => 300; 
 
 has name => (
     is => 'ro',
@@ -105,6 +114,8 @@ sub add_command
     my $mecha = shift;
     my $command = shift;
     my $params = shift;
+    my $secondary_command = shift;
+    my $secondary_params = shift;
     my $m = $self->get_mecha_by_name($mecha);
     if($command eq 'FLY TO WAYPOINT')
     {
@@ -137,7 +148,19 @@ sub add_command
         $m->destination($target->position->clone());
         $m->movement_target({ type => 'mecha', 'name' => $params, class => 'dynamic'  });
         $m->attack_target({ type => 'mecha', 'name' => $params, class => 'dynamic'  });
-        $m->attack_time_limit(SWORD_ATTACK_TIME_LIMIT);
+        $m->attack_limit(SWORD_ATTACK_TIME_LIMIT);
+    }
+    if($secondary_command)
+    {
+        if($secondary_command eq 'MACHINEGUN')
+        {
+            my $target_name = $secondary_params;
+            my $target = $self->get_mecha_by_name($secondary_params);
+            $m->attack_limit(MACHINEGUN_SHOTS);
+            $m->attack('MACHINEGUN');
+            $m->attack_target({ type => 'mecha', 'name' => $secondary_params, class => 'dynamic'  });
+            $m->gauge(0);
+        }
     }
     $m->cmd_fetched(1);
 }
@@ -153,7 +176,7 @@ sub fetch_commands_from_mongo
             my $mongo = MongoDB->connect();
             my $db = $mongo->get_database('gunpla_' . $self->name);
             my ( $command ) = $db->get_collection('commands')->find({ mecha => $m->name, cmd_index => $m->cmd_index })->all();
-            $self->add_command($m->name, $command->{command}, $command->{params});
+            $self->add_command($m->name, $command->{command}, $command->{params}, $command->{secondarycommand}, $command->{secondaryparams});
         }
     }
 }
@@ -198,19 +221,19 @@ sub action
                 {
                     my $target = $self->get_mecha_by_name($m->movement_target->{name});
                     $m->destination($target->position->clone);
-                    $m->impact_gauge($m->impact_gauge +1);
-                    if($m->position->distance($target->position) > SLASH_DISTANCE)
+                    $m->gauge($m->gauge +1);
+                    if($m->position->distance($target->position) > SWORD_DISTANCE)
                     {
                         $m->plan_and_move();
                     }
                     else
                     {
-                        $self->manage_attack('SWORD', $m, $target);
+                        $self->manage_attack('SWORD', $m);
                     }
-                    $m->attack_time_limit($m->attack_time_limit -1);
-                    if($m->attack_time_limit == 0)
+                    $m->attack_limit($m->attack_limit -1);
+                    if($m->attack_limit == 0)
                     {
-                        $m->impact_gauge(0);
+                        $m->gauge(0);
                         $self->event($m->name . " exhausted attack charge", [$m->name]);
                     }
                 }
@@ -237,6 +260,21 @@ sub action
                 else
                 {
                     $self->event($m->name . " reached destination: " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
+                }
+            }
+            if($m->attack && $m->attack eq 'MACHINEGUN')
+            {
+                $m->gauge($m->gauge+1);
+                #say "Mecha: " . $m->name;
+                #say "Gauge: " . $m->name;
+                if($m->gauge >= MACHINEGUN_GAUGE)
+                {
+                    my $target = $self->get_mecha_by_name($m->attack_target->{name});
+                    #say "Distance: " . $m->position->distance($target->position);
+                    if($m->position->distance($target->position) <= MACHINEGUN_RANGE)
+                    {
+                        $self->manage_attack('MACHINEGUN', $m);
+                    }
                 }
             }
             $self->calculate_sighting_matrix($m->name);
@@ -268,45 +306,75 @@ sub manage_attack
     my $self = shift;
     my $attack = shift;
     my $attacker = shift;
-    my $defender = shift;
+    my $defender = $self->get_mecha_by_name($attacker->attack_target->{name});
     if($attack eq 'SWORD')
     {
         #If both are attacking with sword the one with more impact gauge wins
+        my $clash = 1;
         if($defender->attack && $defender->attack eq 'SWORD' && $defender->attack_target->{name} eq $attacker->name)
         {
-            if($defender->impact_gauge > $attacker->impact_gauge)
+            if($defender->gauge > $attacker->gauge)
             {
                 my $switch = $attacker;
                 $attacker = $defender;
                 $defender = $switch;
             }
-            elsif($defender->impact_gauge == $attacker->impact_gauge)
+            elsif($defender->gauge == $attacker->gauge)
             {
+                $attacker->gauge(0);
+                $defender->gauge(0);
                 $self->event($attacker->name . " and " . $defender->name . " attacks nullified");
+                $clash = 0;
             }
         }
-        my $impact_gauge_bonus = $attacker->impact_gauge < 300 ? 0 :
-                                    $attacker->impact_gauge < 500 ? 1 :
-                                        $attacker->impact_gauge < 1000 ? 2 :
-                                            $attacker->impact_gauge < 1400 ? 3 : 4;
-        my $roll = $self->dice(1, 20);
-        if($roll + $impact_gauge_bonus >= SLASH_WIN)
+        if($clash)
         {
-            $self->event($attacker->name . " slash with sword mecha " .  $defender->name, [ $attacker->name, $defender->name ]);
-            my $damage = 100 + ($impact_gauge_bonus * 15);
-            $defender->life($defender->life - $damage);
-            my @dirs = qw(x y z);
-            my $bounce_direction = $dirs[$self->dice(0, 2)];
-            $attacker->position->$bounce_direction($attacker->position->$bounce_direction - SLASH_BOUNCE);
-            $defender->position->$bounce_direction($defender->position->$bounce_direction + SLASH_BOUNCE);
+            my $gauge_bonus = $attacker->gauge < 300 ? 0 :
+                                        $attacker->gauge < 500 ? 1 :
+                                            $attacker->gauge < 1000 ? 2 :
+                                                $attacker->gauge < 1400 ? 3 : 4;
+            my $roll = $self->dice(1, 20);
+            if($roll + $gauge_bonus >= SWORD_WIN)
+            {
+                $self->event($attacker->name . " slash with sword mecha " .  $defender->name, [ $attacker->name, $defender->name ]);
+                my $damage = SWORD_DAMAGE + ($gauge_bonus * SWORD_DAMAGE_BONUS_FACTOR);
+                $defender->life($defender->life - $damage);
+                $attacker->gauge(0);
+            }
+            else
+            {
+                $self->event($defender->name . " dodged " .  $attacker->name, [ $attacker->name, $defender->name ]);
+                $attacker->gauge(0);
+            }
+        }
+        my @dirs = qw(x y z);
+        my $bounce_direction = $dirs[$self->dice(0, 2)];
+        $attacker->position->$bounce_direction($attacker->position->$bounce_direction - SWORD_BOUNCE);
+        $defender->position->$bounce_direction($defender->position->$bounce_direction + SWORD_BOUNCE);
+    }
+    elsif($attack eq 'MACHINEGUN')
+    {
+        $attacker->gauge(0);
+        my $distance = $attacker->position->distance($defender->position);
+        my $distance_bonus = 3 - ceil((3 * $distance) / MACHINEGUN_RANGE);
+        my $roll = $self->dice(1, 20);
+        if($roll + $distance_bonus >= MACHINEGUN_WIN)
+        {
+            $defender->life($defender->life - MACHINEGUN_DAMAGE);   
+            if($defender->attack && $defender->attack eq 'SWORD')
+            {
+                $defender->gauge($defender->gauge - MACHINEGUN_SWORD_GAUGE_DAMAGE);
+            }
+            $self->event($attacker->name . " hits with machine gun " .  $defender->name, [ $defender->name ]);
         }
         else
         {
-            my @dirs = qw(x y z);
-            my $bounce_direction = $dirs[$self->dice(0, 2)];
-            $self->event($defender->name . " dodged " .  $attacker->name, [ $attacker->name, $defender->name ]);
-            $attacker->position->$bounce_direction($attacker->position->$bounce_direction - SLASH_BOUNCE);
-            $defender->position->$bounce_direction($defender->position->$bounce_direction + SLASH_BOUNCE);
+            say $attacker->name . " missed " . $defender->name . " with machine gun";
+        }
+        $attacker->attack_limit($attacker->attack_limit - 1);
+        if($attacker->attack_limit == 0)
+        {
+            $self->event($attacker->name . " ended machine gun shots", [ $attacker->name ]);
         }
     }
 }

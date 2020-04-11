@@ -1,5 +1,6 @@
 package Gunpla::Mecha;
 
+use v5.10;
 use Moo;
 use Gunpla::Position;
 
@@ -49,13 +50,12 @@ has attack_target => (
     is => 'rw',
     default => sub { { } }
 );
-has attack_time_limit => (
+has attack_limit => (
     is => 'rw',
 );
-has impact_gauge => (
+has gauge => (
     is => 'rw',
 );
-
 has life => (
     is => 'rw'
 );
@@ -119,6 +119,11 @@ sub to_mongo
         cmd_fetched => $self->cmd_fetched,
         sensor_range => $self->sensor_range,
         life => $self->life,
+        attack => $self->attack,
+        attack_target => $self->attack_target,
+        attack_limit => $self->attack_limit,
+        gauge => $self->gauge,
+        life => $self->life
     }
 }
 

@@ -200,10 +200,13 @@ App = {
         var wp = form.find('select[name="waypoint"]').children('option:selected').attr('value');
         command = "FLY TO WAYPOINT";
         params = wp;
-        if($( form.children('input[name="machinegun"]').checked))
+        if($( form.find('input[name="machinegun"]')).prop('checked'))
         {
-            secondarycommand = 'MACHINEGUN';
             secondaryparams = form.find('select[name="secondarytarget"]').children('option:selected').attr('value');
+            if(secondaryparams)
+            {
+                secondarycommand = 'MACHINEGUN';
+            }
         }
     }
     else if(cmd == 'flymec')
@@ -211,10 +214,13 @@ App = {
         var m = form.find('select[name="target"]').children('option:selected').attr('value');
         command = "FLY TO MECHA";
         params = m;
-        if($( form.children('input[name="machinegun"]').checked))
+        if($( form.find('input[name="machinegun"]')).prop('checked'))
         {
-            secondarycommand = 'MACHINEGUN';
             secondaryparams = form.find('select[name="secondarytarget"]').children('option:selected').attr('value');
+            if(secondaryparams)
+            {
+                secondarycommand = 'MACHINEGUN';
+            }
         }
     }
     else if(cmd == 'sword')
