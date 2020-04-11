@@ -22,9 +22,11 @@ sub startup {
   $r->get('/game/mechas')->to('game#all_mechas');
   $r->get('/game/sighted')->to('game#sighted_mechas');
   $r->get('/game/waypoints')->to('game#all_waypoints');
-  $r->get('/game/command')->to('game#read_command');
   $r->get('/game/event')->to('game#read_event');
+  $r->get('/game/command')->to('game#read_command');
   $r->post('/game/command')->to('game#add_command');
+  $r->get('/game/available-commands')->to('game#available_commands');
+  $r->get('/game/command-details')->to('game#command_details');
 }
 
 1;

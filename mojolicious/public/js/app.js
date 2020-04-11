@@ -27,17 +27,21 @@ App = {
             <input type="hidden" name="mechaname" value="${m.name}">
             <div class="form-group">
                 <label for="commands">Select Command</label>
-                <select class="form-control" name="commands" onchange="App.commandParams(this, '${m.name}')">
+                <select class="form-control" id="maincommands_${m.name}" name="commands" onchange="App.commandParams(this, '${m.name}')">
                     <option value="">Select...</option>
-                    <option value="flywp">FLY TO WAYPOINT</option>
-                    <option value="flymec">FLY TO MECHA</option>
-                    <option value="sword">SWORD ATTACK</option>
                 </select>
             </div>
             <div class="form-group">
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form></div>`);
+        fetch('/game/available-commands?game='+App.game+'&mecha='+m.name)
+        .then(function(response) { return response.json(); })
+        .then(function(data) { 
+            data.commands.forEach(function(c, index, array) {
+                $( "#maincommands_"+m.name).append('<option value="'+c.code+'">'+c.label+'</option>');
+            });
+        });
         fetch('/game/command?game='+App.game+'&mecha='+m.name+'&prev=1')
         .then(function(response) { return response.json(); })
         .then(function(data) { 
@@ -127,6 +131,28 @@ App = {
     var paramDiv = $( select ).parent().next();
     paramDiv.empty();
     $('#machinegunform').remove()
+    var machinegun = 0;
+    var masternode = '';
+    fetch('/game/command-details?game='+App.game+'&mecha='+name+'&command='+select.value)
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        machinegun = data.command.machinegun;
+        masternode = data.command.params_masternode;
+        paramDiv.append('<lable for="params_'+name+'>'+data.command.params_label+'</label>');
+        paramDiv.append('<select class="form-control" name="params_'+name+'" id="params_'+name+'"></select>');
+        fetch(data.command.params_callback).then(function(response) { return response.json(); })
+        .then(function(data) {
+            data[masternode].forEach(function(d, index, array) {
+                $( "#params_"+name).append('<option value="'+d.name+'">'+d.name+'</option>');
+            });
+        });
+        if(data.command.machinegun == 1)
+        { 
+            App.machinegunForm(name, paramDiv);
+        }
+    });
+
+/*
     if(select.value == 'flywp')
     {
         paramDiv.append('<label for="waypoint">Select Waypoint</label>');
@@ -164,7 +190,7 @@ App = {
                 $( "#params_"+name).append('<option value="'+m.name+'">'+m.name+'</option>');
             });
         });
-    }
+    }*/
   },
   machinegunForm : function(name, div) {
     console.log(div);
@@ -195,6 +221,18 @@ App = {
     var params;
     var secondarycommand;
     var secondaryparams;
+    command = cmd;
+    params = form.find('select[name="params_'+mid+'"]').children('option:selected').attr('value');
+    if($( form.find('input[name="machinegun"]')).prop('checked'))
+    {
+        secondaryparams = form.find('select[name="secondarytarget"]').children('option:selected').attr('value');
+        if(secondaryparams)
+        {
+            secondarycommand = 'machinegun';
+        }
+    }
+
+/*
     if(cmd == 'flywp')
     {
         var wp = form.find('select[name="waypoint"]').children('option:selected').attr('value');
@@ -229,7 +267,7 @@ App = {
         command = "SWORD ATTACK";
         params = m;
     }
-
+*/
     console.log("Adding command "+command+" with params "+params+" to mecha "+mid);
     fetch('/game/command', {
         method: 'post',

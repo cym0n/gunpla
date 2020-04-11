@@ -243,7 +243,6 @@ sub action
             my $m = $_;
             if($m->movement_target)
             {
-                say "Moving " . $m->name;
                 if($m->movement_target->{type} eq 'mecha')
                 {
                     if($m->attack && $m->attack eq 'SWORD')
@@ -295,12 +294,9 @@ sub action
             if($m->attack && $m->attack eq 'MACHINEGUN')
             {
                 $m->gauge($m->gauge+1);
-                #say "Mecha: " . $m->name;
-                #say "Gauge: " . $m->name;
                 if($m->gauge >= MACHINEGUN_GAUGE)
                 {
                     my $target = $self->get_mecha_by_name($m->attack_target->{name});
-                    #say "Distance: " . $m->position->distance($target->position);
                     if($m->position->distance($target->position) <= MACHINEGUN_RANGE)
                     {
                         $self->manage_attack('MACHINEGUN', $m);
