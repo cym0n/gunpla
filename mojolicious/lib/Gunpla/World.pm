@@ -233,7 +233,7 @@ sub add_command
     }
     if($secondary_command)
     {
-        if($secondary_command eq 'MACHINEGUN')
+        if($secondary_command eq 'machinegun')
         {
             my $target_name = $secondary_params;
             my $target = $self->get_mecha_by_name($secondary_params);
