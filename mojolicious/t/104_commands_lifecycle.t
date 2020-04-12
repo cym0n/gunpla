@@ -32,7 +32,9 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
                 'command' => {
                     'params' => 'center',
                     'command' => 'FLY TO WAYPOINT',
-                    'mecha' => 'Diver'
+                    'mecha' => 'Diver',
+                    'secondarycommand' => undef,
+                    'secondaryparams' => undef,
                 } });
 diag("Adding a command to Zaku");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
@@ -44,7 +46,9 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
                 'command' => {
                     'params' => 'alpha',
                     'command' => 'FLY TO WAYPOINT',
-                    'mecha' => 'Zaku'
+                    'mecha' => 'Zaku',
+                    'secondarycommand' => undef,
+                    'secondaryparams' => undef,
                 } });
 
 diag("Running script to elaborate actions");

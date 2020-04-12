@@ -30,7 +30,9 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
                 'command' => {
                     'params' => 'center',
                     'command' => 'FLY TO WAYPOINT',
-                    'mecha' => 'Diver'
+                    'mecha' => 'Diver',
+                    'secondarycommand' => undef,
+                    'secondaryparams' => undef,
                 } });
 
 diag("Veriying waiting mecha flag");
@@ -42,7 +44,9 @@ $t->get_ok('/game/command?game=autotest&mecha=Diver')->status_is(200)->json_is(
         'command' => {
             'params' => 'center',
             'command' => 'FLY TO WAYPOINT',
-            'mecha' => 'Diver'
+            'mecha' => 'Diver',
+            'secondarycommand' => undef,
+            'secondaryparams' => undef,
         }
     }
 );
@@ -52,14 +56,16 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
                                                               mecha => 'Zaku', 
                                                               command => 'FLY TO WAYPOINT',
                                                               params => 'center',
-                                                              secondarycommand => 'MACHINEGUN',
+                                                              secondarycommand => 'machinegun',
                                                               secondaryparams => 'Diver' })
     ->status_is(200)
     ->json_is({ result => 'OK',
                 'command' => {
                     'params' => 'center',
                     'command' => 'FLY TO WAYPOINT',
-                    'mecha' => 'Zaku'
+                    'mecha' => 'Zaku',
+                    'secondarycommand' => 'machinegun',
+                    'secondaryparams' => 'Diver',
                 } });
 
 diag("Veriying waiting mecha flag");
@@ -71,7 +77,9 @@ $t->get_ok('/game/command?game=autotest&mecha=Zaku')->status_is(200)->json_is(
         'command' => {
             'params' => 'center',
             'command' => 'FLY TO WAYPOINT',
-            'mecha' => 'Zaku'
+            'mecha' => 'Zaku',
+            'secondarycommand' => 'machinegun',
+            'secondaryparams' => 'Diver',
         }
     }
 );
@@ -88,7 +96,7 @@ print {$log} Dumper($t->tx->res->json) . "\n";
 close($log);
 diag("Drop gunpla_autotest db on local mongodb for final cleanup");
 $db = $mongo->get_database('gunpla_autotest');
-$db->drop();
+#$db->drop();
 
 
 done_testing();

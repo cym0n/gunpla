@@ -131,7 +131,11 @@ sub add_command
         $c->render(json => { result => 'OK',
                              command => { command => $params->{command},
                                           params  => $params->{params},
-                                          mecha   => $params->{mecha} } });
+                                          mecha   => $params->{mecha},
+                                          secondarycommand => $params->{secondarycommand},
+                                          secondaryparams => $params->{secondaryparams},
+                            } });
+
 
     }
 }
@@ -151,7 +155,9 @@ sub read_command
     my ( $command ) = $db->get_collection('commands')->find({ mecha => $mecha->{name}, cmd_index => $cmd_index })->all();
     $c->render(json => { command => { command => $command->{command},
                                       params  => $command->{params},
-                                      mecha   => $command->{mecha} } });
+                                      mecha   => $command->{mecha},
+                                      secondarycommand => $command->{secondarycommand},
+                                      secondaryparams => $command->{secondaryparams}}});
 }
 
 sub read_event
