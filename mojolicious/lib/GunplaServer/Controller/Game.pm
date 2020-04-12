@@ -184,7 +184,7 @@ sub available_commands
     
     my $client = MongoDB->connect();
     my $db = $client->get_database('gunpla_' . $game);
-    my @commands_mongo = $db->get_collection('available_commands')->find()->all();
+    my @commands_mongo = $db->get_collection('available_commands')->find(undef)->sort({code => 1})->all();
     
     my @commands = ();
     foreach my $c (@commands_mongo)
@@ -229,6 +229,7 @@ sub command_details
             $command_details->{machinegun} = 0;
         }
     }
+    delete $command_details->{_id};
     $c->render(json => { command => $command_details });
 }
 
