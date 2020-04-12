@@ -48,6 +48,10 @@ has generated_events => (
     is => 'rw',
     default => 0
 );
+has available_commands => (
+    is => 'ro',
+    default => sub { {} }
+);
 
 #Only for test purpose
 has dice_results => (
@@ -101,11 +105,61 @@ sub get_mecha_by_name
     return undef;
 }
 
+sub configure_command
+{
+    my $self = shift;
+    my $data = shift;
+    my $save = shift;
+    $self->available_commands->{$data->{code}} = $data;
+    if($save)
+    {
+        my $mongo = MongoDB->connect(); 
+        my $db = $mongo->get_database('gunpla_' . $self->name);
+        $db->get_collection('available_commands')->insert_one($data);
+    }
+}
+
+
+sub build_commands
+{
+    my $self = shift;   
+    $self->configure_command( {
+            code => 'flywp',
+            label => 'FLY TO WAYPOINT',
+            conditions => [  ],
+            params_label => 'Select a Waypoint',
+            params_callback => '/game/waypoints?game=%%GAME%%',
+            params_masternode => 'waypoints',
+            machinegun => 1
+        }, 1);
+    $self->configure_command( {
+            code => 'flymec',
+            label => 'FLY TO MECHA',
+            conditions => [ 'sighted_foe' ],
+            params_label => 'Select a Mecha',
+            params_callback => '/game/sighted?game=%%GAME%%&mecha=%%MECHA%%',
+            params_masternode => 'mechas',
+            machinegun => 1
+        }, 1);
+    $self->configure_command( {
+            code => 'sword',
+            label => 'SWORD ATTACK',
+            conditions => [ 'sighted_foe' ],
+            params_label => 'Select a Mecha',
+            params_callback => '/game/sighted?game=%%GAME%%&mecha=%%MECHA%%',
+            params_masternode => 'mechas',
+            machinegun => 0
+        }, 1);
+}
+
+
+
 
 sub init
 {
     my $self = shift;
     say "Init...\n";
+    $self->build_commands();
     $self->waypoints->{'center'} = Gunpla::Position->new(x => 0, y => 0, z => 0);
     $self->waypoints->{'blue'} = Gunpla::Position->new(x => 500000, y => 0, z => 0);
     $self->waypoints->{'red'} = Gunpla::Position->new(x => -500000, y => 0, z => 0);
@@ -119,6 +173,7 @@ sub init_test
 {
     my $self = shift;
     say "Init (test mode)...\n";
+    $self->build_commands();
     $self->waypoints->{'center'} = Gunpla::Position->new(x => 0, y => 0, z => 0);
     $self->waypoints->{'blue'} = Gunpla::Position->new(x => 20000, y => 0, z => 0);
     $self->spawn_points->{'wolf'} = 'blue';
@@ -511,8 +566,14 @@ sub load
     my ( $sighting_matrix ) = $db->get_collection('status')->find({ status_element => 'sighting_matrix' })->all();
     delete $sighting_matrix->{status_element};
     $self->sighting_matrix($sighting_matrix);
-
+    
+    my @commands = $db->get_collection('available_commands')->find()->all();
+    for(@commands)
+    {
+        $self->configure_command($_);
+    }
 }
+
 
 sub calculate_sighting_matrix
 {

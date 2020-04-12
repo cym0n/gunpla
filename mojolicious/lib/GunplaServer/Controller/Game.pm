@@ -103,15 +103,16 @@ sub add_command
     my $c = shift;
     my $params = $c->req->json;
 
-    if($params->{command} eq 'flywp')
-    {
-        $params->{command} = 'FLY TO WAYPOINT';
-    }
-
-
     my $client = MongoDB->connect();
     $c->app->log->debug(Dumper($params));
     my $db = $client->get_database('gunpla_' . $params->{game});
+    
+    my ( $configured_command ) = $db->get_collection('available_commands')->find({ code => $params->{command} })->all();
+    if($configured_command)
+    {
+        $params->{command} = $configured_command->{label};
+    }
+
     my ( $mecha ) = $db->get_collection('mechas')->find({ name => $params->{mecha} })->all();
     if(! $mecha->{waiting}) #Strong enough?
     {
@@ -180,13 +181,27 @@ sub available_commands
     my $c = shift;
     my $game = $c->param('game');
     my $mecha_name = $c->param('mecha');
+    
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $game);
+    my @commands_mongo = $db->get_collection('available_commands')->find()->all();
+    
     my @commands = ();
-    push @commands, { code => 'flywp', label => 'FLY TO WAYPOINT' }; #FLY TO WAYPOINT always available
-    my @mecha = _get_sighted_mechas($game, $mecha_name);
-    if(@mecha)
+    foreach my $c (@commands_mongo)
     {
-        push @commands, { code => 'flymec', label => 'FLY TO MECHA' }; #FLY TO WAYPOINT always available
-        push @commands, { code => 'sword', label => 'SWORD ATTACK' }; #FLY TO WAYPOINT always available
+        my $yes = 1;
+        for(@{$c->{conditions}})
+        {
+            if($_ eq 'sighted_foe')
+            {
+                my @mecha = _get_sighted_mechas($game, $mecha_name);
+                $yes = 0 if(@mecha == 0);
+            }
+        }
+        if($yes)
+        {
+            push @commands, { code => $c->{code}, label => $c->{label} }
+        }
     }
     $c->render(json => { commands => \@commands });
 }
@@ -197,25 +212,24 @@ sub command_details
     my $game = $c->param('game');
     my $command = $c->param('command');
     my $mecha_name = $c->param('mecha');
-    my %details = ();
-    if($command eq 'flywp')
-    {
-        $details{code} = 'flywp';
-        $details{label} = 'FLY TO WAYPOINT';
-        $details{params_label} = 'Select a Waypoint';
-        $details{params_callback} = '/game/waypoints?game='.$game;
-        $details{params_masternode} = 'waypoints';
+    
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $game);
+    my ( $command_details ) = $db->get_collection('available_commands')->find({ code => $command })->all();
+    
+    my $callback = $command_details->{params_callback};
+    $callback =~ s/%%GAME%%/$game/;
+    $callback =~ s/%%MECHA%%/$mecha_name/;
+    $command_details->{params_callback} = $callback;
+    if($command_details->{machinegun})
+    { 
         my @mecha = _get_sighted_mechas($game, $mecha_name);
-        if(@mecha)
+        if(@mecha == 0)
         {
-            $details{machinegun} = 1;
-        }
-        else
-        {
-            $details{machinegun} = 0;
+            $command_details->{machinegun} = 0;
         }
     }
-    $c->render(json => { command => \%details });
+    $c->render(json => { command => $command_details });
 }
 
 

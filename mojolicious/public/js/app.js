@@ -151,46 +151,6 @@ App = {
             App.machinegunForm(name, paramDiv);
         }
     });
-
-/*
-    if(select.value == 'flywp')
-    {
-        paramDiv.append('<label for="waypoint">Select Waypoint</label>');
-        paramDiv.append('<select class="form-control" name="waypoint" id="params_'+name+'"></select>');
-        fetch('/game/waypoints?game='+App.game)
-        .then(function(response) { return response.json(); })
-        .then(function(data) {
-            data.waypoints.forEach(function(wp, index, array) {
-                $( "#params_"+name).append('<option value="'+wp.name+'">'+wp.name+'</option>');
-            });
-        });
-        App.machinegunForm(name, paramDiv);
-    }
-    else if(select.value == 'flymec')
-    {
-        paramDiv.append('<label for="target">Select Mecha</label>');
-        paramDiv.append('<select class="form-control" name="target" id="params_'+name+'"></select>');
-        fetch('/game/sighted?game='+App.game+'&mecha='+name)
-        .then(function(response) { return response.json(); })
-        .then(function(data) {
-            data.mechas.forEach(function(m, index, array) {
-                $( "#params_"+name).append('<option value="'+m.name+'">'+m.name+'</option>');
-            });
-        });
-        App.machinegunForm(name, paramDiv);
-    }
-    else if(select.value == 'sword')
-    {
-        paramDiv.append('<label for="target">Select Mecha</label>');
-        paramDiv.append('<select class="form-control" name="target" id="params_'+name+'"></select>');
-        fetch('/game/sighted?game='+App.game+'&mecha='+name)
-        .then(function(response) { return response.json(); })
-        .then(function(data) {
-            data.mechas.forEach(function(m, index, array) {
-                $( "#params_"+name).append('<option value="'+m.name+'">'+m.name+'</option>');
-            });
-        });
-    }*/
   },
   machinegunForm : function(name, div) {
     console.log(div);
@@ -231,43 +191,6 @@ App = {
             secondarycommand = 'machinegun';
         }
     }
-
-/*
-    if(cmd == 'flywp')
-    {
-        var wp = form.find('select[name="waypoint"]').children('option:selected').attr('value');
-        command = "FLY TO WAYPOINT";
-        params = wp;
-        if($( form.find('input[name="machinegun"]')).prop('checked'))
-        {
-            secondaryparams = form.find('select[name="secondarytarget"]').children('option:selected').attr('value');
-            if(secondaryparams)
-            {
-                secondarycommand = 'MACHINEGUN';
-            }
-        }
-    }
-    else if(cmd == 'flymec')
-    {
-        var m = form.find('select[name="target"]').children('option:selected').attr('value');
-        command = "FLY TO MECHA";
-        params = m;
-        if($( form.find('input[name="machinegun"]')).prop('checked'))
-        {
-            secondaryparams = form.find('select[name="secondarytarget"]').children('option:selected').attr('value');
-            if(secondaryparams)
-            {
-                secondarycommand = 'MACHINEGUN';
-            }
-        }
-    }
-    else if(cmd == 'sword')
-    {
-        var m = form.find('select[name="target"]').children('option:selected').attr('value');
-        command = "SWORD ATTACK";
-        params = m;
-    }
-*/
     console.log("Adding command "+command+" with params "+params+" to mecha "+mid);
     fetch('/game/command', {
         method: 'post',
@@ -309,7 +232,6 @@ App = {
 
 
 $(function() {
-//  $(window).load(function() {
   $(window).on('load', (function() {
     App.init(game);
   }));
