@@ -17,7 +17,7 @@ my $db = $mongo->get_database('gunpla_autotest');
 $db->drop();
 
 my $world = Gunpla::World->new(name => 'autotest');
-$world->init();
+$world->init_test('duel');
 
 diag("Simulation of order received");
 $world->armies->[0]->waiting(0);

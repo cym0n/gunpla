@@ -172,14 +172,29 @@ sub init
 sub init_test
 {
     my $self = shift;
-    say "Init (test mode)...\n";
+    my $type = shift;
+    say "Init (test mode $type)...\n";
     $self->build_commands();
-    $self->waypoints->{'center'} = Gunpla::Position->new(x => 0, y => 0, z => 0);
-    $self->waypoints->{'blue'} = Gunpla::Position->new(x => 20000, y => 0, z => 0);
-    $self->spawn_points->{'wolf'} = 'blue';
-    $self->spawn_points->{'testing ground'} = 'center';
-    $self->add_mecha("Diver", "wolf");
-    $self->add_mecha("Dummy", "testing ground");
+    if($type eq 'dummy')
+    {
+        $self->waypoints->{'center'} = Gunpla::Position->new(x => 0, y => 0, z => 0);
+        $self->waypoints->{'blue'} = Gunpla::Position->new(x => 20000, y => 0, z => 0);
+        $self->spawn_points->{'wolf'} = 'blue';
+        $self->spawn_points->{'testing ground'} = 'center';
+        $self->add_mecha("Diver", "wolf");
+        $self->add_mecha("Dummy", "testing ground");
+    }
+    elsif($type eq 'duel')
+    {
+        $self->waypoints->{'center'} = Gunpla::Position->new(x => 0, y => 0, z => 0);
+        $self->waypoints->{'blue'} = Gunpla::Position->new(x => 75000, y => 0, z => 0);
+        $self->waypoints->{'red'} = Gunpla::Position->new(x => -75000, y => 0, z => 0);
+        $self->waypoints->{'alpha'} = Gunpla::Position->new(x => 0, y => -200000, z => 0);
+        $self->spawn_points->{'wolf'} = 'blue';
+        $self->spawn_points->{'eagle'} = 'red';
+        $self->add_mecha("Diver", "wolf");
+        $self->add_mecha("Zaku", "eagle");
+    }
 }
 
 

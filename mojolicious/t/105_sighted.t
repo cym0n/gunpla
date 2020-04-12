@@ -18,7 +18,7 @@ $db->drop();
 
 diag("Generate a world and save it on db");
 my $world = Gunpla::World->new(name => 'autotest');
-$world->init();
+$world->init_test('duel');
 $world->add_mecha("Gelgoog", "eagle");
 $world->get_mecha_by_name("Diver")->position(Gunpla::Position->new(x => 0, y => 0, z => 0));
 $world->get_mecha_by_name("Zaku")->position(Gunpla::Position->new(x => 50000, y => 0, z => 0));

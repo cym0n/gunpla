@@ -17,7 +17,7 @@ $db->drop();
 
 diag("Generate a world and save it on db");
 my $world = Gunpla::World->new(name => 'autotest');
-$world->init();
+$world->init_test('duel');
 $world->save();
 
 my $t = Test::Mojo->new('GunplaServer');
@@ -51,6 +51,17 @@ diag("Running script to elaborate actions");
 say `script/gunpla.pl action autotest`;
 
 my $t2 = Test::Mojo->new('GunplaServer');
+diag("Getting the event - distance is exactly 140000");
+$t2->get_ok('/game/event?game=autotest&mecha=Diver')->status_is(200)->json_is(
+    {
+        events => [
+            {
+                mecha => 'Diver',
+                message => 'Diver sighted Zaku'
+            }
+        ]
+    }
+);
 diag("Check Diver position");
 $t2->get_ok('/game/mechas?game=autotest&mecha=Diver')->status_is(200)->json_is(
     {
@@ -58,7 +69,7 @@ $t2->get_ok('/game/mechas?game=autotest&mecha=Diver')->status_is(200)->json_is(
             name => 'Diver',
             life => 1000,
             faction => 'wolf',
-            position => { x => 0, y => 0, z => 0 },
+            position => { x => 64614, y => 0, z => 0 },
             waiting => 1
         }
     }
@@ -71,23 +82,13 @@ $t2->get_ok('/game/mechas?game=autotest&mecha=Zaku')->status_is(200)->json_is(
             name => 'Zaku',
             life => 1000,
             faction => 'eagle',
-            position => { x => -100000, y => -100001, z => 0 },
+            position => { x => -75000, y => -10386, z => 0 },
             waiting => 0
         }
     }
 );
 
-diag("Getting the event");
-$t2->get_ok('/game/event?game=autotest&mecha=Diver')->status_is(200)->json_is(
-    {
-        events => [
-            {
-                mecha => 'Diver',
-                message => 'Diver reached destination: waypoint center'
-            }
-        ]
-    }
-);
+
 
 
 

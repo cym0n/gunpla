@@ -18,7 +18,7 @@ $db->drop();
 
 diag("Generate a world and save it on db");
 my $world = Gunpla::World->new(name => 'autotest', dice_results => [20, 3, 20]);
-$world->init_test();
+$world->init_test('dummy');
 
 my $t = Test::Mojo->new('GunplaServer');
 
@@ -122,7 +122,7 @@ sub resume
     {
         diag("Resuming Diver action");
         $world->armies->[0]->waiting(0);
-        $world->add_command('Diver', 'FLY TO WAYPOINT', 'center', 'MACHINEGUN', 'Dummy');
+        $world->add_command('Diver', 'FLY TO WAYPOINT', 'center', 'machinegun', 'Dummy');
     }
     if($world->armies->[1]->waiting)
     {

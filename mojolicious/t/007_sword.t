@@ -18,7 +18,7 @@ $db->drop();
 
 diag("Generate a world and save it on db");
 my $world = Gunpla::World->new(name => 'autotest', dice_results => [20, 0]);
-$world->init_test();
+$world->init_test('dummy');
 
 my $t = Test::Mojo->new('GunplaServer');
 
