@@ -1,6 +1,7 @@
 package Gunpla::Position;
 
 use Moo;
+use POSIX;
 
 has x => (
     is => 'rw',
@@ -25,6 +26,7 @@ sub vector
 {
     my $self = shift;
     my $destination = shift;
+    my $norm = shift;
     my %value; my %cursor;
 
     foreach my $coo ( 'x', 'y', 'z')
@@ -32,8 +34,19 @@ sub vector
         $value{$coo} = abs($destination->$coo - $self->$coo);
         $cursor{$coo} = $destination->$coo > $self->$coo ? 1 : $destination->$coo ==  $self->$coo ? 0 : -1;
     }
-    return ( $self->new(x => $cursor{x}, y => $cursor{y}, z => $cursor{z}), 
-             $self->new(x => $value{x}, y => $value{y}, z => $value{z}) );
+    my $versus = $self->new(x => $cursor{x}, y => $cursor{y}, z => $cursor{z});
+    my $direction = $self->new(x => $value{x}, y => $value{y}, z => $value{z});
+
+
+    if($norm)
+    {
+        my $anchor = $self->new(x => 0, y => 0, z => 0);
+        my $d = $anchor->distance($direction);
+        $direction->x(sprintf("%.3f", $direction->x / $d));
+        $direction->y(sprintf("%.3f", $direction->y / $d));
+        $direction->z(sprintf("%.3f", $direction->z / $d));
+    }
+    return ( $versus, $direction );
 }
 
 sub distance
@@ -41,8 +54,24 @@ sub distance
     my $self = shift;
     my $destination = shift;
     my $vector = $self->vector($destination);
-    return int(sqrt(($vector->x ** 2) + ($vector->y ** 2) + ($vector->z ** 2)))
+    return ceil(sqrt(($vector->x ** 2) + ($vector->y ** 2) + ($vector->z ** 2)))
 }
+sub away_from
+{
+    my $self = shift;
+    my $target = shift;
+    my $distance = shift;
+    
+    my ($versus, $direction) = $target->vector($self, 1);
+
+    return $self->new(
+        x => $self->x + ($versus->x * ceil($direction->x * $distance)),
+        y => $self->y + ($versus->y * ceil($direction->y * $distance)),
+        z => $self->z + ($versus->z * ceil($direction->z * $distance)),
+    );
+}
+
+
 
 sub longest
 {
