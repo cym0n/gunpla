@@ -22,11 +22,18 @@ sub clone
     return $self->new( x => $self->x, y => $self->y, z => $self->z); 
 }
 
+sub as_string
+{
+    my $self = shift;
+    return '(' . $self->x . ', ' . $self->y . ', ' . $self->z . ')';
+}
+
 sub vector
 {
     my $self = shift;
     my $destination = shift;
-    my $norm = shift;
+    my $normal = shift;
+    my $collapsed = shift;
     my %value; my %cursor;
 
     foreach my $coo ( 'x', 'y', 'z')
@@ -38,15 +45,27 @@ sub vector
     my $direction = $self->new(x => $value{x}, y => $value{y}, z => $value{z});
 
 
-    if($norm)
+    if($normal)
     {
         my $anchor = $self->new(x => 0, y => 0, z => 0);
         my $d = $anchor->distance($direction);
+        return $anchor if($d == 0);
         $direction->x(sprintf("%.3f", $direction->x / $d));
         $direction->y(sprintf("%.3f", $direction->y / $d));
         $direction->z(sprintf("%.3f", $direction->z / $d));
     }
-    return ( $versus, $direction );
+    if($collapsed)
+    {
+        return $self->new(
+            x => $versus->x * $direction->x,
+            y => $versus->y * $direction->y,
+            z => $versus->z * $direction->z,
+        );
+    }
+    else
+    {
+        return ( $versus, $direction );
+    }
 }
 
 sub distance

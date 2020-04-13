@@ -68,10 +68,10 @@ has mecha_templates => (
     is => 'ro',
     default => sub {
         {
-            'Diver' => { sensor_range => 140000, life => 1000  },
-            'Zaku'  => { sensor_range => 80000,  life => 1000 },
-            'Gelgoog'  => { sensor_range => 130000,  life => 1000 },
-            'Dummy'  => { sensor_range => 0,  life => 1000 }
+            'Diver' => { sensor_range => 140000, life => 1000, max_velocity => 6  },
+            'Zaku'  => { sensor_range => 80000,  life => 1000, max_velocity => 6 },
+            'Gelgoog'  => { sensor_range => 130000,  life => 1000, max_velocity => 6 },
+            'Dummy'  => { sensor_range => 0,  life => 1000, max_velocity => 0 }
         }
     }
 );
@@ -91,7 +91,7 @@ sub add_mecha
     $template->{faction} = $faction;
     my $mecha = Gunpla::Mecha->new($template);
     $mecha->position($self->waypoints->{$self->spawn_points->{$faction}}->clone());
-    $mecha->destination($mecha->position->clone());
+    $mecha->set_destination($mecha->position->clone());
     push @{$self->armies}, $mecha;
 }
 
@@ -220,14 +220,14 @@ sub add_command
     my ($target_type, $target_id) = split('-', $params) if $params;
     if($command eq 'FLY TO WAYPOINT')
     {
-        $m->destination($self->waypoints->{$target_id}->clone());
+        $m->set_destination($self->waypoints->{$target_id}->clone());
         $m->movement_target({ type => 'waypoint', 'name' => $target_id, class => 'fixed'  });
     }
     elsif($command eq 'FLY TO MECHA')
     {
         my $target = $self->get_mecha_by_name($target_id);
     
-        $m->destination($target->position->clone());
+        $m->set_destination($target->position->clone());
         $m->movement_target({ type => 'mecha', 'name' => $target_id, class => 'dynamic'  });
     }
     elsif($command eq 'SWORD ATTACK')
@@ -246,7 +246,7 @@ sub add_command
             $self->event("$mecha attacking: $attack", [ $target_name ]);
         }
         $m->attack($attack);
-        $m->destination($target->position->clone());
+        $m->set_destination($target->position->clone());
         $m->movement_target({ type => 'mecha', 'name' => $target_id, class => 'dynamic'  });
         $m->attack_target({ type => 'mecha', 'name' => $target_id, class => 'dynamic'  });
         $m->attack_limit(SWORD_ATTACK_TIME_LIMIT);
@@ -265,7 +265,7 @@ sub add_command
             $target = $target_mecha->position;
         }
         my $destination = $m->position->away_from($target, GET_AWAY_DISTANCE);
-        $m->destination($destination);
+        $m->set_destination($destination);
         $m->movement_target({ type => 'void', name => 'space', class => 'fixed'  });
     }
     elsif($command eq 'WAITING')
@@ -352,7 +352,7 @@ sub action
                     if($m->attack && $m->attack eq 'SWORD')
                     {
                         my $target = $self->get_mecha_by_name($m->movement_target->{name});
-                        $m->destination($target->position->clone);
+                        $m->set_destination($target->position->clone);
                         $m->gauge($m->gauge +1);
                         if($m->position->distance($target->position) > SWORD_DISTANCE)
                         {
@@ -372,7 +372,7 @@ sub action
                     else
                     {
                         my $target = $self->get_mecha_by_name($m->movement_target->{name});
-                        $m->destination($target->position->clone);
+                        $m->set_destination($target->position->clone);
                         if($m->position->distance($target->position) > MECHA_NEARBY)
                         {
                             $m->plan_and_move();

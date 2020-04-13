@@ -5,6 +5,9 @@ use Moo;
 use Gunpla::Position;
 use Data::Dumper;
 
+use constant VELOCITY_LIMIT => 11;
+use constant ACCELERATION_GAUGE_FIXED_LIMIT => 150000;
+
 #Identity
 has name => (
     is => 'ro'
@@ -42,6 +45,26 @@ has course => (
 has destination => (
     is => 'rw',
 );
+#Advanced navigatio
+has velocity => (
+    is => 'rw',
+    default => 0
+);
+has acceleration_gauge => (
+    is => 'rw',
+    default => 0
+);
+has max_velocity => (
+    is => 'rw',
+    default => 5
+);
+has velocity_gauge => (
+    is => 'rw',
+    default => 0
+);
+has velocity_vector => (
+    is => 'rw',
+);
 
 #Combat
 has attack => (
@@ -67,16 +90,59 @@ has sensor_range => (
     is => 'ro',
 );
 
+sub ok_velocity
+{
+    my $self = shift;
+    my $move = 0;
+    if($self->velocity > 0)
+    {
+        $self->velocity_gauge($self->velocity_gauge + 1);
+        if($self->velocity_gauge > (VELOCITY_LIMIT  - $self->velocity))
+        {
+            $self->velocity_gauge(0);
+            $move = 1;
+        }
+    }
+    if($self->velocity < $self->max_velocity)
+    {
+        $self->acceleration_gauge($self->acceleration_gauge + 1);
+        if($self->acceleration_gauge > ACCELERATION_GAUGE_FIXED_LIMIT)
+        {
+            $self->velocity($self->velocity + 1);
+            $self->acceleration_gauge(0);
+        }
+    }
+    return $move;
+}
+
+sub set_destination
+{
+    my $self = shift;
+    my $destination = shift;
+    $self->destination($destination);
+    my $destination_vector = $self->position->vector($destination, 1, 1);
+    #TODO: penalty on change of direction
+    $self->velocity_vector($destination_vector);
+}
+
+
 
 sub move
 {
     my $self = shift;
     if($self->course->{steps} > 0)
     {
-        my $ax = $self->course->{axis};
-        $self->position->$ax($self->position->$ax + $self->course->{direction});
-        $self->course->{steps} = $self->course->{steps} - 1;
-        return 1;
+        if($self->ok_velocity)
+        {
+            my $ax = $self->course->{axis};
+            $self->position->$ax($self->position->$ax + $self->course->{direction});
+            $self->course->{steps} = $self->course->{steps} - 1;
+            return 1;
+        }
+        else
+        {
+            return 0;
+        }
     }
     else
     {
