@@ -105,7 +105,7 @@ sub resume
     {
         diag("Resuming Diver action");
         $world->armies->[0]->waiting(0);
-        $world->add_command('Diver', 'FLY TO WAYPOINT', 'center', 'machinegun', 'Dummy');
+        $world->add_command('Diver', 'FLY TO WAYPOINT', 'WP-center', 'machinegun', 'Dummy');
     }
     if($world->armies->[1]->waiting)
     {

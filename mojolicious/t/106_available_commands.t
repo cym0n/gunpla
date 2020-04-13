@@ -116,7 +116,7 @@ $t2->get_ok('/game/command-details?game=autotest&mecha=Diver&command=flymec')
     });
 diag("Drop gunpla_autotest db");
 $db = $mongo->get_database('gunpla_autotest');
-#$db->drop();
+$db->drop();
 
 
 done_testing();

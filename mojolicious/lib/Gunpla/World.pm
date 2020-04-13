@@ -21,6 +21,7 @@ use constant MACHINEGUN_RANGE => 1000;
 use constant MACHINEGUN_WIN => 10;
 use constant MACHINEGUN_DAMAGE => 20;
 use constant MACHINEGUN_SWORD_GAUGE_DAMAGE => 300; 
+use constant GET_AWAY_DISTANCE => 30000;
 
 has name => (
     is => 'ro',
@@ -216,39 +217,56 @@ sub add_command
     my $secondary_command = shift;
     my $secondary_params = shift;
     my $m = $self->get_mecha_by_name($mecha);
+    my ($target_type, $target_id) = split('-', $params) if $params;
     if($command eq 'FLY TO WAYPOINT')
     {
-        $m->destination($self->waypoints->{$params}->clone());
-        $m->movement_target({ type => 'waypoint', 'name' => $params, class => 'fixed'  });
+        $m->destination($self->waypoints->{$target_id}->clone());
+        $m->movement_target({ type => 'waypoint', 'name' => $target_id, class => 'fixed'  });
     }
     elsif($command eq 'FLY TO MECHA')
     {
-        my $target = $self->get_mecha_by_name($params);
+        my $target = $self->get_mecha_by_name($target_id);
     
         $m->destination($target->position->clone());
-        $m->movement_target({ type => 'mecha', 'name' => $params, class => 'dynamic'  });
+        $m->movement_target({ type => 'mecha', 'name' => $target_id, class => 'dynamic'  });
     }
     elsif($command eq 'SWORD ATTACK')
     {
         my $attack = 'SWORD';
-        my $target_name = $params;
-        my $target = $self->get_mecha_by_name($params);
+        my $target_name = $target_id;
+        my $target = $self->get_mecha_by_name($target_id);
 
         #Event only if:
         #   command changed (avoid event on resume)
         #   attacker sighted by target
         if((($m->attack && $m->attack ne $attack) ||
-           ($m->attack_target->{name} && $m->attack_target->{name} ne $params)) &&
+           ($m->attack_target->{name} && $m->attack_target->{name} ne $target_id)) &&
             $self->sighting_matrix->{$target_name}->{$mecha} > 0)
         {
             $self->event("$mecha attacking: $attack", [ $target_name ]);
         }
         $m->attack($attack);
         $m->destination($target->position->clone());
-        $m->movement_target({ type => 'mecha', 'name' => $params, class => 'dynamic'  });
-        $m->attack_target({ type => 'mecha', 'name' => $params, class => 'dynamic'  });
+        $m->movement_target({ type => 'mecha', 'name' => $target_id, class => 'dynamic'  });
+        $m->attack_target({ type => 'mecha', 'name' => $target_id, class => 'dynamic'  });
         $m->attack_limit(SWORD_ATTACK_TIME_LIMIT);
         $m->gauge(0);
+    }
+    elsif($command eq 'GET AWAY')
+    {
+        my $target;
+        if($target_type eq 'WP')
+        {
+            $target = $self->waypoints->{$target_id};
+        }
+        elsif($target_type eq 'MEC')
+        {
+            my $target_mecha = $self->get_mecha_by_name($target_id);
+            $target = $target_mecha->position;
+        }
+        my $destination = $m->position->away_from($target, GET_AWAY_DISTANCE);
+        $m->destination($destination);
+        $m->movement_target({ type => 'void', name => 'space', class => 'fixed'  });
     }
     elsif($command eq 'WAITING')
     {

@@ -21,9 +21,9 @@ $world->init_test('duel');
 
 diag("Simulation of order received");
 $world->armies->[0]->waiting(0);
-$world->add_command('Diver', 'FLY TO WAYPOINT', 'center');
+$world->add_command('Diver', 'FLY TO WAYPOINT', 'WP-center');
 $world->armies->[1]->waiting(0);
-$world->add_command('Zaku', 'FLY TO WAYPOINT', 'center');
+$world->add_command('Zaku', 'FLY TO WAYPOINT', 'WP-center');
 
 diag("Action until sighting event");
 is($world->action(), 1);

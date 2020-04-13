@@ -24,11 +24,11 @@ diag("Adding a command to Diver");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
                                                               mecha => 'Diver', 
                                                               command => 'FLY TO WAYPOINT',
-                                                              params => 'center' })
+                                                              params => 'WP-center' })
     ->status_is(200)
     ->json_is({ result => 'OK',
                 'command' => {
-                    'params' => 'center',
+                    'params' => 'WP-center',
                     'command' => 'FLY TO WAYPOINT',
                     'mecha' => 'Diver',
                     'secondarycommand' => undef,
@@ -42,7 +42,7 @@ diag("Getting the command");
 $t->get_ok('/game/command?game=autotest&mecha=Diver')->status_is(200)->json_is(
     {
         'command' => {
-            'params' => 'center',
+            'params' => 'WP-center',
             'command' => 'FLY TO WAYPOINT',
             'mecha' => 'Diver',
             'secondarycommand' => undef,
@@ -55,13 +55,13 @@ diag("Adding a command to Zaku");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
                                                               mecha => 'Zaku', 
                                                               command => 'FLY TO WAYPOINT',
-                                                              params => 'center',
+                                                              params => 'WP-center',
                                                               secondarycommand => 'machinegun',
                                                               secondaryparams => 'Diver' })
     ->status_is(200)
     ->json_is({ result => 'OK',
                 'command' => {
-                    'params' => 'center',
+                    'params' => 'WP-center',
                     'command' => 'FLY TO WAYPOINT',
                     'mecha' => 'Zaku',
                     'secondarycommand' => 'machinegun',
@@ -75,7 +75,7 @@ diag("Getting the command");
 $t->get_ok('/game/command?game=autotest&mecha=Zaku')->status_is(200)->json_is(
     {
         'command' => {
-            'params' => 'center',
+            'params' => 'WP-center',
             'command' => 'FLY TO WAYPOINT',
             'mecha' => 'Zaku',
             'secondarycommand' => 'machinegun',
@@ -96,7 +96,7 @@ print {$log} Dumper($t->tx->res->json) . "\n";
 close($log);
 diag("Drop gunpla_autotest db on local mongodb for final cleanup");
 $db = $mongo->get_database('gunpla_autotest');
-#$db->drop();
+$db->drop();
 
 
 done_testing();

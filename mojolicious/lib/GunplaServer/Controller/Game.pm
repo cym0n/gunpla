@@ -10,6 +10,7 @@ sub mecha_from_mongo_to_json
     return { name     => $mecha->{name},
              label     => $mecha->{name},
              map_type => 'mecha',
+             world_id => 'MEC-' . $mecha->{name},   
              life     => $mecha->{life},
              faction  => $mecha->{faction},
              position => $mecha->{position},
@@ -22,6 +23,7 @@ sub waypoint_from_mongo_to_json
     return { name     => $wp->{name},
              label     => $wp->{name},
              map_type => 'waypoint',
+             world_id => 'WP-' . $wp->{name},   
              x    => $wp->{position}->{x},
              y    => $wp->{position}->{y},
              z    => $wp->{position}->{z} }

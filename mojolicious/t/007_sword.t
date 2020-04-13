@@ -80,7 +80,7 @@ sub resume
     {
         diag("Resuming Diver action");
         $world->armies->[0]->waiting(0);
-        $world->add_command('Diver', 'SWORD ATTACK', 'Dummy');
+        $world->add_command('Diver', 'SWORD ATTACK', 'MEC-Dummy');
     }
     if($world->armies->[1]->waiting)
     {

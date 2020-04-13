@@ -26,11 +26,11 @@ diag("Adding a command to Diver");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
                                                               mecha => 'Diver', 
                                                               command => 'FLY TO WAYPOINT',
-                                                              params => 'center' })
+                                                              params => 'WP-center' })
     ->status_is(200)
     ->json_is({ result => 'OK',
                 'command' => {
-                    'params' => 'center',
+                    'params' => 'WP-center',
                     'command' => 'FLY TO WAYPOINT',
                     'mecha' => 'Diver',
                     'secondarycommand' => undef,
@@ -40,11 +40,11 @@ diag("Adding a command to Zaku");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
                                                               mecha => 'Zaku', 
                                                               command => 'FLY TO WAYPOINT',
-                                                              params => 'alpha' })
+                                                              params => 'WP-alpha' })
     ->status_is(200)
     ->json_is({ result => 'OK',
                 'command' => {
-                    'params' => 'alpha',
+                    'params' => 'WP-alpha',
                     'command' => 'FLY TO WAYPOINT',
                     'mecha' => 'Zaku',
                     'secondarycommand' => undef,
@@ -73,9 +73,10 @@ $t2->get_ok('/game/mechas?game=autotest&mecha=Diver')->status_is(200)->json_is(
             name => 'Diver',
             label => 'Diver',
             map_type => 'mecha',
+            world_id => 'MEC-Diver',
             life => 1000,
             faction => 'wolf',
-            position => { x => 64614, y => 0, z => 0 },
+            position => { x => 64613, y => 0, z => 0 },
             waiting => 1
         }
     }
@@ -87,10 +88,11 @@ $t2->get_ok('/game/mechas?game=autotest&mecha=Zaku')->status_is(200)->json_is(
         mecha => {
             name => 'Zaku',
             label => 'Zaku',
+            world_id => 'MEC-Zaku',
             map_type => 'mecha',
             life => 1000,
             faction => 'eagle',
-            position => { x => -75000, y => -10386, z => 0 },
+            position => { x => -75000, y => -10387, z => 0 },
             waiting => 0
         }
     }

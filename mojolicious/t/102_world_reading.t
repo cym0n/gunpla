@@ -28,6 +28,7 @@ $t->get_ok('/game/mechas?game=autotest&mecha=Diver')->status_is(200)->json_is(
         mecha => {
             name => 'Diver',
             label => 'Diver',
+            world_id => 'MEC-Diver',
             map_type => 'mecha',
             life => 1000,
             faction => 'wolf',
@@ -46,6 +47,7 @@ $t->get_ok('/game/waypoints?game=autotest&waypoint=center')->status_is(200)->jso
             name => 'center',
             label => 'center',
             map_type => 'waypoint',
+            world_id => 'WP-center',
             x => 0,
             y => 0,
             z => 0
