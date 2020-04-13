@@ -47,13 +47,27 @@ App = {
         .then(function(data) { 
             if(data.command.command)
             {
+                var previous;
+                if(data.command.secondarycommand)
+                {
+                    previous = data.command.command +' '+ data.command.params+' ['+
+                               data.command.secondarycommand + ' ' + data.command.secondaryparams +']';
+                }
+                else
+                {
+                    previous = data.command.command +' '+ data.command.params;
+                }
+
+
                 $('#mecha_' + m.name).append(`
                     <div class="well">
                     <form onSubmit="App.resumeCommand(this); return false;" id="prevcomms_${m.name}">
                         <input type="hidden" name="mechaname" value="${m.name}">
-                        <input type="hidden" name="commands" value="${data.command.command}">
+                        <input type="hidden" name="command" value="${data.command.command}">
                         <input type="hidden" name="params" value="${data.command.params}">
-                        <label for="resume">Previous command: ${data.command.command} [${data.command.params}]</label>
+                        <input type="hidden" name="secondarycommand" value="${data.command.secondarycommand}">
+                        <input type="hidden" name="secondaryparams" value="${data.command.secondaryparams}">
+                        <p><b>Previous command</b>:<br />${previous}</p>
                         <button name="resume" type="submit" class="btn btn-primary">Resume</button>
                     </form></div>`);
             }
@@ -65,7 +79,16 @@ App = {
         fetch('/game/command?game='+App.game+'&mecha='+m.name)
         .then(function(response) { return response.json(); })
         .then(function(data) { 
-            $('#mecha_' + data.command.mecha).append('<p>ORDERS GIVEN: ' + data.command.command + ' [' + data.command.params + ']</p>');
+            if(data.command.secondarycommand)
+            {
+                previous =  data.command.command +' '+ data.command.params+' ['+
+                            data.command.secondarycommand + ' ' + data.command.secondaryparams +']';
+            }
+            else
+            {
+                previous =  data.command.command +' '+ data.command.params;
+            }
+            $('#mecha_' + data.command.mecha).append('<div class="well"><b>Previous command</b>:<br />'+previous+'</div>');
         });
         if(poll_needed)
         {
@@ -210,14 +233,18 @@ App = {
   resumeCommand : function(el) {
     var form = $( el )
     var mid = $( form.children('input[name="mechaname"]')).attr('value');
-    var command = $( form.children('input[name="commands"]')).attr('value');
+    var command = $( form.children('input[name="command"]')).attr('value');
     var params = $( form.children('input[name="params"]')).attr('value');
+    var secondarycommand = $( form.children('input[name="secondarycommand"]')).attr('value');
+    var secondaryparams = $( form.children('input[name="secondaryparams"]')).attr('value');
     console.log("Adding command "+command+" with params "+params+" to mecha "+mid);
     fetch('/game/command', {
         method: 'post',
         body: JSON.stringify({
             'command': command,
             'params': params,
+            'secondarycommand': secondarycommand,
+            'secondaryparams': secondaryparams,
             'mecha': mid,
             'game': App.game })
     })

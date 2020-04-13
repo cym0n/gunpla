@@ -252,10 +252,17 @@ sub add_command
         {
             my $target_name = $secondary_params;
             my $target = $self->get_mecha_by_name($secondary_params);
-            $m->attack_limit(MACHINEGUN_SHOTS);
-            $m->attack('MACHINEGUN');
-            $m->attack_target({ type => 'mecha', 'name' => $secondary_params, class => 'dynamic'  });
-            $m->gauge(0);
+            if($m->attack && $m->attack eq 'MACHINEGUN' && $m->attack_limit > 0 && $m->attack_target->{name} eq $target_name)
+            {
+                #We do nothing, leaving machinegun order to exhaust the shots
+            }
+            else
+            {
+                $m->attack_limit(MACHINEGUN_SHOTS);
+                $m->attack('MACHINEGUN');
+                $m->attack_target({ type => 'mecha', 'name' => $secondary_params, class => 'dynamic'  });
+                $m->gauge(0);
+            }
         }
     }
     $m->cmd_fetched(1);
