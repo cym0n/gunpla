@@ -57,23 +57,6 @@ is($world->armies->[1]->life, 980);
 
 resume(2);
 diag("=== Second shot misses, no events");
-#diag("Checking event generation (using API)");
-#$t->get_ok('/game/event?game=autotest&mecha=Dummy')->status_is(200)->json_is(
-#    {
-#        events => [
-#            {
-#                mecha => 'Dummy',
-#                message => 'Diver hits with machine gun Dummy'
-#            }
-#        ]
-#    }
-#);
-#diag("Checking mechas stats");
-#is($world->armies->[0]->position->x, 800);
-#is($world->armies->[0]->attack_limit, 1);
-#is($world->armies->[0]->gauge, 0);
-#is($world->armies->[1]->life, 960);
-
 diag("=== Third shot - action ended");
 diag("Checking event generation (using API)");
 $t->get_ok('/game/event?game=autotest&mecha=Dummy')->status_is(200)->json_is(

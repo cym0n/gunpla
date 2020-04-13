@@ -7,7 +7,7 @@ use Test::More;
 diag("Main library load");
 require_ok('Gunpla::World');
 
-my $world = Gunpla::World->new();
+my $world = Gunpla::World->new(name => 'autotest');
 $world->init();
 
 diag("Checking waypoints created on init");

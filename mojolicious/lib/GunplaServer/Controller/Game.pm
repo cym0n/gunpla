@@ -4,15 +4,29 @@ use Mojo::Base 'Mojolicious::Controller';
 use MongoDB;
 use Data::Dumper;
 
-sub from_mongo_to_json
+sub mecha_from_mongo_to_json
 {
     my $mecha = shift;
     return { name     => $mecha->{name},
+             label     => $mecha->{name},
+             map_type => 'mecha',
              life     => $mecha->{life},
              faction  => $mecha->{faction},
              position => $mecha->{position},
              waiting  => $mecha->{waiting} };
 }
+
+sub waypoint_from_mongo_to_json
+{
+    my $wp = shift;
+    return { name     => $wp->{name},
+             label     => $wp->{name},
+             map_type => 'waypoint',
+             x    => $wp->{position}->{x},
+             y    => $wp->{position}->{y},
+             z    => $wp->{position}->{z} }
+}
+
 
 sub all_mechas {
     my $c = shift;
@@ -23,7 +37,7 @@ sub all_mechas {
     if($mecha_name)
     {
         my ( $mecha ) = $db->get_collection('mechas')->find({ name => $mecha_name })->all();
-        $c->render(json => { mecha => from_mongo_to_json($mecha) });
+        $c->render(json => { mecha => mecha_from_mongo_to_json($mecha) });
     }
     else
     {
@@ -31,7 +45,7 @@ sub all_mechas {
         my @out = ();
         for(@mecha)
         {
-            push @out, from_mongo_to_json($_);
+            push @out, mecha_from_mongo_to_json($_);
         }
         $c->render(json => { mechas => \@out });
     }
@@ -64,7 +78,7 @@ sub sighted_mechas {
     my @out = ();
     for(@mecha)
     {
-        push @out, from_mongo_to_json($_);
+        push @out, mecha_from_mongo_to_json($_);
     }
     $c->render(json => { mechas => \@out });
 }
@@ -78,10 +92,7 @@ sub all_waypoints {
     if($wp_name)
     {
         my ( $wp ) = $db->get_collection('map')->find({ type => 'waypoint', name => $wp_name } )->all();
-        $c->render(json => { waypoint => { name => $wp->{name},
-                                           x    => $wp->{position}->{x},
-                                           y    => $wp->{position}->{y},
-                                           z    => $wp->{position}->{z} } });
+        $c->render(json => { waypoint => waypoint_from_mongo_to_json($wp) });
     }
     else
     {
@@ -89,13 +100,35 @@ sub all_waypoints {
         my @out = ();
         for(@wp)
         {
-            push @out, { name => $_->{name},
-                        x => $_->{position}->{x},
-                        y => $_->{position}->{y},
-                        z => $_->{position}->{z}, };
+            push @out, waypoint_from_mongo_to_json($_);
         }
         $c->render(json => { waypoints => \@out });
     }
+}
+
+sub all_visible {
+    my $c = shift;
+    my $game = $c->param('game');
+    my $mecha_name = $c->param('mecha');
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $game);
+
+    my @out = ();
+    my @wp = $db->get_collection('map')->find({ type => 'waypoint' } )->all();
+    for(@wp)
+    {
+        my $w = waypoint_from_mongo_to_json($_);
+        $w->{label} = $w->{name} . ' (W)';
+        push @out, $w;
+    }
+    my @mecha = _get_sighted_mechas($game, $mecha_name);
+    for(@mecha)
+    {
+        my $m = $_;
+        $m->{label} = $m->{name} . ' (M)';
+        push @out, $m;
+    }
+    $c->render(json => { elements => \@out });
 }
 
 sub add_command

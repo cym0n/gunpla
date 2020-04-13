@@ -166,7 +166,7 @@ App = {
         fetch(data.command.params_callback).then(function(response) { return response.json(); })
         .then(function(data) {
             data[masternode].forEach(function(d, index, array) {
-                $( "#params_"+name).append('<option value="'+d.name+'">'+d.name+'</option>');
+                $( "#params_"+name).append('<option value="'+d.label+'">'+d.label+'</option>');
             });
         });
         if(data.command.machinegun == 1)

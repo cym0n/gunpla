@@ -8,7 +8,7 @@ use Gunpla::Position;
 diag("Main library load");
 require_ok('Gunpla::World');
 
-my $world = Gunpla::World->new();
+my $world = Gunpla::World->new(name => 'autotest');
 $world->init();
 
 diag("Simulation of order received");

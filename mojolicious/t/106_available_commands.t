@@ -20,11 +20,16 @@ diag("Generate a world with no target sighted and save it on db");
 my $world = Gunpla::World->new(name => 'autotest');
 $world->init_test('duel');
 my $t = Test::Mojo->new('GunplaServer');
-diag("No mecha sighted, FLY TO WAYPOINT is the only available command");
+diag("No mecha sighted, FLY TO WAYPOINT and GET AWAY are the only available command");
 $t->get_ok('/game/available-commands?game=autotest&mecha=Diver')
     ->status_is(200)
     ->json_is({
-          'commands' => [ {
+          'commands' => [ 
+                        {   
+                          'code' => 'away',
+                          'label' => 'GET AWAY'
+                        },
+                        {
                           'code' => 'flywp',
                           'label' => 'FLY TO WAYPOINT'
                         }, ]
@@ -63,6 +68,10 @@ $t2->get_ok('/game/available-commands?game=autotest&mecha=Diver')
     ->status_is(200)
     ->json_is({
           'commands' => [
+                        {
+                          'code' => 'away',
+                          'label' => 'GET AWAY'
+                        },
                         {
                           'code' => 'flymec',
                           'label' => 'FLY TO MECHA'

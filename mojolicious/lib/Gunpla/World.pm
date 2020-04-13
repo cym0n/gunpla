@@ -150,6 +150,15 @@ sub build_commands
             params_masternode => 'mechas',
             machinegun => 0
         }, 1);
+    $self->configure_command( {
+            code => 'away',
+            label => 'GET AWAY',
+            conditions => [ ],
+            params_label => 'Select a Element',
+            params_callback => '/game/visible-elements?game=%%GAME%%&mecha=%%MECHA%%',
+            params_masternode => 'elements',
+            machinegun => 1
+        }, 1);
 }
 
 

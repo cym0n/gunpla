@@ -38,6 +38,8 @@ $t->get_ok('/game/sighted?game=autotest&mecha=Diver')
                           'waiting' => 1,
                           'faction' => 'eagle',
                           'name' => 'Zaku',
+                          'label' => 'Zaku',
+                          'map_type' => 'mecha',
                           'life' => 1000,
                           'position' => {
                                           'z' => 0,
@@ -52,6 +54,8 @@ $t->get_ok('/game/sighted?game=autotest&mecha=Diver')
                                           'x' => 120000
                                         },
                           'name' => 'Gelgoog',
+                          'label' => 'Gelgoog',
+                          'map_type' => 'mecha',
                           'faction' => 'eagle',
                           'life' => 1000,
                           'waiting' => 1
@@ -66,6 +70,8 @@ $t->get_ok('/game/sighted?game=autotest&mecha=Zaku')
                           'waiting' => 1,
                           'faction' => 'wolf',
                           'name' => 'Diver',
+                          'label' => 'Diver',
+                          'map_type' => 'mecha',
                           'life' => 1000,
                           'position' => {
                                           'z' => 0,

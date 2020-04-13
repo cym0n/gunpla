@@ -27,6 +27,8 @@ $t->get_ok('/game/mechas?game=autotest&mecha=Diver')->status_is(200)->json_is(
     {
         mecha => {
             name => 'Diver',
+            label => 'Diver',
+            map_type => 'mecha',
             life => 1000,
             faction => 'wolf',
             position => { x => 500000, y => 0, z => 0 },
@@ -42,6 +44,8 @@ $t->get_ok('/game/waypoints?game=autotest&waypoint=center')->status_is(200)->jso
     {
         waypoint => {
             name => 'center',
+            label => 'center',
+            map_type => 'waypoint',
             x => 0,
             y => 0,
             z => 0
