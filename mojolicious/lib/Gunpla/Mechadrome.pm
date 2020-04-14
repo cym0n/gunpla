@@ -6,14 +6,27 @@ extends 'Gunpla::World';
 
 use constant MECHA_NEARBY => 1000;
 
+has counter => (
+    is => 'rw',
+    default => 0
+);
+
+has report => (
+    is => 'rw',
+    default => undef
+);
+
+
 sub init_drome
 {
     my $self = shift;
     say "Init...\n";
     $self->waypoints->{'center'} = Gunpla::Position->new(x => 0, y => 0, z => 0);
-    $self->waypoints->{'blue'} = Gunpla::Position->new(x => 500000, y => 0, z => 0);
+    $self->waypoints->{'blue'} = Gunpla::Position->new(x => 200000, y => 0, z => 0);
     $self->waypoints->{'red'} = Gunpla::Position->new(x => -500000, y => 0, z => 0);
     $self->waypoints->{'alpha'} = Gunpla::Position->new(x => 0, y => -200000, z => 0);
+    $self->waypoints->{'ulysses'} = Gunpla::Position->new(x => -300000, y => 0, z => 0);
+    $self->waypoints->{'eracles'} = Gunpla::Position->new(x => -200000, y => 0, z => 0);
     $self->spawn_points->{'wolf'} = 'blue';
     $self->add_mecha("Diver", "wolf");
 }
@@ -23,12 +36,23 @@ sub race
     my $self = shift;
     my $waypoints = shift;
     my $steps = shift;
-    my $counter = 0;
+    if($self->report)
+    {
+        open(my $rfh, ">> " . $self->report);
+        print {$rfh} "=====\n";
+        print {$rfh} "Max velocity: " . $self->armies->[0]->max_velocity . "\n";    
+        print {$rfh} "Acceleration: " . $self->armies->[0]->acceleration . "\n";
+        print {$rfh} "Track: WP-blue -> " . join(" -> ", @{$waypoints}) . "\n";
+        print {$rfh} "\n";
+        close($rfh);
+    }
+
+
     foreach my $wp (@{$waypoints})
     {
         $self->armies->[0]->waiting(0);
         $self->add_command('Diver', 'FLY TO WAYPOINT', $wp);
-        while($self->all_ready && (! $steps || $counter < $steps))
+        while($self->all_ready && (! $steps || $self->counter < $steps))
         {
             for(@{$self->armies})
             {
@@ -60,13 +84,9 @@ sub race
                         }
                     }
                 }
-                if($m->velocity == $m->max_velocity)
+                if($self->counter % 1000 == 0)
                 {
-                    die "Max velocity reached at $counter";
-                }
-                if($counter % 1000 == 0)
-                {
-                    say "Step: $counter";
+                    say "Step: " . $self->counter;
                     say "Waypoint: $wp";
                     say "Mecha position: " . $m->position->as_string();
                     say "Velocity: " . $m->velocity;
@@ -75,9 +95,15 @@ sub race
                     say "Velocity vector: " . $m->velocity_vector->as_string();
                 }
             }
-            $counter++;
+            $self->counter($self->counter+1);
             
         }
+    }
+    if($self->report)
+    {
+        open(my $rfh, ">> " . $self->report);
+        print {$rfh} "\n\n";
+        close($rfh);
     }
 }
 
@@ -86,8 +112,13 @@ sub event
     my $self = shift;
     my $message = shift;
     my $involved = shift;
-    say $message;
-
+    say $self->counter . ": " . $message;
+    if($self->report)
+    {
+        open(my $rfh, ">> " . $self->report);
+        print {$rfh} $self->counter. ": " . $message. "\n";
+        close($rfh);
+    }
     for(@{$involved})
     {
         my $m = $self->get_mecha_by_name($_);

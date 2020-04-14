@@ -27,6 +27,11 @@ sub as_string
     my $self = shift;
     return '(' . $self->x . ', ' . $self->y . ', ' . $self->z . ')';
 }
+sub anchor
+{
+    my $self = shift;
+    return $self->new(x => 0, y => 0, z => 0);
+}
 
 sub vector
 {
@@ -47,7 +52,7 @@ sub vector
 
     if($normal)
     {
-        my $anchor = $self->new(x => 0, y => 0, z => 0);
+        my $anchor = $self->anchor;
         my $d = $anchor->distance($direction);
         return $anchor if($d == 0);
         $direction->x(sprintf("%.3f", $direction->x / $d));
@@ -72,8 +77,17 @@ sub distance
 {
     my $self = shift;
     my $destination = shift;
+    my $floating = shift;
     my $vector = $self->vector($destination);
-    return ceil(sqrt(($vector->x ** 2) + ($vector->y ** 2) + ($vector->z ** 2)))
+    my $result = sqrt(($vector->x ** 2) + ($vector->y ** 2) + ($vector->z ** 2));
+    if($floating)
+    {
+        return sprintf("%.3f", $result)
+    }
+    else
+    {
+        return ceil($result);
+    }
 }
 sub away_from
 {
@@ -88,6 +102,17 @@ sub away_from
         y => $self->y + ($versus->y * ceil($direction->y * $distance)),
         z => $self->z + ($versus->z * ceil($direction->z * $distance)),
     );
+}
+sub sum
+{
+    my $self = shift;
+    my $second = shift;
+    my $result = $self->new(
+        x => $self->x + $second->x,
+        y => $self->y + $second->y,
+        z => $self->z + $second->z);
+    my $anchor = $self->anchor;
+    return $anchor->distance($result, 1);
 }
 
 

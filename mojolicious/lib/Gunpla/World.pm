@@ -68,10 +68,10 @@ has mecha_templates => (
     is => 'ro',
     default => sub {
         {
-            'Diver' => { sensor_range => 140000, life => 1000, max_velocity => 6  },
-            'Zaku'  => { sensor_range => 80000,  life => 1000, max_velocity => 6 },
-            'Gelgoog'  => { sensor_range => 130000,  life => 1000, max_velocity => 6 },
-            'Dummy'  => { sensor_range => 0,  life => 1000, max_velocity => 0 }
+            'Diver' => { sensor_range => 140000, life => 1000, max_velocity => 6, acceleration => 100000  },
+            'Zaku'  => { sensor_range => 80000,  life => 1000, max_velocity => 6, acceleration => 100000 },
+            'Gelgoog'  => { sensor_range => 130000,  life => 1000, max_velocity => 6, acceleration => 100000 },
+            'Dummy'  => { sensor_range => 0,  life => 1000, max_velocity => 0, acceleration => 0 }
         }
     }
 );

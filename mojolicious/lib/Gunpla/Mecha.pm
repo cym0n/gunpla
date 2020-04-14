@@ -6,7 +6,6 @@ use Gunpla::Position;
 use Data::Dumper;
 
 use constant VELOCITY_LIMIT => 11;
-use constant ACCELERATION_GAUGE_FIXED_LIMIT => 150000;
 
 #Identity
 has name => (
@@ -50,9 +49,23 @@ has velocity => (
     is => 'rw',
     default => 0
 );
+has acceleration => (
+    is => 'rw',
+);
 has acceleration_gauge => (
     is => 'rw',
     default => 0
+);
+has acceleration_matrix => (
+    is => 'ro',
+    default => sub { 
+        {
+            '1.5' => undef,
+            '1' => 4,
+            '0.5' => 3,
+            '-1' => 2
+        }
+    }
 );
 has max_velocity => (
     is => 'rw',
@@ -106,7 +119,7 @@ sub ok_velocity
     if($self->velocity < $self->max_velocity)
     {
         $self->acceleration_gauge($self->acceleration_gauge + 1);
-        if($self->acceleration_gauge > ACCELERATION_GAUGE_FIXED_LIMIT)
+        if($self->acceleration_gauge > $self->acceleration)
         {
             $self->velocity($self->velocity + 1);
             $self->acceleration_gauge(0);
@@ -121,7 +134,22 @@ sub set_destination
     my $destination = shift;
     $self->destination($destination);
     my $destination_vector = $self->position->vector($destination, 1, 1);
-    #TODO: penalty on change of direction
+    if($self->velocity_vector)
+    {
+        my $stir = $destination_vector->sum($self->velocity_vector);
+        for(sort { $b <=> $a } keys %{$self->acceleration_matrix})
+        {
+            my $l = $_;
+            if($stir > $l)
+            {
+                if($self->acceleration_matrix->{$l})
+                {
+                    $self->velocity($self->acceleration_matrix->{$l}) if $self->velocity > $self->acceleration_matrix->{$l};
+                    last;
+                }
+            }
+        }
+    }
     $self->velocity_vector($destination_vector);
 }
 
@@ -174,6 +202,28 @@ sub plan_and_move
 sub to_mongo
 {
     my $self = shift;
+has velocity => (
+    is => 'rw',
+    default => 0
+);
+has acceleration => (
+    is => 'rw',
+);
+has acceleration_gauge => (
+    is => 'rw',
+    default => 0
+);
+has max_velocity => (
+    is => 'rw',
+    default => 5
+);
+has velocity_gauge => (
+    is => 'rw',
+    default => 0
+);
+has velocity_vector => (
+    is => 'rw',
+);
     return {
         name => $self->name,
         faction => $self->faction,
@@ -182,6 +232,12 @@ sub to_mongo
         course => $self->course,
         movement_target => $self->movement_target,
         destination => $self->destination->to_mongo(),
+        velocity => $self->velocity,
+        acceleration => $self->cceleration,
+        acceleration_gauge => $self->acceleration_gauge,
+        max_velocity => $self->max_velocity,
+        velocity_gauge => $self->velocity_gauge,
+        velocity_vector => $self->velocity_vector->to_mongo(),
         cmd_index => $self->cmd_index,
         cmd_fetched => $self->cmd_fetched,
         sensor_range => $self->sensor_range,
@@ -200,11 +256,14 @@ sub from_mongo
     my $data = shift;
     my $position = $data->{position};
     my $destination = $data->{destination};
+    my $velocity_vector = $data->{velocity_vector};
     delete $data->{position};
     delete $data->{destination};
+    delete $data->{velocity_vector};
     my $m = $package->new($data);
     $m->position(Gunpla::Position->from_mongo($position));
     $m->destination(Gunpla::Position->from_mongo($destination));
+    $m->velocity_vector(Gunpla::Position->from_mongo($velocity_vector));
     return $m;  
 }
 
