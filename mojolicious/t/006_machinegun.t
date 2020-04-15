@@ -23,14 +23,14 @@ $world->init_test('dummy');
 my $t = Test::Mojo->new('GunplaServer');
 
 resume(1);
-diag("=== Diver sees dummy at start");
+diag("=== RX78 sees dummy at start");
 diag("Checking event generation (using API)");
-$t->get_ok('/game/event?game=autotest&mecha=Diver')->status_is(200)->json_is(
+$t->get_ok('/game/event?game=autotest&mecha=RX78')->status_is(200)->json_is(
     {
         events => [
             {
-                mecha => 'Diver',
-                message => 'Diver sighted Dummy'
+                mecha => 'RX78',
+                message => 'RX78 sighted Dummy'
             }
         ]
     }
@@ -44,13 +44,14 @@ $t->get_ok('/game/event?game=autotest&mecha=Dummy')->status_is(200)->json_is(
         events => [
             {
                 mecha => 'Dummy',
-                message => 'Diver hits with machine gun Dummy'
+                message => 'RX78 hits with machine gun Dummy'
             }
         ]
     }
 );
 diag("Checking mechas stats");
 is($world->armies->[0]->position->x, 1000);
+is($world->armies->[0]->velocity, 10);
 is($world->armies->[0]->attack_limit, 2);
 is($world->armies->[0]->gauge, 0);
 is($world->armies->[1]->life, 980);
@@ -64,23 +65,24 @@ $t->get_ok('/game/event?game=autotest&mecha=Dummy')->status_is(200)->json_is(
         events => [
             {
                 mecha => 'Dummy',
-                message => 'Diver hits with machine gun Dummy'
+                message => 'RX78 hits with machine gun Dummy'
             }
         ]
     }
 );
-$t->get_ok('/game/event?game=autotest&mecha=Diver')->status_is(200)->json_is(
+$t->get_ok('/game/event?game=autotest&mecha=RX78')->status_is(200)->json_is(
     {
         events => [
             {
-                mecha => 'Diver',
-                message => 'Diver ended machine gun shots'
-            }
+                mecha => 'RX78',
+                message => 'RX78 ended machine gun shots'
+           }
         ]
     }
 );
 
 diag("Checking mechas stats");
+is($world->armies->[0]->velocity, 10);
 is($world->armies->[0]->position->x, 600);
 is($world->armies->[0]->attack_limit, 0);
 is($world->armies->[0]->gauge, 0);
@@ -103,9 +105,9 @@ sub resume
     my $events = shift;
     if($world->armies->[0]->waiting)
     {
-        diag("Resuming Diver action");
+        diag("Resuming RX78 action");
         $world->armies->[0]->waiting(0);
-        $world->add_command('Diver', 'FLY TO WAYPOINT', 'WP-center', 'machinegun', 'Dummy');
+        $world->add_command('RX78', 'FLY TO WAYPOINT', 'WP-center', 'machinegun', 'Dummy');
     }
     if($world->armies->[1]->waiting)
     {

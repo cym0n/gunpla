@@ -21,15 +21,15 @@ $world->init_test('duel');
 
 diag("Simulation of order received");
 $world->armies->[0]->waiting(0);
-$world->add_command('Diver', 'FLY TO WAYPOINT', 'WP-center');
+$world->add_command('RX78', 'FLY TO WAYPOINT', 'WP-center');
 $world->armies->[1]->waiting(0);
-$world->add_command('Zaku', 'FLY TO WAYPOINT', 'WP-center');
+$world->add_command('Hyakushiki', 'FLY TO WAYPOINT', 'WP-center');
 
 diag("Action until sighting event");
 is($world->action(), 1);
 
 diag("Checking game status after the event");
-is($world->sighting_matrix->{'Diver'}->{'Zaku'}, 10000);
+is($world->sighting_matrix->{'RX78'}->{'Hyakushiki'}, 10000);
 is($world->armies->[0]->waiting, 1);
 is($world->armies->[0]->cmd_index, 1);
 is($world->armies->[0]->position->x, 69999);
@@ -40,12 +40,12 @@ is($world->armies->[1]->position->x, -69999);
 diag("Checking event generation (using API)");
 $world->save;
 my $t = Test::Mojo->new('GunplaServer');
-$t->get_ok('/game/event?game=autotest&mecha=Diver')->status_is(200)->json_is(
+$t->get_ok('/game/event?game=autotest&mecha=RX78')->status_is(200)->json_is(
     {
         events => [
             {
-                mecha => 'Diver',
-                message => 'Diver sighted Zaku'
+                mecha => 'RX78',
+                message => 'RX78 sighted Hyakushiki'
             }
         ]
     }

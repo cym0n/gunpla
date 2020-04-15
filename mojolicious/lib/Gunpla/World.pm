@@ -10,12 +10,12 @@ use Gunpla::Mecha;
 use constant SIGHT_TOLERANCE => 10000;
 use constant MECHA_NEARBY => 1000;
 use constant SWORD_DISTANCE => 10;
-use constant SWORD_ATTACK_TIME_LIMIT => 1500;
+use constant SWORD_ATTACK_TIME_LIMIT => 3000;
 use constant SWORD_WIN => 12;
 use constant SWORD_BOUNCE => 200;
 use constant SWORD_DAMAGE => 100;
 use constant SWORD_DAMAGE_BONUS_FACTOR => 15;
-use constant MACHINEGUN_GAUGE => 200;
+use constant MACHINEGUN_GAUGE => 400;
 use constant MACHINEGUN_SHOTS => 3;
 use constant MACHINEGUN_RANGE => 1000;
 use constant MACHINEGUN_WIN => 10;
@@ -71,7 +71,9 @@ has mecha_templates => (
             'Diver' => { sensor_range => 140000, life => 1000, max_velocity => 6, acceleration => 100000  },
             'Zaku'  => { sensor_range => 80000,  life => 1000, max_velocity => 6, acceleration => 100000 },
             'Gelgoog'  => { sensor_range => 130000,  life => 1000, max_velocity => 6, acceleration => 100000 },
-            'Dummy'  => { sensor_range => 0,  life => 1000, max_velocity => 0, acceleration => 0 }
+            'Dummy'  => { sensor_range => 0,  life => 1000, max_velocity => 0, acceleration => 0 },
+            'RX78' => { sensor_range => 140000, life => 1000, max_velocity => 10, acceleration => 10  },
+            'Hyakushiki' => { sensor_range => 80000, life => 1000, max_velocity => 10, acceleration => 10  },
         }
     }
 );
@@ -191,7 +193,7 @@ sub init_test
         $self->waypoints->{'blue'} = Gunpla::Position->new(x => 20000, y => 0, z => 0);
         $self->spawn_points->{'wolf'} = 'blue';
         $self->spawn_points->{'testing ground'} = 'center';
-        $self->add_mecha("Diver", "wolf");
+        $self->add_mecha("RX78", "wolf");
         $self->add_mecha("Dummy", "testing ground");
     }
     elsif($type eq 'duel')
@@ -202,8 +204,8 @@ sub init_test
         $self->waypoints->{'alpha'} = Gunpla::Position->new(x => 0, y => -200000, z => 0);
         $self->spawn_points->{'wolf'} = 'blue';
         $self->spawn_points->{'eagle'} = 'red';
-        $self->add_mecha("Diver", "wolf");
-        $self->add_mecha("Zaku", "eagle");
+        $self->add_mecha("RX78", "wolf");
+        $self->add_mecha("Hyakushiki", "eagle");
     }
 }
 

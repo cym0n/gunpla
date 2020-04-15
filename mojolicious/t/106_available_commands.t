@@ -21,7 +21,7 @@ my $world = Gunpla::World->new(name => 'autotest');
 $world->init_test('duel');
 my $t = Test::Mojo->new('GunplaServer');
 diag("No mecha sighted, FLY TO WAYPOINT and GET AWAY are the only available command");
-$t->get_ok('/game/available-commands?game=autotest&mecha=Diver')
+$t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
     ->status_is(200)
     ->json_is({
           'commands' => [ 
@@ -36,7 +36,7 @@ $t->get_ok('/game/available-commands?game=autotest&mecha=Diver')
            });
 
 diag("FLY TO WAYPOINT details");
-$t->get_ok('/game/command-details?game=autotest&mecha=Diver&command=flywp')
+$t->get_ok('/game/command-details?game=autotest&mecha=RX78&command=flywp')
     ->status_is(200)
     ->json_is({
           'command' => {
@@ -56,7 +56,7 @@ $world = Gunpla::World->new(name => 'autotest');
 diag("Stimulating sight matrix generation");
 $world->init_test('dummy');
 $world->armies->[0]->waiting(0);
-$world->add_command('Diver', 'WAITING');
+$world->add_command('RX78', 'WAITING');
 $world->armies->[1]->waiting(0);
 $world->add_command('Dummy', 'WAITING');
 is($world->action(), 1);
@@ -64,7 +64,7 @@ $world->save();
 
 my $t2 = Test::Mojo->new('GunplaServer');
 diag("Mecha sighted, all commands available");
-$t2->get_ok('/game/available-commands?game=autotest&mecha=Diver')
+$t2->get_ok('/game/available-commands?game=autotest&mecha=RX78')
     ->status_is(200)
     ->json_is({
           'commands' => [
@@ -87,7 +87,7 @@ $t2->get_ok('/game/available-commands?game=autotest&mecha=Diver')
            });
 
 diag("FLY TO WAYPOINT details");
-$t2->get_ok('/game/command-details?game=autotest&mecha=Diver&command=flywp')
+$t2->get_ok('/game/command-details?game=autotest&mecha=RX78&command=flywp')
     ->status_is(200)
     ->json_is({
           'command' => {
@@ -101,7 +101,7 @@ $t2->get_ok('/game/command-details?game=autotest&mecha=Diver&command=flywp')
                         }
     });
 diag("FLY TO MECHA details");
-$t2->get_ok('/game/command-details?game=autotest&mecha=Diver&command=flymec')
+$t2->get_ok('/game/command-details?game=autotest&mecha=RX78&command=flymec')
     ->status_is(200)
     ->json_is({
           'command' => {
@@ -109,7 +109,7 @@ $t2->get_ok('/game/command-details?game=autotest&mecha=Diver&command=flymec')
                           'label' => 'FLY TO MECHA',
                           'conditions' => [ 'sighted_foe' ],
                           'params_label' => 'Select a Mecha',
-                          'params_callback' => '/game/sighted?game=autotest&mecha=Diver',
+                          'params_callback' => '/game/sighted?game=autotest&mecha=RX78',
                           'params_masternode' => 'mechas',
                           'machinegun' => 1
                         }

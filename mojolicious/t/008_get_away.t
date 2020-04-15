@@ -24,23 +24,23 @@ my $t = Test::Mojo->new('GunplaServer');
 
 $world->armies->[0]->position->x(200000);
 $world->armies->[0]->waiting(0);
-$world->add_command('Diver', 'GET AWAY', 'WP-center');
+$world->add_command('RX78', 'GET AWAY', 'WP-center');
 $world->armies->[1]->waiting(0);
 $world->add_command('Dummy', 'WAITING');
 is($world->action(), 1);
 $world->save;
-diag("Diver got away");
-$t->get_ok('/game/event?game=autotest&mecha=Diver')->status_is(200)->json_is(
+diag("RX78 got away");
+$t->get_ok('/game/event?game=autotest&mecha=RX78')->status_is(200)->json_is(
     {
         events => [
             {
-                mecha => 'Diver',
-                message => 'Diver reached destination: void space'
+                mecha => 'RX78',
+                message => 'RX78 reached destination: void space'
             }
         ]
     }
 );
-diag("Check Diver position");
+diag("Check RX78 position");
 is($world->armies->[0]->position->x, 230000);
 
 open(my $log, "> /tmp/out1.log");
