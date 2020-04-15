@@ -171,8 +171,8 @@ sub init
     say "Init...\n";
     $self->build_commands();
     $self->waypoints->{'center'} = Gunpla::Position->new(x => 0, y => 0, z => 0);
-    $self->waypoints->{'blue'} = Gunpla::Position->new(x => 500000, y => 0, z => 0);
-    $self->waypoints->{'red'} = Gunpla::Position->new(x => -500000, y => 0, z => 0);
+    $self->waypoints->{'blue'} = Gunpla::Position->new(x => 200000, y => 0, z => 0);
+    $self->waypoints->{'red'} = Gunpla::Position->new(x => -200000, y => 0, z => 0);
     $self->waypoints->{'alpha'} = Gunpla::Position->new(x => 0, y => -200000, z => 0);
     $self->spawn_points->{'wolf'} = 'blue';
     $self->spawn_points->{'eagle'} = 'red';

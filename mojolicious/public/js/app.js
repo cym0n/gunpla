@@ -33,7 +33,9 @@ App = {
             </div>
             <div class="form-group">
             </div>
+            <div class="form-group">
             <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
         </form></div>`);
         fetch('/game/available-commands?game='+App.game+'&mecha='+m.name)
         .then(function(response) { return response.json(); })
@@ -162,7 +164,7 @@ App = {
         machinegun = data.command.machinegun;
         masternode = data.command.params_masternode;
         paramDiv.append('<lable for="params_'+name+'>'+data.command.params_label+'</label>');
-        paramDiv.append('<select class="form-control" name="params_'+name+'" id="params_'+name+'"></select>');
+        paramDiv.append('<div class="form-group"><select class="form-control" name="params_'+name+'" id="params_'+name+'"></select></div>');
         fetch(data.command.params_callback).then(function(response) { return response.json(); })
         .then(function(data) {
             data[masternode].forEach(function(d, index, array) {
@@ -173,10 +175,29 @@ App = {
         { 
             App.machinegunForm(name, paramDiv);
         }
+        App.velocityForm(name, paramDiv);
     });
   },
+  velocityForm : function(name, div) {
+    fetch('/game/mechas?game='+App.game+'&mecha='+name)
+    .then(function(response) { return response.json(); })
+    .then(function(data) { 
+        var form = '<div class="form-group row">'+
+                        '<label class="col-sm-8">Velocity</label>'+
+                        '<div class="col-sm-12">';
+        for (i = 1; i <= data.mecha.max_velocity; i++) {
+            checked = '';
+            if(i == data.mecha.velocity)
+            {
+                checked = 'checked';
+            }
+            form = form +
+                '<label class="radio-inline"> <input type="radio" name="velocity" id="velocity'+i+'" value="'+i+'" '+checked+'>'+i+'</label>';
+        }
+        form = form + '</div></div>';
+    $(form).insertAfter(div); });
+  },
   machinegunForm : function(name, div) {
-    console.log(div);
     $(`
         <div class="form-group" id="machinegunform">
         <div class="form-check">
@@ -204,6 +225,7 @@ App = {
     var params;
     var secondarycommand;
     var secondaryparams;
+    var velocity;
     command = cmd;
     params = form.find('select[name="params_'+mid+'"]').children('option:selected').attr('value');
     if($( form.find('input[name="machinegun"]')).prop('checked'))
@@ -214,6 +236,10 @@ App = {
             secondarycommand = 'machinegun';
         }
     }
+    if($( form.find('input[name="velocity"]')))
+    {
+        velocity = $( form.find('input[name="velocity"]:checked')).val();
+    }
     console.log("Adding command "+command+" with params "+params+" to mecha "+mid);
     fetch('/game/command', {
         method: 'post',
@@ -222,6 +248,7 @@ App = {
             'params': params,
             'secondarycommand': secondarycommand,
             'secondaryparams': secondaryparams,
+            'velocity': velocity,
             'mecha': mid,
             'game': App.game })
     })

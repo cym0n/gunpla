@@ -14,6 +14,8 @@ sub mecha_from_mongo_to_json
              life     => $mecha->{life},
              faction  => $mecha->{faction},
              position => $mecha->{position},
+             velocity => $mecha->{velocity},
+             max_velocity => $mecha->{max_velocity},
              waiting  => $mecha->{waiting} };
 }
 
