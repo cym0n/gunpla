@@ -202,28 +202,6 @@ sub plan_and_move
 sub to_mongo
 {
     my $self = shift;
-has velocity => (
-    is => 'rw',
-    default => 0
-);
-has acceleration => (
-    is => 'rw',
-);
-has acceleration_gauge => (
-    is => 'rw',
-    default => 0
-);
-has max_velocity => (
-    is => 'rw',
-    default => 5
-);
-has velocity_gauge => (
-    is => 'rw',
-    default => 0
-);
-has velocity_vector => (
-    is => 'rw',
-);
     return {
         name => $self->name,
         faction => $self->faction,
@@ -233,7 +211,7 @@ has velocity_vector => (
         movement_target => $self->movement_target,
         destination => $self->destination->to_mongo(),
         velocity => $self->velocity,
-        acceleration => $self->cceleration,
+        acceleration => $self->acceleration,
         acceleration_gauge => $self->acceleration_gauge,
         max_velocity => $self->max_velocity,
         velocity_gauge => $self->velocity_gauge,
