@@ -13,7 +13,8 @@ my $max_velocity  = 6;
 my $acceleration = 100000;
 my $report = undef;
 my $steps = undef;
-GetOptions( 'max-velocity=s' => \$max_velocity, "acceleration=s" => \$acceleration, "report=s" => \$report, "steps=s" => \$steps );
+my $full = undef;
+GetOptions( 'full' => \$full, 'max-velocity=s' => \$max_velocity, "acceleration=s" => \$acceleration, "report=s" => \$report, "steps=s" => \$steps );
 my @wps = ();
 
 for(@ARGV)
@@ -22,7 +23,7 @@ for(@ARGV)
 
 }
 
-my $world = Gunpla::Mechadrome->new(name => 'mechadrome');
+my $world = Gunpla::Mechadrome->new(name => 'mechadrome', full_record => $full);
 $world->init_drome();
 $world->armies->[0]->acceleration($acceleration);
 $world->armies->[0]->max_velocity($max_velocity);

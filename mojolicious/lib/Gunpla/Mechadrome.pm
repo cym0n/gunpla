@@ -15,6 +15,10 @@ has report => (
     is => 'rw',
     default => undef
 );
+has full_record => (
+    is => 'rw',
+    default => 0
+);
 
 
 sub init_drome
@@ -84,15 +88,22 @@ sub race
                         }
                     }
                 }
+                my $scan = "Step: " . $self->counter . "\n" .
+                           "Waypoint: $wp" . "\n" .
+                           "Mecha position: " . $m->position->as_string() . "\n" .
+                           "Velocity: " . $m->velocity . "\n" .
+                           "Velocity Gauge: " . $m->velocity_gauge . "\n" .
+                           "Acceleration Gauge: " . $m->velocity_gauge . "\n" .
+                           "Velocity vector: " . $m->velocity_vector->as_string();
+
                 if($self->counter % 1000 == 0)
                 {
-                    say "Step: " . $self->counter;
-                    say "Waypoint: $wp";
-                    say "Mecha position: " . $m->position->as_string();
-                    say "Velocity: " . $m->velocity;
-                    say "Velocity Gauge: " . $m->velocity_gauge;
-                    say "Acceleration Gauge: " . $m->velocity_gauge;
-                    say "Velocity vector: " . $m->velocity_vector->as_string();
+                    say $scan;
+                }
+                if($self->full_record && $self->report)
+                {    open(my $rfh, ">> " . $self->report);
+                     print {$rfh} "$scan\n\n";
+                     close($rfh);
                 }
             }
             $self->counter($self->counter+1);
