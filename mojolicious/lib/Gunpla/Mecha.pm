@@ -79,7 +79,9 @@ has velocity_gauge => (
 has velocity_vector => (
     is => 'rw',
 );
-
+has velocity_target => (
+    is => 'rw',
+);
 #Combat
 has attack => (
     is => 'rw'
@@ -130,7 +132,7 @@ sub ok_velocity
             $move = 1;
         }
     }
-    if($self->velocity < $self->max_velocity)
+    if($self->velocity < $self->velocity_target)
     {
         $self->acceleration_gauge($self->acceleration_gauge + 1);
         if($self->acceleration_gauge > $self->acceleration)
@@ -138,6 +140,10 @@ sub ok_velocity
             $self->velocity($self->velocity + 1);
             $self->acceleration_gauge(0);
         }
+    }
+    elsif($self->velocity > $self->velocity_target)
+    {
+        $self->velocity = $self->velocity_target;
     }
     return $move;
 }
@@ -230,6 +236,7 @@ sub to_mongo
         max_velocity => $self->max_velocity,
         velocity_gauge => $self->velocity_gauge,
         velocity_vector => $self->velocity_vector->to_mongo(),
+        velocity_target => $self->velocity_target,
         cmd_index => $self->cmd_index,
         cmd_fetched => $self->cmd_fetched,
         sensor_range => $self->sensor_range,

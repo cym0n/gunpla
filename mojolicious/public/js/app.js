@@ -155,7 +155,8 @@ App = {
   commandParams : function(select, name) {
     var paramDiv = $( select ).parent().next();
     paramDiv.empty();
-    $('#machinegunform').remove()
+    $('#'+name+'_machinegunform').remove()
+    $('#'+name+'_velocityform').remove()
     var machinegun = 0;
     var masternode = '';
     fetch('/game/command-details?game='+App.game+'&mecha='+name+'&command='+select.value)
@@ -175,14 +176,17 @@ App = {
         { 
             App.machinegunForm(name, paramDiv);
         }
-        App.velocityForm(name, paramDiv);
+        if(data.command.velocity == 1)
+        {
+            App.velocityForm(name, paramDiv);
+        }
     });
   },
   velocityForm : function(name, div) {
     fetch('/game/mechas?game='+App.game+'&mecha='+name)
     .then(function(response) { return response.json(); })
     .then(function(data) { 
-        var form = '<div class="form-group row">'+
+        var form = '<div class="form-group row" id="'+name+'_velocityform">'+
                         '<label class="col-sm-8">Velocity</label>'+
                         '<div class="col-sm-12">';
         for (i = 1; i <= data.mecha.max_velocity; i++) {
@@ -199,7 +203,7 @@ App = {
   },
   machinegunForm : function(name, div) {
     $(`
-        <div class="form-group" id="machinegunform">
+        <div class="form-group" id="${name}_machinegunform">
         <div class="form-check">
         <input type="checkbox" class="form-check-input" id="machinegun" name="machinegun">
         <label class="form-check-label" for="machinegun">Fire machinegun</label>

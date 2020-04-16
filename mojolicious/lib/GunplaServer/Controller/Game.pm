@@ -162,6 +162,7 @@ sub add_command
                                                       params    => $params->{params},
                                                       secondarycommand   => $params->{secondarycommand},
                                                       secondaryparams    => $params->{secondaryparams},
+                                                      velocity    => $params->{velocity},
                                                       mecha     => $params->{mecha},
                                                       cmd_index => $mecha->{cmd_index} });
         $db->get_collection('mechas')->update_one( { 'name' => $params->{mecha} }, { '$set' => { 'waiting' => 0 } } );
@@ -171,6 +172,7 @@ sub add_command
                                           mecha   => $params->{mecha},
                                           secondarycommand => $params->{secondarycommand},
                                           secondaryparams => $params->{secondaryparams},
+                                          velocity    => $params->{velocity},
                             } });
 
 
@@ -194,7 +196,8 @@ sub read_command
                                       params  => $command->{params},
                                       mecha   => $command->{mecha},
                                       secondarycommand => $command->{secondarycommand},
-                                      secondaryparams => $command->{secondaryparams}}});
+                                      secondaryparams => $command->{secondaryparams},
+                                      velocity    => $command->{velocity}}});
 }
 
 sub read_event

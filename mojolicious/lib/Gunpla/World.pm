@@ -134,7 +134,8 @@ sub build_commands
             params_label => 'Select a Waypoint',
             params_callback => '/game/waypoints?game=%%GAME%%',
             params_masternode => 'waypoints',
-            machinegun => 1
+            machinegun => 1,
+            velocity => 1
         }, 1);
     $self->configure_command( {
             code => 'flymec',
@@ -143,6 +144,7 @@ sub build_commands
             params_label => 'Select a Mecha',
             params_callback => '/game/sighted?game=%%GAME%%&mecha=%%MECHA%%',
             params_masternode => 'mechas',
+            velocity => 1,
             machinegun => 1
         }, 1);
     $self->configure_command( {
@@ -152,7 +154,8 @@ sub build_commands
             params_label => 'Select a Mecha',
             params_callback => '/game/sighted?game=%%GAME%%&mecha=%%MECHA%%',
             params_masternode => 'mechas',
-            machinegun => 0
+            machinegun => 0,
+            velocity => 0
         }, 1);
     $self->configure_command( {
             code => 'away',
@@ -161,7 +164,8 @@ sub build_commands
             params_label => 'Select a Element',
             params_callback => '/game/visible-elements?game=%%GAME%%&mecha=%%MECHA%%',
             params_masternode => 'elements',
-            machinegun => 1
+            machinegun => 1,
+            velocity => 1
         }, 1);
 }
 
@@ -215,16 +219,19 @@ sub add_command
 {
     my $self = shift;
     my $mecha = shift;
-    my $command = shift;
-    my $params = shift;
-    my $secondary_command = shift;
-    my $secondary_params = shift;
+    my $command_mongo = shift;
+    my $command = $command_mongo->{command};
+    my $params = $command_mongo->{params};
+    my $secondary_command = $command_mongo->{secondarycommand};
+    my $secondary_params = $command_mongo->{secondaryparams};
+    my $velocity = $command_mongo->{velocity};
     my $m = $self->get_mecha_by_name($mecha);
     my ($target_type, $target_id) = split('-', $params) if $params;
     if($command eq 'FLY TO WAYPOINT')
     {
         $m->set_destination($self->waypoints->{$target_id}->clone());
         $m->movement_target({ type => 'waypoint', 'name' => $target_id, class => 'fixed'  });
+        $m->velocity_target($velocity);
     }
     elsif($command eq 'FLY TO MECHA')
     {
@@ -232,6 +239,7 @@ sub add_command
     
         $m->set_destination($target->position->clone());
         $m->movement_target({ type => 'mecha', 'name' => $target_id, class => 'dynamic'  });
+        $m->velocity_target($velocity);
     }
     elsif($command eq 'SWORD ATTACK')
     {
@@ -270,6 +278,7 @@ sub add_command
         my $destination = $m->position->away_from($target, GET_AWAY_DISTANCE);
         $m->set_destination($destination);
         $m->movement_target({ type => 'void', name => 'space', class => 'fixed'  });
+        $m->velocity_target($velocity);
     }
     elsif($command eq 'WAITING')
     {
@@ -309,7 +318,7 @@ sub fetch_commands_from_mongo
             my $mongo = MongoDB->connect();
             my $db = $mongo->get_database('gunpla_' . $self->name);
             my ( $command ) = $db->get_collection('commands')->find({ mecha => $m->name, cmd_index => $m->cmd_index })->all();
-            $self->add_command($m->name, $command->{command}, $command->{params}, $command->{secondarycommand}, $command->{secondaryparams});
+            $self->add_command($m->name, $command);
         }
     }
 }
