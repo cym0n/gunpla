@@ -22,9 +22,9 @@ $world->save();
 
 my $t = Test::Mojo->new('GunplaServer');
 
-diag("Adding a command to Diver");
+diag("Adding a command to RX78");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
-                                                              mecha => 'Diver', 
+                                                              mecha => 'RX78', 
                                                               command => 'FLY TO WAYPOINT',
                                                               params => 'WP-center' })
     ->status_is(200)
@@ -32,13 +32,13 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
                 'command' => {
                     'params' => 'WP-center',
                     'command' => 'FLY TO WAYPOINT',
-                    'mecha' => 'Diver',
+                    'mecha' => 'RX78',
                     'secondarycommand' => undef,
                     'secondaryparams' => undef,
                 } });
-diag("Adding a command to Zaku");
+diag("Adding a command to Hyakushiki");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
-                                                              mecha => 'Zaku', 
+                                                              mecha => 'Hyakushiki', 
                                                               command => 'FLY TO WAYPOINT',
                                                               params => 'WP-alpha' })
     ->status_is(200)
@@ -46,7 +46,7 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
                 'command' => {
                     'params' => 'WP-alpha',
                     'command' => 'FLY TO WAYPOINT',
-                    'mecha' => 'Zaku',
+                    'mecha' => 'Hyakushiki',
                     'secondarycommand' => undef,
                     'secondaryparams' => undef,
                 } });
@@ -56,44 +56,48 @@ say `script/gunpla.pl action autotest`;
 
 my $t2 = Test::Mojo->new('GunplaServer');
 diag("Getting the event - distance is exactly 140000");
-$t2->get_ok('/game/event?game=autotest&mecha=Diver')->status_is(200)->json_is(
+$t2->get_ok('/game/event?game=autotest&mecha=RX78')->status_is(200)->json_is(
     {
         events => [
             {
-                mecha => 'Diver',
-                message => 'Diver sighted Zaku'
+                mecha => 'RX78',
+                message => 'RX78 sighted Hyakushiki'
             }
         ]
     }
 );
-diag("Check Diver position");
-$t2->get_ok('/game/mechas?game=autotest&mecha=Diver')->status_is(200)->json_is(
+diag("Check RX78 position");
+$t2->get_ok('/game/mechas?game=autotest&mecha=RX78')->status_is(200)->json_is(
     {
         mecha => {
-            name => 'Diver',
-            label => 'Diver',
+            name => 'RX78',
+            label => 'RX78',
             map_type => 'mecha',
-            world_id => 'MEC-Diver',
+            world_id => 'MEC-RX78',
             life => 1000,
             faction => 'wolf',
             position => { x => 64613, y => 0, z => 0 },
-            waiting => 1
+            waiting => 1,
+            velocity => 10,
+            max_velocity => 10,
         }
     }
 );
 
-diag("Check Zaku position");
-$t2->get_ok('/game/mechas?game=autotest&mecha=Zaku')->status_is(200)->json_is(
+diag("Check Hyakushiki position");
+$t2->get_ok('/game/mechas?game=autotest&mecha=Hyakushiki')->status_is(200)->json_is(
     {
         mecha => {
-            name => 'Zaku',
-            label => 'Zaku',
-            world_id => 'MEC-Zaku',
+            name => 'Hyakushiki',
+            label => 'Hyakushiki',
+            world_id => 'MEC-Hyakushiki',
             map_type => 'mecha',
             life => 1000,
             faction => 'eagle',
             position => { x => -75000, y => -10387, z => 0 },
-            waiting => 0
+            waiting => 0,
+            velocity => 10,
+            max_velocity => 10,
         }
     }
 );
