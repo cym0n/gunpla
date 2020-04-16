@@ -10,11 +10,12 @@ use Gunpla::Mecha;
 use constant SIGHT_TOLERANCE => 10000;
 use constant MECHA_NEARBY => 1000;
 use constant SWORD_DISTANCE => 10;
-use constant SWORD_ATTACK_TIME_LIMIT => 3000;
+use constant SWORD_ATTACK_TIME_LIMIT => 4000;
 use constant SWORD_WIN => 12;
 use constant SWORD_BOUNCE => 200;
 use constant SWORD_DAMAGE => 100;
 use constant SWORD_DAMAGE_BONUS_FACTOR => 15;
+use constant SWORD_GAUGE_VELOCITY_BONUS => 20;
 use constant MACHINEGUN_GAUGE => 400;
 use constant MACHINEGUN_SHOTS => 3;
 use constant MACHINEGUN_RANGE => 1000;
@@ -72,8 +73,8 @@ has mecha_templates => (
             'Zaku'  => { sensor_range => 80000,  life => 1000, max_velocity => 6, acceleration => 100000 },
             'Gelgoog'  => { sensor_range => 130000,  life => 1000, max_velocity => 6, acceleration => 100000 },
             'Dummy'  => { sensor_range => 0,  life => 1000, max_velocity => 0, acceleration => 0 },
-            'RX78' => { sensor_range => 140000, life => 1000, max_velocity => 10, acceleration => 10  },
-            'Hyakushiki' => { sensor_range => 80000, life => 1000, max_velocity => 10, acceleration => 10  },
+            'RX78' => { sensor_range => 140000, life => 1000, max_velocity => 10, acceleration => 100  },
+            'Hyakushiki' => { sensor_range => 80000, life => 1000, max_velocity => 10, acceleration => 100  },
         }
     }
 );
@@ -252,7 +253,7 @@ sub add_command
         $m->movement_target({ type => 'mecha', 'name' => $target_id, class => 'dynamic'  });
         $m->attack_target({ type => 'mecha', 'name' => $target_id, class => 'dynamic'  });
         $m->attack_limit(SWORD_ATTACK_TIME_LIMIT);
-        $m->gauge(0);
+        $m->gauge(SWORD_GAUGE_VELOCITY_BONUS * $m->velocity);
     }
     elsif($command eq 'GET AWAY')
     {
@@ -455,18 +456,22 @@ sub manage_attack
             {
                 $attacker->gauge(0);
                 $attacker->attack_limit(0);
+                $attacker->attack(undef);
                 $defender->gauge(0);
                 $defender->attack_limit(0);
+                $defender->attack(undef);
                 $self->event($attacker->name . " and " . $defender->name . " attacks nullified");
                 $clash = 0;
+                $attacker->velocity(0);
+                $defender->velocity(0);
             }
         }
         if($clash)
         {
-            my $gauge_bonus = $attacker->gauge < 300 ? 0 :
-                                        $attacker->gauge < 500 ? 1 :
-                                            $attacker->gauge < 1000 ? 2 :
-                                                $attacker->gauge < 1400 ? 3 : 4;
+            my $gauge_bonus = $attacker->gauge < 1200 ? 0 :
+                                        $attacker->gauge < 2000 ? 1 :
+                                            $attacker->gauge < 4000 ? 2 :
+                                                $attacker->gauge < 5600 ? 3 : 4;
             my $roll = $self->dice(1, 20);
             if($roll + $gauge_bonus >= SWORD_WIN)
             {
@@ -483,7 +488,15 @@ sub manage_attack
         }
         my @dirs = qw(x y z);
         my $bounce_direction = $dirs[$self->dice(0, 2)];
+        $attacker->attack(undef);
+        $attacker->attack_limit(0);
+        $attacker->velocity(0);
+        $attacker->gauge(0);
         $attacker->position->$bounce_direction($attacker->position->$bounce_direction - SWORD_BOUNCE);
+        $defender->attack(undef);
+        $defender->attack_limit(0);
+        $defender->velocity(0);
+        $defender->gauge(0);
         $defender->position->$bounce_direction($defender->position->$bounce_direction + SWORD_BOUNCE);
     }
     elsif($attack eq 'MACHINEGUN')

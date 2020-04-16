@@ -6,6 +6,7 @@ use Gunpla::Position;
 use Data::Dumper;
 
 use constant VELOCITY_LIMIT => 11;
+use constant SWORD_VELOCITY => 8;
 
 #Identity
 has name => (
@@ -103,14 +104,27 @@ has sensor_range => (
     is => 'ro',
 );
 
+sub get_velocity
+{
+    my $self = shift;
+    if($self->attack && $self->attack eq 'SWORD')
+    {
+        return SWORD_VELOCITY;
+    } 
+    else
+    {
+        $self->velocity();
+    }
+}
+
 sub ok_velocity
 {
     my $self = shift;
     my $move = 0;
-    if($self->velocity > 0)
+    if($self->get_velocity > 0)
     {
         $self->velocity_gauge($self->velocity_gauge + 1);
-        if($self->velocity_gauge > (VELOCITY_LIMIT  - $self->velocity))
+        if($self->velocity_gauge > (VELOCITY_LIMIT  - $self->get_velocity))
         {
             $self->velocity_gauge(0);
             $move = 1;
