@@ -14,8 +14,10 @@ $world->init_test('duel');
 diag("Simulation of order received");
 $world->armies->[0]->destination(Gunpla::Position->new(x => 0, y => 0, z => 0));
 $world->armies->[0]->movement_target({ type => 'waypoint', name => 'center', class => 'fixed'});
+$world->armies->[0]->velocity_target(6);
 $world->armies->[1]->destination(Gunpla::Position->new(x => 0, y => 0, z => 0));
 $world->armies->[1]->movement_target({ type => 'waypoint', name => 'center', class => 'fixed'});
+$world->armies->[1]->velocity_target(6);
 $world->armies->[0]->waiting(0);
 $world->armies->[1]->waiting(0);
 

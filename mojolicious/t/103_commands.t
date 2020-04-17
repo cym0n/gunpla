@@ -24,7 +24,8 @@ diag("Adding a command to RX78");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
                                                               mecha => 'RX78', 
                                                               command => 'FLY TO WAYPOINT',
-                                                              params => 'WP-center' })
+                                                              params => 'WP-center',
+                                                              velocity => 4 })
     ->status_is(200)
     ->json_is({ result => 'OK',
                 'command' => {
@@ -33,6 +34,7 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
                     'mecha' => 'RX78',
                     'secondarycommand' => undef,
                     'secondaryparams' => undef,
+                    'velocity' => 4,
                 } });
 open(my $log, "> /tmp/out1.log");
 print {$log} Dumper($t->tx->res->json) . "\n";
@@ -50,6 +52,7 @@ $t->get_ok('/game/command?game=autotest&mecha=RX78')->status_is(200)->json_is(
             'mecha' => 'RX78',
             'secondarycommand' => undef,
             'secondaryparams' => undef,
+            'velocity' => 4,
         }
     }
 );
@@ -60,7 +63,9 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
                                                               command => 'FLY TO WAYPOINT',
                                                               params => 'WP-center',
                                                               secondarycommand => 'machinegun',
-                                                              secondaryparams => 'RX78' })
+                                                              secondaryparams => 'RX78',
+                                                              velocity => 5,
+ })
     ->status_is(200)
     ->json_is({ result => 'OK',
                 'command' => {
@@ -69,6 +74,7 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
                     'mecha' => 'Hyakushiki',
                     'secondarycommand' => 'machinegun',
                     'secondaryparams' => 'RX78',
+                    'velocity' => 5,
                 } });
 
 diag("Veriying waiting mecha flag");
@@ -83,6 +89,7 @@ $t->get_ok('/game/command?game=autotest&mecha=Hyakushiki')->status_is(200)->json
             'mecha' => 'Hyakushiki',
             'secondarycommand' => 'machinegun',
             'secondaryparams' => 'RX78',
+            'velocity' => 5,
         }
     }
 );

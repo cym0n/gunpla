@@ -80,13 +80,13 @@ sub resume
     {
         diag("Resuming RX78 action");
         $world->armies->[0]->waiting(0);
-        $world->add_command('RX78', 'SWORD ATTACK', 'MEC-Dummy');
+        $world->add_command('RX78', { command => 'SWORD ATTACK', params => 'MEC-Dummy'});
     }
     if($world->armies->[1]->waiting)
     {
         diag("Resuming Dummy action");
         $world->armies->[1]->waiting(0);
-        $world->add_command('Dummy', 'WAITING');
+        $world->add_command('Dummy', {command => 'WAITING'});
     }
     is($world->action(), $events);
     $world->save;

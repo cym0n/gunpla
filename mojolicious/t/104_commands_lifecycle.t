@@ -26,7 +26,8 @@ diag("Adding a command to RX78");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
                                                               mecha => 'RX78', 
                                                               command => 'FLY TO WAYPOINT',
-                                                              params => 'WP-center' })
+                                                              params => 'WP-center',
+                                                              velocity => 4 })
     ->status_is(200)
     ->json_is({ result => 'OK',
                 'command' => {
@@ -35,12 +36,14 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
                     'mecha' => 'RX78',
                     'secondarycommand' => undef,
                     'secondaryparams' => undef,
+                    'velocity' => 4
                 } });
 diag("Adding a command to Hyakushiki");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
                                                               mecha => 'Hyakushiki', 
                                                               command => 'FLY TO WAYPOINT',
-                                                              params => 'WP-alpha' })
+                                                              params => 'WP-alpha',
+                                                              velocity => 5 })
     ->status_is(200)
     ->json_is({ result => 'OK',
                 'command' => {
@@ -49,6 +52,7 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
                     'mecha' => 'Hyakushiki',
                     'secondarycommand' => undef,
                     'secondaryparams' => undef,
+                    'velocity' => 5
                 } });
 
 diag("Running script to elaborate actions");
@@ -76,9 +80,9 @@ $t2->get_ok('/game/mechas?game=autotest&mecha=RX78')->status_is(200)->json_is(
             world_id => 'MEC-RX78',
             life => 1000,
             faction => 'wolf',
-            position => { x => 64613, y => 0, z => 0 },
+            position => { x => 64482, y => 0, z => 0 },
             waiting => 1,
-            velocity => 10,
+            velocity => 4,
             max_velocity => 10,
         }
     }
@@ -94,9 +98,9 @@ $t2->get_ok('/game/mechas?game=autotest&mecha=Hyakushiki')->status_is(200)->json
             map_type => 'mecha',
             life => 1000,
             faction => 'eagle',
-            position => { x => -75000, y => -10387, z => 0 },
+            position => { x => -75000, y => -12014, z => 0 },
             waiting => 0,
-            velocity => 10,
+            velocity => 5,
             max_velocity => 10,
         }
     }

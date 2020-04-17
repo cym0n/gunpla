@@ -81,6 +81,7 @@ has velocity_vector => (
 );
 has velocity_target => (
     is => 'rw',
+    default => 0,
 );
 #Combat
 has attack => (

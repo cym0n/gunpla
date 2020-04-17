@@ -24,9 +24,9 @@ my $t = Test::Mojo->new('GunplaServer');
 
 $world->armies->[0]->position->x(200000);
 $world->armies->[0]->waiting(0);
-$world->add_command('RX78', 'GET AWAY', 'WP-center');
+$world->add_command('RX78', { command =>'GET AWAY', params => 'WP-center', velocity => 10});
 $world->armies->[1]->waiting(0);
-$world->add_command('Dummy', 'WAITING');
+$world->add_command('Dummy', {command => 'WAITING'});
 is($world->action(), 1);
 $world->save;
 diag("RX78 got away");

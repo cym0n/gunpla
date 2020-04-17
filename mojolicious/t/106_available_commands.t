@@ -46,7 +46,8 @@ $t->get_ok('/game/command-details?game=autotest&mecha=RX78&command=flywp')
                           'params_label' => 'Select a Waypoint',
                           'params_callback' => '/game/waypoints?game=autotest',
                           'params_masternode' => 'waypoints',
-                          'machinegun' => 0
+                          'machinegun' => 0,
+                          'velocity' => 1
                         }
     });
 
@@ -56,9 +57,9 @@ $world = Gunpla::World->new(name => 'autotest');
 diag("Stimulating sight matrix generation");
 $world->init_test('dummy');
 $world->armies->[0]->waiting(0);
-$world->add_command('RX78', 'WAITING');
+$world->add_command('RX78', {command => 'WAITING'});
 $world->armies->[1]->waiting(0);
-$world->add_command('Dummy', 'WAITING');
+$world->add_command('Dummy', { command => 'WAITING'});
 is($world->action(), 1);
 $world->save();
 
@@ -97,7 +98,8 @@ $t2->get_ok('/game/command-details?game=autotest&mecha=RX78&command=flywp')
                           'params_label' => 'Select a Waypoint',
                           'params_callback' => '/game/waypoints?game=autotest',
                           'params_masternode' => 'waypoints',
-                          'machinegun' => 1
+                          'machinegun' => 1,
+                          'velocity' => 1
                         }
     });
 diag("FLY TO MECHA details");
@@ -111,7 +113,8 @@ $t2->get_ok('/game/command-details?game=autotest&mecha=RX78&command=flymec')
                           'params_label' => 'Select a Mecha',
                           'params_callback' => '/game/sighted?game=autotest&mecha=RX78',
                           'params_masternode' => 'mechas',
-                          'machinegun' => 1
+                          'machinegun' => 1,
+                          'velocity' => 1,
                         }
     });
 diag("Drop gunpla_autotest db");
