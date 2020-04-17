@@ -167,6 +167,16 @@ sub build_commands
             machinegun => 1,
             velocity => 1
         }, 1);
+    $self->configure_command( {
+            code => 'rifle',
+            label => 'RIFLE',
+            conditions => [ 'sighted_foe' ],
+            params_label => 'Select a Mecha',
+            params_callback => '/game/sighted?game=%%GAME%%&mecha=%%MECHA%%',
+            params_masternode => 'mechas',
+            machinegun => 0,
+            velocity => 0
+        }, 1);
 }
 
 
