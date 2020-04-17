@@ -665,9 +665,9 @@ sub calculate_sighting_matrix
             {
                 if($self->sighting_matrix->{$m->name}->{$other->name} == 0)
                 {
-                    $self->sighting_matrix->{$m->name}->{$other->name} = SIGHT_TOLERANCE;
                     $self->event($m->name . " sighted " . $other->name, [ $m->name ]);
                 }
+                $self->sighting_matrix->{$m->name}->{$other->name} = SIGHT_TOLERANCE;
             }
             else
             {
@@ -676,7 +676,7 @@ sub calculate_sighting_matrix
                     $self->sighting_matrix->{$m->name}->{$other->name} -= 1;
                     if($self->sighting_matrix->{$m->name}->{$other->name} == 0)
                     {
-                        $self->event($m->name . " lost contact with  " . $other->name, [ $m->name ]);
+                        $self->event($m->name . " lost contact with " . $other->name, [ $m->name ]);
                     }
                 }
             }

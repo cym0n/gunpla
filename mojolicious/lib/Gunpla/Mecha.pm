@@ -154,6 +154,7 @@ sub set_destination
     my $self = shift;
     my $destination = shift;
     $self->destination($destination);
+    $self->course->{steps} = 0; #Reset previous course
     my $destination_vector = $self->position->vector($destination, 1, 1);
     if($self->velocity_vector)
     {
