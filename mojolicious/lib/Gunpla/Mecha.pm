@@ -107,6 +107,15 @@ has sensor_range => (
     is => 'ro',
 );
 
+sub mod_attack_gauge
+{
+    my $self = shift;
+    my $value = shift;
+    my $new_value = $self->attack_gauge + $value;
+    $new_value = $new_value < 0 ? 0 : $new_value;
+    $self->attack_gauge($new_value);
+}
+
 sub stop_movement
 {
     my $self = shift;

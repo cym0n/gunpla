@@ -13,7 +13,7 @@ use constant SWORD_DISTANCE => 10;
 use constant SWORD_ATTACK_TIME_LIMIT => 4000;
 use constant SWORD_WIN => 12;
 use constant SWORD_BOUNCE => 200;
-use constant SWORD_DAMAGE => 100;
+use constant SWORD_DAMAGE => 200;
 use constant SWORD_DAMAGE_BONUS_FACTOR => 15;
 use constant SWORD_GAUGE_VELOCITY_BONUS => 20;
 use constant MACHINEGUN_GAUGE => 400;
@@ -27,6 +27,9 @@ use constant RIFLE_MAX_DISTANCE => 40000;
 use constant RIFLE_MIN_DISTANCE => 2000;
 use constant RIFLE_ATTACK_TIME_LIMIT => 20000;
 use constant RIFLE_GAUGE => 5000;
+use constant RIFLE_WIN => 11;
+use constant RIFLE_DAMAGE => 100;
+use constant RIFLE_SWORD_GAUGE_DAMAGE => 600; 
  
 has name => (
     is => 'ro',
@@ -299,6 +302,22 @@ sub add_command
         say $m->name . " on waiting status";
         $m->movement_target(undef);
     }
+    elsif($command eq 'RIFLE')
+    {
+        my $target_name = $params;
+        my $target = $self->get_mecha_by_name($secondary_params);
+        if($m->attack && $m->attack eq 'RIFLE' && $m->attack_limit > 0 && $m->attack_target->{name} eq $target_name)
+        {
+            #Resume. We do nothing, leaving rifle going on
+        }
+        else
+        {
+            $m->attack_limit(RIFLE_ATTACK_TIME_LIMIT);
+            $m->attack('RIFLE');
+            $m->attack_target({ type => 'mecha', 'name' => $params, class => 'dynamic'  });
+            $m->attack_gauge(0);
+        }
+    }
     if($secondary_command)
     {
         if($secondary_command eq 'machinegun')
@@ -307,7 +326,7 @@ sub add_command
             my $target = $self->get_mecha_by_name($secondary_params);
             if($m->attack && $m->attack eq 'MACHINEGUN' && $m->attack_limit > 0 && $m->attack_target->{name} eq $target_name)
             {
-                #We do nothing, leaving machinegun order to exhaust the shots
+                #Resume. We do nothing, leaving machinegun order to exhaust the shots
             }
             else
             {
@@ -379,7 +398,7 @@ sub action
                     {
                         my $target = $self->get_mecha_by_name($m->movement_target->{name});
                         $m->set_destination($target->position->clone);
-                        $m->attack_gauge($m->attack_gauge +1);
+                        $m->mod_attack_gauge(1);
                         if($m->position->distance($target->position) > SWORD_DISTANCE)
                         {
                             $m->plan_and_move();
@@ -425,7 +444,7 @@ sub action
             {
                 if($m->attack eq 'MACHINEGUN')
                 {
-                    $m->attack_gauge($m->attack_gauge+1);
+                    $m->mod_attack_gauge(1);
                     if($m->attack_gauge >= MACHINEGUN_GAUGE)
                     {
                         my $target = $self->get_mecha_by_name($m->attack_target->{name});
@@ -446,7 +465,7 @@ sub action
                     {
                         if($m->attack_gauge < RIFLE_GAUGE)
                         {
-                            $m->attack_gauge($m->attack_gauge + 1);
+                            $m->mod_attack_gauge(1);
                         }
                         else
                         {
@@ -557,7 +576,7 @@ sub manage_attack
             $defender->life($defender->life - MACHINEGUN_DAMAGE);   
             if($defender->attack && $defender->attack eq 'SWORD')
             {
-                $defender->attack_gauge($defender->attack_gauge - MACHINEGUN_SWORD_GAUGE_DAMAGE);
+                $defender->mod_attack_gauge(-1 * MACHINEGUN_SWORD_GAUGE_DAMAGE);
             }
             $self->event($attacker->name . " hits with machine gun " .  $defender->name, [ $defender->name ]);
         }
@@ -571,6 +590,26 @@ sub manage_attack
             $self->event($attacker->name . " ended machine gun shots", [ $attacker->name ]);
             $attacker->stop_attack();
         }
+    }
+    elsif($attack eq 'RIFLE')
+    {
+        my $distance = $attacker->position->distance($defender->position);
+        my $distance_bonus = 3 - ceil((3 * $distance) / RIFLE_MAX_DISTANCE);
+        my $roll = $self->dice(1, 20);
+        if($roll + $distance_bonus >= RIFLE_WIN)
+        {
+            $defender->life($defender->life - RIFLE_DAMAGE);   
+            if($defender->attack && $defender->attack eq 'SWORD')
+            {
+                $defender->mod_attack_gauge(-1 * RIFLE_SWORD_GAUGE_DAMAGE);
+            }
+            $self->event($attacker->name . " hits with rifle " .  $defender->name, [ $defender->name ]);
+        }
+        else
+        {
+            $self->event($attacker->name . " missed " . $defender->name . " with rifle", [$attacker->name]);
+        }
+    
     }
 }
 
