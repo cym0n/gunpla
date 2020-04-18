@@ -62,7 +62,7 @@ $t->get_ok('/game/event?game=autotest&mecha=Dummy')->status_is(200)->json_is(
 diag("Checking mechas stats");
 is($world->armies->[0]->position->x, -190);
 is($world->armies->[0]->attack_limit, 0);
-is($world->armies->[0]->gauge, 0);
+is($world->armies->[0]->attack_gauge, 0);
 is($world->armies->[1]->life, 870); #Damage 130 = 100 + (15 * 2)
 is($world->armies->[1]->position->x, 200); #Damage 130 = 100 + (15 * 2)
 

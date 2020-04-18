@@ -53,7 +53,7 @@ diag("Checking mechas stats");
 is($world->armies->[0]->position->x, 1000);
 is($world->armies->[0]->velocity, 10);
 is($world->armies->[0]->attack_limit, 2);
-is($world->armies->[0]->gauge, 0);
+is($world->armies->[0]->attack_gauge, 0);
 is($world->armies->[1]->life, 980);
 
 resume(2);
@@ -85,7 +85,7 @@ diag("Checking mechas stats");
 is($world->armies->[0]->velocity, 10);
 is($world->armies->[0]->position->x, 600);
 is($world->armies->[0]->attack_limit, 0);
-is($world->armies->[0]->gauge, 0);
+is($world->armies->[0]->attack_gauge, 0);
 is($world->armies->[1]->life, 960);
 
 

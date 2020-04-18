@@ -82,6 +82,10 @@ $t2->get_ok('/game/available-commands?game=autotest&mecha=RX78')
                           'label' => 'FLY TO WAYPOINT'
                         }, 
                         {
+                          'code' => 'rifle',
+                          'label' => 'RIFLE'
+                        },
+                        {
                           'code' => 'sword',
                           'label' => 'SWORD ATTACK'
                         }]

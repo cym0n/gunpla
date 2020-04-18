@@ -94,7 +94,7 @@ has attack_target => (
 has attack_limit => (
     is => 'rw',
 );
-has gauge => (
+has attack_gauge => (
     is => 'rw',
 );
 has life => (
@@ -246,7 +246,7 @@ sub to_mongo
         attack => $self->attack,
         attack_target => $self->attack_target,
         attack_limit => $self->attack_limit,
-        gauge => $self->gauge,
+        attack_gauge => $self->attack_gauge,
         life => $self->life
     }
 }
