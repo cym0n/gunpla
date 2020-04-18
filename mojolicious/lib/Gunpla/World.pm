@@ -23,7 +23,11 @@ use constant MACHINEGUN_WIN => 10;
 use constant MACHINEGUN_DAMAGE => 20;
 use constant MACHINEGUN_SWORD_GAUGE_DAMAGE => 300; 
 use constant GET_AWAY_DISTANCE => 30000;
-
+use constant RIFLE_MAX_DISTANCE => 40000;
+use constant RIFLE_MIN_DISTANCE => 2000;
+use constant RIFLE_ATTACK_TIME_LIMIT => 20000;
+use constant RIFLE_GAUGE => 5000;
+ 
 has name => (
     is => 'ro',
 );
@@ -382,7 +386,7 @@ sub action
                             $m->attack_limit($m->attack_limit -1);
                             if($m->attack_limit == 0)
                             {
-                                $m->attack_gauge(0);
+                                $m->stop_attack();
                                 $self->event($m->name . " exhausted attack charge", [$m->name]);
                             }
                         }
@@ -417,15 +421,49 @@ sub action
                     }
                 }
             }
-            if($m->attack && $m->attack eq 'MACHINEGUN')
+            if($m->attack)
             {
-                $m->attack_gauge($m->attack_gauge+1);
-                if($m->attack_gauge >= MACHINEGUN_GAUGE)
+                if($m->attack eq 'MACHINEGUN')
+                {
+                    $m->attack_gauge($m->attack_gauge+1);
+                    if($m->attack_gauge >= MACHINEGUN_GAUGE)
+                    {
+                        my $target = $self->get_mecha_by_name($m->attack_target->{name});
+                        if($m->position->distance($target->position) <= MACHINEGUN_RANGE)
+                        {
+                            $self->manage_attack('MACHINEGUN', $m);
+                        }
+                    }
+                }
+                elsif($m->attack eq 'RIFLE')
                 {
                     my $target = $self->get_mecha_by_name($m->attack_target->{name});
-                    if($m->position->distance($target->position) <= MACHINEGUN_RANGE)
+                    if($m->position->distance($target->position) < RIFLE_MIN_DISTANCE)
                     {
-                        $self->manage_attack('MACHINEGUN', $m);
+                        $self->event($m->name . ": rifle target " . $target->name . " too close", [ $m->name ]);
+                    }
+                    else
+                    {
+                        if($m->attack_gauge < RIFLE_GAUGE)
+                        {
+                            $m->attack_gauge($m->attack_gauge + 1);
+                        }
+                        else
+                        {
+                            if($m->position->distance($target->position) > RIFLE_MAX_DISTANCE)
+                            {
+                                $m->attack_limit($m->attack_limit -1);
+                                if($m->attack_limit == 0)
+                                {
+                                    $m->stop_attack();
+                                    $self->event($m->name . " time for rifle shot exhausted", [$m->name]);
+                                }
+                            }
+                            else
+                            {
+                                $self->manage_attack('RIFLE', $m);
+                            }
+                        }
                     }
                 }
             }
@@ -473,16 +511,12 @@ sub manage_attack
             }
             elsif($defender->attack_gauge == $attacker->attack_gauge)
             {
-                $attacker->atacck_gauge(0);
-                $attacker->attack_limit(0);
-                $attacker->attack(undef);
-                $defender->attack_gauge(0);
-                $defender->attack_limit(0);
-                $defender->attack(undef);
                 $self->event($attacker->name . " and " . $defender->name . " attacks nullified");
                 $clash = 0;
-                $attacker->velocity(0);
-                $defender->velocity(0);
+                $attacker->stop_attack();
+                $attacker->stop_movement();
+                $defender->stop_attack();
+                $defender->stop_movement();
             }
         }
         if($clash)
@@ -502,21 +536,15 @@ sub manage_attack
             {
                 $self->event($defender->name . " dodged " .  $attacker->name, [ $attacker->name, $defender->name ]);
             }
-            $attacker->attack_gauge(0);
-            $attacker->attack_limit(0);
         }
         my @dirs = qw(x y z);
         my $bounce_direction = $dirs[$self->dice(0, 2)];
-        $attacker->attack(undef);
-        $attacker->attack_limit(0);
-        $attacker->velocity(0);
-        $attacker->attack_gauge(0);
         $attacker->position->$bounce_direction($attacker->position->$bounce_direction - SWORD_BOUNCE);
-        $defender->attack(undef);
-        $defender->attack_limit(0);
-        $defender->velocity(0);
-        $defender->attack_gauge(0);
+        $attacker->stop_attack();
+        $attacker->stop_movement();
         $defender->position->$bounce_direction($defender->position->$bounce_direction + SWORD_BOUNCE);
+        $defender->stop_attack();
+        $defender->stop_movement();
     }
     elsif($attack eq 'MACHINEGUN')
     {
@@ -541,6 +569,7 @@ sub manage_attack
         if($attacker->attack_limit == 0)
         {
             $self->event($attacker->name . " ended machine gun shots", [ $attacker->name ]);
+            $attacker->stop_attack();
         }
     }
 }

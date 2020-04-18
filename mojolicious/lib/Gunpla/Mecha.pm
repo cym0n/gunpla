@@ -45,7 +45,7 @@ has course => (
 has destination => (
     is => 'rw',
 );
-#Advanced navigatio
+#Advanced navigation
 has velocity => (
     is => 'rw',
     default => 0
@@ -89,7 +89,7 @@ has attack => (
 );
 has attack_target => (
     is => 'rw',
-    default => sub { { } }
+    default => sub { { type => 'none' } }
 );
 has attack_limit => (
     is => 'rw',
@@ -106,6 +106,30 @@ has life => (
 has sensor_range => (
     is => 'ro',
 );
+
+sub stop_movement
+{
+    my $self = shift;
+    $self->movement_target(undef);
+    $self->course->{steps} = 0;
+    $self->course->{direction} = 0;
+    $self->course->{axis} = '';
+    $self->destination($self->position);
+    $self->velocity(0);
+    $self->acceleration_gauge(0);
+    $self->velocity_gauge(0);
+    $self->velocity_vector(undef);
+    $self->velocity_target(0);
+}
+
+sub stop_attack
+{
+    my $self = shift;
+    $self->attack(undef);
+    $self->attack_target({ type => 'none' });
+    $self->attack_limit(0);
+    $self->attack_gauge(0);
+}
 
 sub get_velocity
 {
@@ -228,16 +252,16 @@ sub to_mongo
         name => $self->name,
         faction => $self->faction,
         waiting => $self->waiting,
-        position => $self->position->to_mongo(),
+        position => $self->position ? $self->position->to_mongo() : undef,
         course => $self->course,
         movement_target => $self->movement_target,
-        destination => $self->destination->to_mongo(),
+        destination => $self->destination ? $self->destination->to_mongo() : undef,
         velocity => $self->velocity,
         acceleration => $self->acceleration,
         acceleration_gauge => $self->acceleration_gauge,
         max_velocity => $self->max_velocity,
         velocity_gauge => $self->velocity_gauge,
-        velocity_vector => $self->velocity_vector->to_mongo(),
+        velocity_vector => $self->velocity_vector ? $self->velocity_vector->to_mongo() : undef,
         velocity_target => $self->velocity_target,
         cmd_index => $self->cmd_index,
         cmd_fetched => $self->cmd_fetched,
