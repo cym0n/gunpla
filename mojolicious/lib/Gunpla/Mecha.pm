@@ -33,7 +33,7 @@ has cmd_index => (
 #Navigation
 has movement_target => (
     is => 'rw',
-    default => sub { { } }
+    default => undef,
 );
 has position => (
     is => 'rw',

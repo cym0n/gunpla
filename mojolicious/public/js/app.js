@@ -217,7 +217,7 @@ App = {
         .then(function(data) {
             console.log("populate " + name);
             data.mechas.forEach(function(m, index, array) {
-                $( "#secparams_"+name).append('<option value="'+m.name+'">'+m.name+'</option>');
+                $( "#secparams_"+name).append('<option value="'+m.world_id+'">'+m.name+'</option>');
             });
         });
   },

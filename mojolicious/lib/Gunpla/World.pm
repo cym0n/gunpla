@@ -85,7 +85,7 @@ has mecha_templates => (
             'Diver' => { sensor_range => 140000, life => 1000, max_velocity => 6, acceleration => 100000  },
             'Zaku'  => { sensor_range => 80000,  life => 1000, max_velocity => 6, acceleration => 100000 },
             'Gelgoog'  => { sensor_range => 130000,  life => 1000, max_velocity => 6, acceleration => 100000 },
-            'Dummy'  => { sensor_range => 0,  life => 1000, max_velocity => 0, acceleration => 0 },
+            'Dummy'  => { sensor_range => 0,  life => 1000, max_velocity => 10, acceleration => 100 },
             'RX78' => { sensor_range => 140000, life => 1000, max_velocity => 10, acceleration => 100  },
             'Hyakushiki' => { sensor_range => 80000, life => 1000, max_velocity => 10, acceleration => 100  },
         }
@@ -349,16 +349,17 @@ sub add_command
     elsif($command eq 'RIFLE')
     {
         my $target_name = $params;
-        my $target = $self->get_mecha_by_name($secondary_params);
-        if($m->attack && $m->attack eq 'RIFLE' && $m->attack_limit > 0 && $m->attack_target->{name} eq $target_name)
+        my $target = $self->get_mecha_by_name($target_id);
+        if($m->attack && $m->attack eq 'RIFLE' && $m->attack_limit > 0 && $m->attack_target->{name} eq $target_id)
         {
             #Resume. We do nothing, leaving rifle going on
         }
         else
         {
+            $m->stop_movement();
             $m->attack_limit(RIFLE_ATTACK_TIME_LIMIT);
             $m->attack('RIFLE');
-            $m->attack_target({ type => 'mecha', 'name' => $params, class => 'dynamic'  });
+            $m->attack_target({ type => 'mecha', 'name' => $target_id, class => 'dynamic'  });
             $m->attack_gauge(0);
         }
     }
@@ -366,9 +367,9 @@ sub add_command
     {
         if($secondary_command eq 'machinegun')
         {
-            my $target_name = $secondary_params;
-            my $target = $self->get_mecha_by_name($secondary_params);
-            if($m->attack && $m->attack eq 'MACHINEGUN' && $m->attack_limit > 0 && $m->attack_target->{name} eq $target_name)
+            my ($target_type, $target_id) = split('-', $secondary_params);
+            my $target = $self->get_mecha_by_name($target_id);
+            if($m->attack && $m->attack eq 'MACHINEGUN' && $m->attack_limit > 0 && $m->attack_target->{name} eq $target_id)
             {
                 #Resume. We do nothing, leaving machinegun order to exhaust the shots
             }
@@ -376,7 +377,7 @@ sub add_command
             {
                 $m->attack_limit(MACHINEGUN_SHOTS);
                 $m->attack('MACHINEGUN');
-                $m->attack_target({ type => 'mecha', 'name' => $secondary_params, class => 'dynamic'  });
+                $m->attack_target({ type => 'mecha', 'name' => $target_id, class => 'dynamic'  });
                 $m->attack_gauge(0);
             }
         }
@@ -647,7 +648,7 @@ sub manage_attack
             {
                 $defender->mod_attack_gauge(-1 * RIFLE_SWORD_GAUGE_DAMAGE);
             }
-            $self->event($attacker->name . " hits with rifle " .  $defender->name, [ $defender->name ]);
+            $self->event($attacker->name . " hits with rifle " .  $defender->name, [ $attacker->name, $defender->name ]);
         }
         else
         {

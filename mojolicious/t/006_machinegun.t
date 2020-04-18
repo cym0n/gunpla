@@ -93,7 +93,7 @@ sub resume
     {
         diag("Resuming RX78 action");
         $world->armies->[0]->waiting(0);
-        $world->add_command('RX78', { command => 'FLY TO WAYPOINT', params => 'WP-center', secondarycommand => 'machinegun', secondaryparams => 'Dummy', velocity => 10});
+        $world->add_command('RX78', { command => 'FLY TO WAYPOINT', params => 'WP-center', secondarycommand => 'machinegun', secondaryparams => 'MEC-Dummy', velocity => 10});
     }
     if($world->armies->[1]->waiting)
     {
