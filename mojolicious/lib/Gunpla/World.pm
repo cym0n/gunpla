@@ -4,6 +4,7 @@ use v5.10;
 use POSIX;
 use Moo;
 use MongoDB;
+use Cwd 'abs_path';
 use Gunpla::Position;
 use Gunpla::Mecha;
 
@@ -61,12 +62,17 @@ has available_commands => (
     is => 'ro',
     default => sub { {} }
 );
+has no_events => (
+    is => 'rw',
+    default => 0
+);
 
 #Only for test purpose
 has dice_results => (
     is => 'ro',
     default => sub { [] }
 );
+
 
 
 
@@ -202,6 +208,9 @@ sub init
     $self->spawn_points->{'eagle'} = 'red';
     $self->add_mecha("Diver", "wolf");
     $self->add_mecha("Zaku", "eagle");
+    $self->no_events(1);
+    $self->calculate_sighting_matrix();
+    $self->no_events(0);
 }
 sub init_test
 {
@@ -228,7 +237,42 @@ sub init_test
         $self->spawn_points->{'eagle'} = 'red';
         $self->add_mecha("RX78", "wolf");
         $self->add_mecha("Hyakushiki", "eagle");
+    } 
+    $self->no_events(1);
+    $self->calculate_sighting_matrix();
+    $self->no_events(0);
+}
+sub init_scenario
+{
+    my $self = shift;
+    my $file = shift;
+    my $module_file_path = __FILE__;
+    my $root_path = abs_path($module_file_path);
+    $root_path =~ s/World\.pm//;
+    my $data_directory = $root_path . "../../scenarios";
+    say "Init (scenario $file)...\n";
+    $self->build_commands();
+    open(my $fh, "< $data_directory/$file") || die "Impossible to open $data_directory/$file";
+    for(<$fh>)
+    {
+        chomp;
+        my @values = split ";", $_;
+        if($values[0] eq 'WP')
+        {
+            $self->waypoints->{$values[1]} = Gunpla::Position->new(x => $values[2], y => $values[3], z => $values[4]);
+            if( $values[5] )
+            {
+                $self->spawn_points->{$values[5]} = $values[1];
+            }
+        }
+        elsif($values[0] eq 'MEC')
+        {
+            $self->add_mecha($values[1], $values[2]);
+        }
     }
+    $self->no_events(1);
+    $self->calculate_sighting_matrix();
+    $self->no_events(0);
 }
 
 
@@ -632,6 +676,7 @@ sub event
     my $self = shift;
     my $message = shift;
     my $involved = shift;
+    return if $self->no_events;
 
     my $mongo = MongoDB->connect(); 
     my $db = $mongo->get_database('gunpla_' . $self->name);
@@ -730,31 +775,43 @@ sub calculate_sighting_matrix
 {
     my $self = shift;
     my $mecha_name = shift;
-    my $m = $self->get_mecha_by_name($mecha_name);
-    foreach my $other (@{$self->armies})      
+    my $silent = shift;
+    my @do = ();
+    if($mecha_name)
     {
-        if($m->faction ne $other->faction) #Mechas of the same faction are always visible each other 
+        @do = ( $self->get_mecha_by_name($mecha_name) );
+    }
+    else
+    {
+        @do = @{$self->armies};
+    }
+    foreach my $m (@do)
+    {
+        foreach my $other (@{$self->armies})      
         {
-            if(! exists $self->sighting_matrix->{$m->name}->{$other->name})
+            if($m->faction ne $other->faction) #Mechas of the same faction are always visible each other 
             {
-                $self->sighting_matrix->{$m->name}->{$other->name} = 0;
-            }
-            if($m->position->distance($other->position) < $m->sensor_range)
-            {
-                if($self->sighting_matrix->{$m->name}->{$other->name} == 0)
+                if(! exists $self->sighting_matrix->{$m->name}->{$other->name})
                 {
-                    $self->event($m->name . " sighted " . $other->name, [ $m->name ]);
+                    $self->sighting_matrix->{$m->name}->{$other->name} = 0;
                 }
-                $self->sighting_matrix->{$m->name}->{$other->name} = SIGHT_TOLERANCE;
-            }
-            else
-            {
-                if($self->sighting_matrix->{$m->name}->{$other->name} > 0)
+                if($m->position->distance($other->position) < $m->sensor_range)
                 {
-                    $self->sighting_matrix->{$m->name}->{$other->name} -= 1;
                     if($self->sighting_matrix->{$m->name}->{$other->name} == 0)
                     {
-                        $self->event($m->name . " lost contact with " . $other->name, [ $m->name ]);
+                        $self->event($m->name . " sighted " . $other->name, [ $m->name ]);
+                    }
+                    $self->sighting_matrix->{$m->name}->{$other->name} = SIGHT_TOLERANCE;
+                }
+                else
+                {
+                    if($self->sighting_matrix->{$m->name}->{$other->name} > 0)
+                    {
+                        $self->sighting_matrix->{$m->name}->{$other->name} -= 1;
+                        if($self->sighting_matrix->{$m->name}->{$other->name} == 0)
+                        {
+                            $self->event($m->name . " lost contact with " . $other->name, [ $m->name ]);
+                        }
                     }
                 }
             }

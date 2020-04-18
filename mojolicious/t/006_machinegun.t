@@ -23,20 +23,6 @@ $world->init_test('dummy');
 my $t = Test::Mojo->new('GunplaServer');
 
 resume(1);
-diag("=== RX78 sees dummy at start");
-diag("Checking event generation (using API)");
-$t->get_ok('/game/event?game=autotest&mecha=RX78')->status_is(200)->json_is(
-    {
-        events => [
-            {
-                mecha => 'RX78',
-                message => 'RX78 sighted Dummy'
-            }
-        ]
-    }
-);
-
-resume(1);
 diag("=== First shot");
 diag("Checking event generation (using API)");
 $t->get_ok('/game/event?game=autotest&mecha=Dummy')->status_is(200)->json_is(

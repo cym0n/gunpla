@@ -54,13 +54,11 @@ $t->get_ok('/game/command-details?game=autotest&mecha=RX78&command=flywp')
 $db->drop();
 diag("Generate a world with a target sighted and save it on db");
 $world = Gunpla::World->new(name => 'autotest');
-diag("Stimulating sight matrix generation");
 $world->init_test('dummy');
 $world->armies->[0]->waiting(0);
 $world->add_command('RX78', {command => 'WAITING'});
 $world->armies->[1]->waiting(0);
 $world->add_command('Dummy', { command => 'WAITING'});
-is($world->action(), 1);
 $world->save();
 
 my $t2 = Test::Mojo->new('GunplaServer');
