@@ -284,6 +284,7 @@ sub add_command
     my $secondary_params = $command_mongo->{secondaryparams};
     my $velocity = $command_mongo->{velocity};
     my $m = $self->get_mecha_by_name($mecha);
+    $velocity = $m->velocity_target if(! $velocity);
     my ($target_type, $target_id) = split('-', $params) if $params;
     if($command eq 'FLY TO WAYPOINT')
     {
@@ -305,15 +306,6 @@ sub add_command
         my $target_name = $target_id;
         my $target = $self->get_mecha_by_name($target_id);
 
-        #Event only if:
-        #   command changed (avoid event on resume)
-        #   attacker sighted by target
-        if((($m->attack && $m->attack ne $attack) ||
-           ($m->attack_target->{name} && $m->attack_target->{name} ne $target_id)) &&
-            $self->sighting_matrix->{$target_name}->{$mecha} > 0)
-        {
-            $self->event("$mecha attacking: $attack", [ $target_name ]);
-        }
         $m->attack($attack);
         $m->set_destination($target->position->clone());
         $m->movement_target({ type => 'mecha', 'name' => $target_id, class => 'dynamic'  });

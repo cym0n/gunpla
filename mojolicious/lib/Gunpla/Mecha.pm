@@ -152,6 +152,18 @@ sub get_velocity
         $self->velocity();
     }
 }
+sub acceleration_needed
+{
+    my $self = shift;
+    if($self->attack && $self->attack eq 'SWORD')
+    {
+        return 0;
+    } 
+    else
+    {
+        return($self->velocity < $self->velocity_target);
+    }
+}
 
 sub ok_velocity
 {
@@ -166,7 +178,7 @@ sub ok_velocity
             $move = 1;
         }
     }
-    if($self->velocity < $self->velocity_target)
+    if($self->acceleration_needed())
     {
         $self->acceleration_gauge($self->acceleration_gauge + 1);
         if($self->acceleration_gauge > $self->acceleration)
