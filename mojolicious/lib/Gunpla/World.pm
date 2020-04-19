@@ -66,6 +66,10 @@ has no_events => (
     is => 'rw',
     default => 0
 );
+has save_every => (
+    is => 'rw',
+    default => 0
+);
 
 #Only for test purpose
 has dice_results => (
@@ -522,12 +526,12 @@ sub action
             $self->calculate_sighting_matrix($m->name);
         }
         $counter++;
+        if($self->save_every && $counter % $self->save_every == 0)
+        {
+            $self->save_mecha_status();
+        }
     }
     $self->cmd_index_up();
-    if($steps && $counter >= $steps)
-    {
-        $self->event("All steps executed", []);
-    }
     return $self->generated_events();
 }
 
@@ -747,6 +751,17 @@ sub save
     $sighting_matrix->{status_element} = 'sighting_matrix';
     $db->get_collection('status')->insert_one($sighting_matrix);
 }
+sub save_mecha_status
+{
+    my $self = shift;
+    my $mongo = MongoDB->connect(); 
+    my $db = $mongo->get_database('gunpla_' . $self->name);
+    foreach my $m (@{$self->armies})
+    {
+        $db->get_collection('mechas')->update_one( { 'name' => $m->name }, { '$set' => $m->to_mongo });
+    }
+}
+
 
 sub load
 {
