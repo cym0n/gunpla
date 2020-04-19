@@ -8,30 +8,36 @@ use Gunpla::World;
 use Getopt::Long;
 use Data::Dumper;
 
-my $usage     = "Usage: $0 [COMMAND] [WORLD]\n\n";
-#my $json    = '';
-#my $userid = '';
-#my $action = '';
-#my $filename = '';
-#GetOptions( 'json' => \$json, "userid=s" => \$userid ) or die $usage;
+my $usage     = "Usage: $0 [COMMAND] [WORLD] [--scenario=xxx] [--log=xxx]\n\n";
+my $scenario  = undef;
+my $logfile = undef;
 
+GetOptions( 'scenario=s' => \$scenario, "log=s" => \$logfile ) or die $usage;
 my $command = shift;
 my $world = shift;
 
 my $mongo = MongoDB->connect(); 
 if($command eq 'init')
 {
-    say "Any data about old game $world will be lost...";
+    to_log("Any data about old game $world will be lost...");
     my $db = $mongo->get_database('gunpla_' . $world);
     $db->drop();
     my $world_obj = Gunpla::World->new(name => $world);
-    $world_obj->init();
+    if($scenario)
+    {
+        to_log("Scenario from file $scenario");
+        $world_obj->init_scenario($scenario);
+    }
+    else
+    {
+        $world_obj->init();
+    }
     $world_obj->save();
-    say "New world $world initiated";
+    to_log("New world $world initiated");
 }
 elsif($command eq 'action')
 {
-    say "Loading world $world...";
+    to_log("Loading world $world...");
     my $world_obj = Gunpla::World->new(name => $world);
     $world_obj->load();
     if($world_obj->all_ready())
@@ -40,9 +46,8 @@ elsif($command eq 'action')
         if($world_obj->all_ready_and_fetched())
         {
             my $e = $world_obj->action();
-            say "$e events generated. Mechas ready for new commands";
             $world_obj->save();
-            say "World saved. Action done";
+            to_log("$e events generated. Mechas ready for new commands");
         }
         else
         {
@@ -51,6 +56,20 @@ elsif($command eq 'action')
     }
     else
     {
-        say "Not all mecha ready for action. Exiting."
+        to_log("Not all mecha ready for action. Exiting.");
+    }
+}
+
+sub to_log
+{
+    my $message = shift;
+    if($logfile)
+    {
+        open(my $lfh, ">> $logfile");
+        say {$lfh} $message;
+    }
+    else
+    {
+        say $message;
     }
 }
