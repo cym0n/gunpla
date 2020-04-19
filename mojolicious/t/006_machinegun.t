@@ -22,7 +22,7 @@ $world->init_test('dummy');
 
 my $t = Test::Mojo->new('GunplaServer');
 
-resume(1);
+resume(2); #Counting non-blocking events
 diag("=== First shot");
 diag("Checking event generation (using API)");
 $t->get_ok('/game/event?game=autotest&mecha=Dummy')->status_is(200)->json_is(
@@ -42,7 +42,7 @@ is($world->armies->[0]->attack_limit, 2);
 is($world->armies->[0]->attack_gauge, 0);
 is($world->armies->[1]->life, 980);
 
-resume(2);
+resume(5); #Counting non-blocking events
 diag("=== Second shot misses, no events");
 diag("=== Third shot - action ended");
 diag("Checking event generation (using API)");

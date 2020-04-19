@@ -198,7 +198,6 @@ sub build_commands
 sub init
 {
     my $self = shift;
-    say "Init...\n";
     $self->build_commands();
     $self->waypoints->{'center'} = Gunpla::Position->new(x => 0, y => 0, z => 0);
     $self->waypoints->{'blue'} = Gunpla::Position->new(x => 200000, y => 0, z => 0);
@@ -216,7 +215,6 @@ sub init_test
 {
     my $self = shift;
     my $type = shift;
-    say "Init (test mode $type)...\n";
     $self->build_commands();
     if($type eq 'dummy')
     {
@@ -250,7 +248,6 @@ sub init_scenario
     my $root_path = abs_path($module_file_path);
     $root_path =~ s/World\.pm//;
     my $data_directory = $root_path . "../../scenarios";
-    say "Init (scenario $file)...\n";
     $self->build_commands();
     open(my $fh, "< $data_directory/$file") || die "Impossible to open $data_directory/$file";
     for(<$fh>)
@@ -343,7 +340,6 @@ sub add_command
     }
     elsif($command eq 'WAITING')
     {
-        say $m->name . " on waiting status";
         $m->movement_target(undef);
     }
     elsif($command eq 'RIFLE')
@@ -623,11 +619,11 @@ sub manage_attack
             {
                 $defender->mod_attack_gauge(-1 * MACHINEGUN_SWORD_GAUGE_DAMAGE);
             }
-            $self->event($attacker->name . " hits with machine gun " .  $defender->name, [ $defender->name ]);
+            $self->event($attacker->name . " hits with machine gun " .  $defender->name, { $attacker->name => 0, $defender->name => 1});
         }
         else
         {
-            say $attacker->name . " missed " . $defender->name . " with machine gun";
+            $self->event($attacker->name . " missed " . $defender->name . " with machine gun", { $attacker->name => 0, $defender->name => 0});
         }
         $attacker->attack_limit($attacker->attack_limit - 1);
         if($attacker->attack_limit == 0)
@@ -676,22 +672,44 @@ sub event
 {
     my $self = shift;
     my $message = shift;
-    my $involved = shift;
+    my $involved_input = shift;
     return if $self->no_events;
+
+    my $involved = {};
+    if(ref $involved_input eq 'ARRAY')
+    {
+        for(@{$involved_input})
+        {
+            $involved->{$_} = 1;
+        }
+    }
+    elsif(ref $involved_input eq 'HASH')
+    {
+        $involved = $involved_input;
+    }
+    else
+    {
+        $involved = { $involved_input => 1 };
+    }
+
 
     my $mongo = MongoDB->connect(); 
     my $db = $mongo->get_database('gunpla_' . $self->name);
-    for(@{$involved})
+    for(keys %{$involved})
     {
-        my $m = $self->get_mecha_by_name($_);
-        say "Adding event for " . $m->name; 
-        #$m->cmd_index($m->cmd_index + 1);
+        my $m_id = $_;
+        my $m = $self->get_mecha_by_name($m_id);
         my $cmd_index = $m->cmd_index + 1;
-        $db->get_collection('events')->insert_one({ message   => $message,
+        $db->get_collection('events')->insert_one({ time_index => $self->generated_events,
+                                                    message   => $message,
                                                     mecha     => $m->name,
-                                                    cmd_index => $cmd_index });
-        $m->waiting(1);
-        $m->cmd_fetched(0);
+                                                    cmd_index => $cmd_index,
+                                                    blocking => $involved->{$m_id} });
+        if($involved->{$m_id})
+        {
+            $m->waiting(1);
+            $m->cmd_fetched(0);
+        }
         $self->generated_events($self->generated_events + 1);
     }
 }

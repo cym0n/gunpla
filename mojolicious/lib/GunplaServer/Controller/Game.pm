@@ -211,7 +211,7 @@ sub read_event
     my ( $mecha ) = $db->get_collection('mechas')->find({ name => $mecha_name })->all();
     my $index = $mecha->{cmd_index};
     $c->app->log->debug("Getting event " . $mecha_name . '-' . $index);
-    my @events = $db->get_collection('events')->find({ mecha => $mecha_name, cmd_index => int($index)})->all();
+    my @events = $db->get_collection('events')->find({ mecha => $mecha_name, cmd_index => int($index), blocking => 1})->all();
     my @out = ();
     for(@events)
     {
