@@ -190,6 +190,7 @@ sub from_mongo
 {
     my $package = shift;
     my $data = shift;
+    return undef if ! $data;
     return $package->new($data);
 }
 
