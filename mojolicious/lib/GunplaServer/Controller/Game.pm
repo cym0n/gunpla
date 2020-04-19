@@ -128,7 +128,8 @@ sub all_visible {
     my @mecha = _get_sighted_mechas($game, $mecha_name);
     for(@mecha)
     {
-        my $m = $_;
+        my $m_mongo = $_;
+        my $m = mecha_from_mongo_to_json($m_mongo);
         $m->{label} = $m->{name} . ' (M)';
         push @out, $m;
     }
