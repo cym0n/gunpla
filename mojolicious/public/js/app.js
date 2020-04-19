@@ -18,7 +18,7 @@ App = {
         });
   },
   renderMechaTemplate: function(m, poll_needed) {
-    $('#mecha_' + m.name).append('<p>'+ m.name + ' (' + m.faction + ')<br />[' + m.position.x +', '+ m.position.y +', '+ m.position.z + ']<br />Life: '+ m.life + '</p>');
+    $('#mecha_' + m.name).append('<p id="desc_'+m.name+'">'+ App.mechaDescription(m) + '</p>');
     if(m.waiting)
     {
         $('#mecha_' + m.name).append(`
@@ -99,6 +99,7 @@ App = {
                 .then(function(response) { return response.json(); })
                 },
                 function(data) {
+                    App.refreshMechaDescription(data.mecha.name, data.mecha);
                     return data.mecha.waiting == 1
                 },
                 3600000, 10000).then(function(data) { 
@@ -107,6 +108,14 @@ App = {
             });
         }
     }
+  },
+  mechaDescription(m) {
+    return m.name + ' (' + m.faction + ')<br />[' + m.position.x +', '+ m.position.y +', '+ m.position.z + ']<br />Velocity: '+m.velocity+'<br />Life: '+ m.life
+  },
+  refreshMechaDescription(name, m) {
+    console.log("Refreshing mecha "+name);
+    $('#desc_'+name).empty();
+    $('#desc_'+name).append(App.mechaDescription(m));
   },
   getLastEvent: function(name, highlight) {
     fetch('/game/event?game='+App.game+'&mecha='+name)
