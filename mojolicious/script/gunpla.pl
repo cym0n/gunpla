@@ -37,9 +37,49 @@ if($command eq 'init')
 }
 elsif($command eq 'action')
 {
-    to_log("Loading world $world...");
-    my $world_obj = Gunpla::World->new(name => $world);
+    my $world_obj = load_world($world);
+    run_world($world_obj);
+}
+elsif($command eq 'daemon')
+{
+    while(1)
+    {
+        my $world_obj = load_world($world);
+        run_world($world_obj);
+        sleep 10;    
+    }
+}
+
+sub to_log
+{
+    my $message = shift;
+    if($logfile)
+    {
+        open(my $lfh, ">> $logfile");
+        say {$lfh} $message;
+    }
+    else
+    {
+        say $message;
+    }
+}
+
+sub load_world
+{
+    my $name = shift;
+    to_log("Loading world $name...");
+    my $world_obj = Gunpla::World->new(name => $name);
     $world_obj->load();
+    if(! @{$world_obj->armies})
+    {
+        die "No mechas loaded. Check world name.";
+    }
+    return $world_obj;
+}
+
+sub run_world
+{
+    my $world_obj = shift;
     if($world_obj->all_ready())
     {
         $world_obj->fetch_commands_from_mongo();
@@ -56,20 +96,6 @@ elsif($command eq 'action')
     }
     else
     {
-        to_log("Not all mecha ready for action. Exiting.");
-    }
-}
-
-sub to_log
-{
-    my $message = shift;
-    if($logfile)
-    {
-        open(my $lfh, ">> $logfile");
-        say {$lfh} $message;
-    }
-    else
-    {
-        say $message;
+       to_log("Not all mecha ready for action.");
     }
 }
