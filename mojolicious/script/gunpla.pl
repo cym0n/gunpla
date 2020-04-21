@@ -7,6 +7,7 @@ use MongoDB;
 use Gunpla::World;
 use Getopt::Long;
 use Data::Dumper;
+use DateTime;
 
 my $usage     = "Usage: $0 [COMMAND] [WORLD] [--scenario=xxx] [--log=xxx]\n\n";
 my $scenario  = undef;
@@ -87,10 +88,19 @@ sub run_world
         $world_obj->fetch_commands_from_mongo();
         if($world_obj->all_ready_and_fetched())
         {
+            my $start = DateTime->now;
+            my $starting_timestamp = $world_obj->timestamp;
             my $e = $world_obj->action($steps);
             $world_obj->save();
+            my $end = DateTime->now;
+            my $ending_timestamp = $world_obj->timestamp;
+            my $secs = $end->epoch - $start->epoch;
+            my $clocks = $ending_timestamp - $starting_timestamp;
             if($e)
             {
+                to_log("Starting timestamp: $starting_timestamp");
+                to_log("Ending timestamp: $ending_timestamp");
+                to_log("Action elaboration took $secs seconds, $clocks clocks elaborated");
                 to_log("$e events generated. Mechas ready for new commands");
             }
         }

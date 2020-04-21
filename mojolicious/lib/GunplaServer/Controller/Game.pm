@@ -144,6 +144,9 @@ sub add_command
     my $client = MongoDB->connect();
     $c->app->log->debug(Dumper($params));
     my $db = $client->get_database('gunpla_' . $params->{game});
+
+    my ( $timestamp_mongo ) = $db->get_collection('status')->find({ status_element => 'timestamp' })->all();
+    my $timestamp = $timestamp_mongo->{timestamp};
     
     my ( $configured_command ) = $db->get_collection('available_commands')->find({ code => $params->{command} })->all();
     if($configured_command)
@@ -159,7 +162,8 @@ sub add_command
     else
     {
         $c->app->log->debug("Adding command " . $params->{mecha} . '-' . $mecha->{cmd_index});
-        $db->get_collection('commands')->insert_one({ command   => $params->{command},
+        $db->get_collection('commands')->insert_one({ timestamp => $timestamp,
+                                                      command   => $params->{command},
                                                       params    => $params->{params},
                                                       secondarycommand   => $params->{secondarycommand},
                                                       secondaryparams    => $params->{secondaryparams},

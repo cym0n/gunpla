@@ -70,6 +70,10 @@ has save_every => (
     is => 'rw',
     default => 0
 );
+has timestamp => (
+    is => 'rw',
+    default => 0
+);
 
 #Only for test purpose
 has dice_results => (
@@ -526,6 +530,7 @@ sub action
             $self->calculate_sighting_matrix($m->name);
         }
         $counter++;
+        $self->timestamp($self->timestamp+1);
         if($self->save_every && $counter % $self->save_every == 0)
         {
             $self->save_mecha_status();
@@ -696,7 +701,8 @@ sub event
         my $m_id = $_;
         my $m = $self->get_mecha_by_name($m_id);
         my $cmd_index = $m->cmd_index + 1;
-        $db->get_collection('events')->insert_one({ time_index => $self->generated_events,
+        $db->get_collection('events')->insert_one({ timestamp => $self->timestamp,
+                                                    time_index => $self->generated_events,
                                                     message   => $message,
                                                     mecha     => $m->name,
                                                     cmd_index => $cmd_index,
@@ -750,6 +756,7 @@ sub save
     my $sighting_matrix = $self->sighting_matrix;
     $sighting_matrix->{status_element} = 'sighting_matrix';
     $db->get_collection('status')->insert_one($sighting_matrix);
+    $db->get_collection('status')->insert_one({status_element => 'timestamp', timestamp => $self->timestamp});
 }
 sub save_mecha_status
 {
@@ -788,6 +795,8 @@ sub load
     my ( $sighting_matrix ) = $db->get_collection('status')->find({ status_element => 'sighting_matrix' })->all();
     delete $sighting_matrix->{status_element};
     $self->sighting_matrix($sighting_matrix);
+    my ( $timestamp ) = $db->get_collection('status')->find({ status_element => 'timestamp' })->all();
+    $self->timestamp($timestamp->{timestamp});
     
     my @commands = $db->get_collection('available_commands')->find()->all();
     for(@commands)
