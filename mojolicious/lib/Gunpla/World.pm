@@ -5,33 +5,11 @@ use POSIX;
 use Moo;
 use MongoDB;
 use Cwd 'abs_path';
+use Gunpla::Constants ':all';
 use Gunpla::Position;
 use Gunpla::Mecha;
 
-use constant SIGHT_TOLERANCE => 10000;
-use constant MECHA_NEARBY => 1000;
-use constant SWORD_DISTANCE => 10;
-use constant SWORD_ATTACK_TIME_LIMIT => 4000;
-use constant SWORD_WIN => 12;
-use constant SWORD_BOUNCE => 200;
-use constant SWORD_DAMAGE => 200;
-use constant SWORD_DAMAGE_BONUS_FACTOR => 15;
-use constant SWORD_GAUGE_VELOCITY_BONUS => 20;
-use constant MACHINEGUN_GAUGE => 400;
-use constant MACHINEGUN_SHOTS => 3;
-use constant MACHINEGUN_RANGE => 1000;
-use constant MACHINEGUN_WIN => 10;
-use constant MACHINEGUN_DAMAGE => 20;
-use constant MACHINEGUN_SWORD_GAUGE_DAMAGE => 300; 
-use constant GET_AWAY_DISTANCE => 30000;
-use constant RIFLE_MAX_DISTANCE => 40000;
-use constant RIFLE_MIN_DISTANCE => 2000;
-use constant RIFLE_ATTACK_TIME_LIMIT => 20000;
-use constant RIFLE_GAUGE => 5000;
-use constant RIFLE_WIN => 11;
-use constant RIFLE_DAMAGE => 100;
-use constant RIFLE_SWORD_GAUGE_DAMAGE => 600; 
- 
+
 has name => (
     is => 'ro',
 );
@@ -42,6 +20,10 @@ has waypoints => (
 );
 
 has armies => (
+    is => 'ro',
+    default => sub { [] }
+);
+has map_elements => (
     is => 'ro',
     default => sub { [] }
 );
@@ -118,6 +100,14 @@ sub add_mecha
     $mecha->set_destination($mecha->position->clone());
     push @{$self->armies}, $mecha;
 }
+sub add_map_element
+{
+    my $self = shift;
+    my $type = shift;
+    my $position = shift;
+    
+}
+
 
 sub get_mecha_by_name
 {
@@ -280,6 +270,26 @@ sub init_scenario
     $self->no_events(0);
 }
 
+sub get_target
+{
+    my $self = shift;
+    my $target_id = shift;
+    return undef if ! $target_id;
+    my ($target_type, $target_name) = split('-', $target_id);
+    if($target_type eq 'WP')
+    {
+        return { name => $target_name, position => $self->waypoints->{$target_name}};
+    }
+    elsif($target_type eq 'MEC')
+    {
+        return $self->get_mecha_by_name($target_name);
+    }
+    else
+    {
+        return undef;
+    }
+}
+
 
 sub add_command
 {
@@ -292,90 +302,12 @@ sub add_command
     my $secondary_params = $command_mongo->{secondaryparams};
     my $velocity = $command_mongo->{velocity};
     my $m = $self->get_mecha_by_name($mecha);
-    $velocity = $m->velocity_target if(! $velocity);
-    my ($target_type, $target_id) = split('-', $params) if $params;
-    if($command eq 'FLY TO WAYPOINT')
-    {
-        $m->set_destination($self->waypoints->{$target_id}->clone());
-        $m->movement_target({ type => 'waypoint', 'name' => $target_id, class => 'fixed'  });
-        $m->velocity_target($velocity);
-    }
-    elsif($command eq 'FLY TO MECHA')
-    {
-        my $target = $self->get_mecha_by_name($target_id);
-    
-        $m->set_destination($target->position->clone());
-        $m->movement_target({ type => 'mecha', 'name' => $target_id, class => 'dynamic'  });
-        $m->velocity_target($velocity);
-    }
-    elsif($command eq 'SWORD ATTACK')
-    {
-        my $attack = 'SWORD';
-        my $target_name = $target_id;
-        my $target = $self->get_mecha_by_name($target_id);
-
-        $m->attack($attack);
-        $m->set_destination($target->position->clone());
-        $m->movement_target({ type => 'mecha', 'name' => $target_id, class => 'dynamic'  });
-        $m->attack_target({ type => 'mecha', 'name' => $target_id, class => 'dynamic'  });
-        $m->attack_limit(SWORD_ATTACK_TIME_LIMIT);
-        $m->attack_gauge(SWORD_GAUGE_VELOCITY_BONUS * $m->velocity);
-    }
-    elsif($command eq 'GET AWAY')
-    {
-        my $target;
-        if($target_type eq 'WP')
-        {
-            $target = $self->waypoints->{$target_id};
-        }
-        elsif($target_type eq 'MEC')
-        {
-            my $target_mecha = $self->get_mecha_by_name($target_id);
-            $target = $target_mecha->position;
-        }
-        my $destination = $m->position->away_from($target, GET_AWAY_DISTANCE);
-        $m->set_destination($destination);
-        $m->movement_target({ type => 'void', name => 'space', class => 'fixed'  });
-        $m->velocity_target($velocity);
-    }
-    elsif($command eq 'WAITING')
-    {
-        $m->movement_target(undef);
-    }
-    elsif($command eq 'RIFLE')
-    {
-        my $target_name = $params;
-        my $target = $self->get_mecha_by_name($target_id);
-        if($m->attack && $m->attack eq 'RIFLE' && $m->attack_limit > 0 && $m->attack_target->{name} eq $target_id)
-        {
-            #Resume. We do nothing, leaving rifle going on
-        }
-        else
-        {
-            $m->stop_movement();
-            $m->attack_limit(RIFLE_ATTACK_TIME_LIMIT);
-            $m->attack('RIFLE');
-            $m->attack_target({ type => 'mecha', 'name' => $target_id, class => 'dynamic'  });
-            $m->attack_gauge(0);
-        }
-    }
+    $m->command($command, $self->get_target($params), $velocity);
     if($secondary_command)
     {
         if($secondary_command eq 'machinegun')
         {
-            my ($target_type, $target_id) = split('-', $secondary_params);
-            my $target = $self->get_mecha_by_name($target_id);
-            if($m->attack && $m->attack eq 'MACHINEGUN' && $m->attack_limit > 0 && $m->attack_target->{name} eq $target_id)
-            {
-                #Resume. We do nothing, leaving machinegun order to exhaust the shots
-            }
-            else
-            {
-                $m->attack_limit(MACHINEGUN_SHOTS);
-                $m->attack('MACHINEGUN');
-                $m->attack_target({ type => 'mecha', 'name' => $target_id, class => 'dynamic'  });
-                $m->attack_gauge(0);
-            }
+            $m->command('MACHINEGUN', $self->get_target($secondary_params), undef);
         }
     }
     $m->cmd_fetched(1);

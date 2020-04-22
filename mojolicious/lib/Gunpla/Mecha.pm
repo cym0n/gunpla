@@ -2,11 +2,10 @@ package Gunpla::Mecha;
 
 use v5.10;
 use Moo;
+use Gunpla::Constants ':all';
 use Gunpla::Position;
 use Data::Dumper;
 
-use constant VELOCITY_LIMIT => 11;
-use constant SWORD_VELOCITY => 8;
 
 #Identity
 has name => (
@@ -265,6 +264,90 @@ sub plan_and_move
         $self->move();
     }
 }
+
+sub command
+{
+    my $self = shift;
+    my $command = shift;
+    my $target = shift;
+    my $velocity = shift;
+    $velocity = $self->velocity_target if(! $velocity);
+    if($command eq 'FLY TO WAYPOINT')
+    {
+        $self->set_destination($target->{position}->clone());
+        $self->movement_target({ type => 'waypoint', 'name' => $target->{name}, class => 'fixed'  });
+        $self->velocity_target($velocity);
+    }
+    elsif($command eq 'FLY TO MECHA')
+    {
+        $self->set_destination($target->position->clone());
+        $self->movement_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
+        $self->velocity_target($velocity);
+    }
+    elsif($command eq 'SWORD ATTACK')
+    {
+        my $attack = 'SWORD';
+
+        $self->attack($attack);
+        $self->set_destination($target->position->clone());
+        $self->movement_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
+        $self->attack_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
+        $self->attack_limit(SWORD_ATTACK_TIME_LIMIT);
+        $self->attack_gauge(SWORD_GAUGE_VELOCITY_BONUS * $self->velocity);
+    }
+    elsif($command eq 'GET AWAY')
+    {
+        my $position;
+        if(ref $target eq 'HASH')
+        {
+            $position = $target->{position};
+        }
+        else
+        {
+            $position = $target->position;
+        }
+        my $destination = $self->position->away_from($position, GET_AWAY_DISTANCE);
+        $self->set_destination($destination);
+        $self->movement_target({ type => 'void', name => 'space', class => 'fixed'  });
+        $self->velocity_target($velocity);
+    }
+    elsif($command eq 'WAITING')
+    {
+        $self->stop_movement();
+        $self->stop_attack();    
+    }
+    elsif($command eq 'RIFLE')
+    {
+        if($self->attack && $self->attack eq 'RIFLE' && $self->attack_limit > 0 && $self->attack_target->{name} eq $target->name)
+        {
+            #Resume. We do nothing, leaving rifle going on
+        }
+        else
+        {
+            $self->stop_movement();
+            $self->attack_limit(RIFLE_ATTACK_TIME_LIMIT);
+            $self->attack('RIFLE');
+            $self->attack_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
+            $self->attack_gauge(0);
+        }
+    }
+    elsif($command eq 'MACHINEGUN')
+    {
+        if($self->attack && $self->attack eq 'MACHINEGUN' && $self->attack_limit > 0 && $self->attack_target->{name} eq $target->name)
+        {
+            #Resume. We do nothing, leaving machinegun order to exhaust the shots
+        }
+        else
+        {
+            $self->attack_limit(MACHINEGUN_SHOTS);
+            $self->attack('MACHINEGUN');
+            $self->attack_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
+            $self->attack_gauge(0);
+        }
+    }
+}
+
+
 
 sub to_mongo
 {
