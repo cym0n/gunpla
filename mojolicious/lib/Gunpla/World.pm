@@ -196,47 +196,20 @@ sub build_commands
 sub init
 {
     my $self = shift;
-    $self->build_commands();
-    $self->waypoints->{'center'} = Gunpla::Position->new(x => 0, y => 0, z => 0);
-    $self->waypoints->{'blue'} = Gunpla::Position->new(x => 200000, y => 0, z => 0);
-    $self->waypoints->{'red'} = Gunpla::Position->new(x => -200000, y => 0, z => 0);
-    $self->waypoints->{'alpha'} = Gunpla::Position->new(x => 0, y => -200000, z => 0);
-    $self->spawn_points->{'wolf'} = 'blue';
-    $self->spawn_points->{'eagle'} = 'red';
-    $self->add_mecha("Diver", "wolf");
-    $self->add_mecha("Zaku", "eagle");
-    $self->no_events(1);
-    $self->calculate_sighting_matrix();
-    $self->no_events(0);
+    $self->init_scenario('basic.csv');
 }
 sub init_test
 {
     my $self = shift;
     my $type = shift;
-    $self->build_commands();
     if($type eq 'dummy')
     {
-        $self->waypoints->{'center'} = Gunpla::Position->new(x => 0, y => 0, z => 0);
-        $self->waypoints->{'blue'} = Gunpla::Position->new(x => 20000, y => 0, z => 0);
-        $self->spawn_points->{'wolf'} = 'blue';
-        $self->spawn_points->{'testing ground'} = 'center';
-        $self->add_mecha("RX78", "wolf");
-        $self->add_mecha("Dummy", "testing ground");
+        $self->init_scenario('dummy.csv');
     }
     elsif($type eq 'duel')
     {
-        $self->waypoints->{'center'} = Gunpla::Position->new(x => 0, y => 0, z => 0);
-        $self->waypoints->{'blue'} = Gunpla::Position->new(x => 75000, y => 0, z => 0);
-        $self->waypoints->{'red'} = Gunpla::Position->new(x => -75000, y => 0, z => 0);
-        $self->waypoints->{'alpha'} = Gunpla::Position->new(x => 0, y => -200000, z => 0);
-        $self->spawn_points->{'wolf'} = 'blue';
-        $self->spawn_points->{'eagle'} = 'red';
-        $self->add_mecha("RX78", "wolf");
-        $self->add_mecha("Hyakushiki", "eagle");
+        $self->init_scenario('duel.csv');
     } 
-    $self->no_events(1);
-    $self->calculate_sighting_matrix();
-    $self->no_events(0);
 }
 sub init_scenario
 {
