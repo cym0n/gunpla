@@ -1,8 +1,12 @@
 package GunplaServer::Controller::Game;
 use Mojo::Base 'Mojolicious::Controller';
 
+use lib "../../";
+
 use MongoDB;
+use Gunpla::Position;
 use Data::Dumper;
+
 
 sub mecha_from_mongo_to_json
 {
@@ -29,6 +33,26 @@ sub waypoint_from_mongo_to_json
              x    => $wp->{position}->{x},
              y    => $wp->{position}->{y},
              z    => $wp->{position}->{z} }
+}
+
+sub hotspot_from_mongo_to_json
+{
+    my $hot = shift;
+    my $mecha = shift;
+    my $hot_pos = Gunpla::Position->from_mongo($hot->{position});
+    my $mecha_pos = Gunpla::Position->from_mongo($mecha->{position});
+    my $distance = $mecha_pos->distance($hot_pos);
+    my %tags = ( 'asteroid' => 'AST' );
+
+
+    return { id => $hot->{id},
+             label => $hot->{type} . " " . $hot_pos->as_string . " d:$distance",
+             map_type => $hot->{type},
+             world_id => $tags{$hot->{type}} . '-' . $hot->{id},
+             x    => $hot->{position}->{x},
+             y    => $hot->{position}->{y},
+             z    => $hot->{position}->{z} 
+    }
 }
 
 
@@ -134,6 +158,36 @@ sub all_visible {
         push @out, $m;
     }
     $c->render(json => { elements => \@out });
+}
+
+sub all_hotspots {
+    my $c = shift;
+    my $game = $c->param('game');
+    my $mecha_name = $c->param('mecha');
+    my $type = $c->param('type');
+    my $id = $c->param('id');
+
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $game);
+    my ( $mecha ) = $db->get_collection('mechas')->find({ name => $mecha_name })->all();
+    if($type && $id)
+    {
+        my ( $hot ) = $db->get_collection('map')->find({ type => $type, id => $id } )->all();
+        $c->render(json => { hotspot => hotspot_from_mongo_to_json($hot, $mecha) });
+    }
+    else
+    {
+        my @hs = $db->get_collection('map')->find()->all();
+        my @out = ();
+        for(@hs)
+        {
+            if($_->{type} ne 'waypoint')
+            {
+                push @out, hotspot_from_mongo_to_json($_, $mecha);
+            }
+        }
+        $c->render(json => { hotspots => \@out });
+    }
 }
 
 sub add_command

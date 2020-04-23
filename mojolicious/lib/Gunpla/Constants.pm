@@ -12,7 +12,7 @@ use constant MACHINEGUN_RANGE => 1000;
 use constant MACHINEGUN_SHOTS => 3;
 use constant MACHINEGUN_SWORD_GAUGE_DAMAGE => 300; 
 use constant MACHINEGUN_WIN => 10;
-use constant MECHA_NEARBY => 1000;
+use constant NEARBY => 1000;
 use constant RIFLE_ATTACK_TIME_LIMIT => 20000;
 use constant RIFLE_DAMAGE => 100;
 use constant RIFLE_GAUGE => 5000;
@@ -39,7 +39,7 @@ our @EXPORT_OK = (
     'MACHINEGUN_SHOTS',
     'MACHINEGUN_SWORD_GAUGE_DAMAGE',
     'MACHINEGUN_WIN',
-    'MECHA_NEARBY',
+    'NEARBY',
     'RIFLE_ATTACK_TIME_LIMIT',
     'RIFLE_DAMAGE',
     'RIFLE_GAUGE',

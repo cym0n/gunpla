@@ -278,10 +278,16 @@ sub command
         $self->movement_target({ type => 'waypoint', 'name' => $target->{name}, class => 'fixed'  });
         $self->velocity_target($velocity);
     }
+    elsif($command eq 'FLY TO HOTSPOT')
+    {
+        $self->set_destination($target->{position}->clone());
+        $self->movement_target({ type => $target->{type}, 'name' => $target->{id}, class => 'fixed', nearby => 1  });
+        $self->velocity_target($velocity);
+    }
     elsif($command eq 'FLY TO MECHA')
     {
         $self->set_destination($target->position->clone());
-        $self->movement_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
+        $self->movement_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic', nearby => 1  });
         $self->velocity_target($velocity);
     }
     elsif($command eq 'SWORD ATTACK')

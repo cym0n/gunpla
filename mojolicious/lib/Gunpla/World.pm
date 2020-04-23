@@ -159,6 +159,16 @@ sub build_commands
             machinegun => 1
         }, 1);
     $self->configure_command( {
+            code => 'flyhot',
+            label => 'FLY TO HOTSPOT',
+            conditions => [  ],
+            params_label => 'Select a Hotspot',
+            params_callback => '/game/hotspots?game=%%GAME%%&mecha=%%MECHA%%',
+            params_masternode => 'hotspots',
+            velocity => 1,
+            machinegun => 1
+        }, 1);
+    $self->configure_command( {
             code => 'sword',
             label => 'SWORD ATTACK',
             conditions => [ 'sighted_foe' ],
@@ -220,6 +230,7 @@ sub init_scenario
     $root_path =~ s/World\.pm//;
     my $data_directory = $root_path . "../../scenarios";
     $self->build_commands();
+    my %counters = ( AST => 0 );
     open(my $fh, "< $data_directory/$file") || die "Impossible to open $data_directory/$file";
     for(<$fh>)
     {
@@ -237,13 +248,36 @@ sub init_scenario
         {
             $self->add_mecha($values[1], $values[2]);
         }
+        elsif($values[0] eq 'AST')
+        {
+            push @{$self->map_elements}, { id => $counters{'AST'}, type => 'asteroid', 
+                                           position =>  Gunpla::Position->new(x => $values[1], y => $values[2], z => $values[3]) };
+            $counters{'AST'} = $counters{'AST'} + 1;
+                
+        }
     }
     $self->no_events(1);
     $self->calculate_sighting_matrix();
     $self->no_events(0);
 }
 
-sub get_target
+sub get_map_element
+{
+    my $self = shift;
+    my $type = shift;
+    my $id = shift;
+    for(@{$self->map_elements})
+    {
+        if($_->{type} eq $type && $_->{id} == $id)
+        {
+            return $_;
+        }
+    }
+    return undef;
+}
+
+
+sub get_target_from_world_id
 {
     my $self = shift;
     my $target_id = shift;
@@ -252,6 +286,10 @@ sub get_target
     if($target_type eq 'WP')
     {
         return { name => $target_name, position => $self->waypoints->{$target_name}};
+    }
+    elsif($target_type eq 'AST')
+    {
+        return $self->get_map_element('asteroid', $target_name);
     }
     elsif($target_type eq 'MEC')
     {
@@ -262,6 +300,18 @@ sub get_target
         return undef;
     }
 }
+sub get_position_from_movement_target
+{
+    my $self = shift;
+    my $movement_target = shift;
+    if($movement_target->{type} eq 'mecha')
+    {
+        my $m = $self->get_mecha_by_name($movement_target->{name});
+        return $m->position->clone();
+    }   
+}
+
+
 
 
 sub add_command
@@ -275,12 +325,12 @@ sub add_command
     my $secondary_params = $command_mongo->{secondaryparams};
     my $velocity = $command_mongo->{velocity};
     my $m = $self->get_mecha_by_name($mecha);
-    $m->command($command, $self->get_target($params), $velocity);
+    $m->command($command, $self->get_target_from_world_id($params), $velocity);
     if($secondary_command)
     {
         if($secondary_command eq 'machinegun')
         {
-            $m->command('MACHINEGUN', $self->get_target($secondary_params), undef);
+            $m->command('MACHINEGUN', $self->get_target_from_world_id($secondary_params), undef);
         }
     }
     $m->cmd_fetched(1);
@@ -338,51 +388,43 @@ sub action
             my $m = $_;
             if($m->movement_target)
             {
-                if($m->movement_target->{type} eq 'mecha')
+                if($m->attack && $m->attack eq 'SWORD')
                 {
-                    if($m->attack && $m->attack eq 'SWORD')
+                    my $target = $self->get_mecha_by_name($m->movement_target->{name});
+                    $m->set_destination($target->position->clone);
+                    $m->mod_attack_gauge(1);
+                    if($m->position->distance($target->position) > SWORD_DISTANCE)
                     {
-                        my $target = $self->get_mecha_by_name($m->movement_target->{name});
-                        $m->set_destination($target->position->clone);
-                        $m->mod_attack_gauge(1);
-                        if($m->position->distance($target->position) > SWORD_DISTANCE)
+                        $m->plan_and_move();
+                        $m->attack_limit($m->attack_limit -1);
+                        if($m->attack_limit == 0)
                         {
-                            $m->plan_and_move();
-                            $m->attack_limit($m->attack_limit -1);
-                            if($m->attack_limit == 0)
-                            {
-                                $m->stop_attack();
-                                $self->event($m->name . " exhausted attack charge", [$m->name]);
-                            }
-                        }
-                        else
-                        {
-                            $self->manage_attack('SWORD', $m);
+                            $m->stop_attack();
+                            $self->event($m->name . " exhausted attack charge", [$m->name]);
                         }
                     }
                     else
                     {
-                        my $target = $self->get_mecha_by_name($m->movement_target->{name});
-                        $m->set_destination($target->position->clone);
-                        if($m->position->distance($target->position) > MECHA_NEARBY)
-                        {
-                            $m->plan_and_move();
-                        }
-                        else
-                        {
-                            $self->event($m->name . " reached the nearby of " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
-                        }
+                        $self->manage_attack('SWORD', $m);
                     }
                 }
                 else
                 {
-                    if(! $m->destination->equals($m->position))
+                    if($m->movement_target->{class} eq 'dynamic')
                     {
-                        $m->plan_and_move();
+                        $m->destination($self->get_position_from_movement_target($m->movement_target));
+                    }              
+                    if($m->destination->equals($m->position))
+                    {
+                        $self->event($m->name . " reached destination: " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
+                    }
+                    elsif($m->movement_target->{nearby} && $m->position->distance($m->destination) < NEARBY)
+                    {
+                        $self->event($m->name . " reached the nearby of " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
                     }
                     else
                     {
-                        $self->event($m->name . " reached destination: " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
+                        $m->plan_and_move();
                     }
                 }
             }
@@ -658,6 +700,16 @@ sub save
         };
         $db->get_collection('map')->insert_one($wp_mongo);
     }
+    foreach my $hot (@{$self->map_elements})
+    {
+        my $hotspot = {
+            id => $hot->{id},
+            type => $hot->{type},
+            position => $hot->{position}->to_mongo
+        };
+        $db->get_collection('map')->insert_one($hotspot);
+    }
+
     my $sighting_matrix = $self->sighting_matrix;
     $sighting_matrix->{status_element} = 'sighting_matrix';
     $db->get_collection('status')->insert_one($sighting_matrix);
@@ -695,6 +747,11 @@ sub load
             {
                 $self->spawn_points->{$mapp->{spawn_point}} = $mapp->{name};
             }
+        }
+        else
+        {
+            $mapp->{position} = Gunpla::Position->from_mongo($mapp->{position});
+            push @{$self->map_elements}, $mapp;
         }
     }
     my ( $sighting_matrix ) = $db->get_collection('status')->find({ status_element => 'sighting_matrix' })->all();

@@ -30,6 +30,10 @@ $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
                           'label' => 'GET AWAY'
                         },
                         {
+                          'code' => 'flyhot',
+                          'label' => 'FLY TO HOTSPOT'
+                        }, 
+                        {
                           'code' => 'flywp',
                           'label' => 'FLY TO WAYPOINT'
                         }, ]
@@ -71,6 +75,10 @@ $t2->get_ok('/game/available-commands?game=autotest&mecha=RX78')
                           'code' => 'away',
                           'label' => 'GET AWAY'
                         },
+                        {
+                          'code' => 'flyhot',
+                          'label' => 'FLY TO HOTSPOT'
+                        }, 
                         {
                           'code' => 'flymec',
                           'label' => 'FLY TO MECHA'

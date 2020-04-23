@@ -22,6 +22,7 @@ sub startup {
   $r->get('/game/mechas')->to('game#all_mechas');
   $r->get('/game/sighted')->to('game#sighted_mechas');
   $r->get('/game/waypoints')->to('game#all_waypoints');
+  $r->get('/game/hotspots')->to('game#all_hotspots');
   $r->get('/game/visible-elements')->to('game#all_visible');
   $r->get('/game/event')->to('game#read_event');
   $r->get('/game/command')->to('game#read_command');
