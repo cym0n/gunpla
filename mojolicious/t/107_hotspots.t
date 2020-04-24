@@ -1,0 +1,89 @@
+use Mojo::Base -strict;
+
+use v5.12;
+
+use Test::More;
+use Test::Mojo;
+
+use lib 'lib';
+use Data::Dumper;
+use Gunpla::World;
+use Gunpla::Position;
+
+diag("Drop gunpla_autotest db on local mongodb");
+my $mongo = MongoDB->connect(); 
+my $db = $mongo->get_database('gunpla_autotest');
+$db->drop();
+
+
+diag("Generate a world and save it on db");
+my $world = Gunpla::World->new(name => 'autotest');
+$world->init_test('duel');
+$world->save();
+
+my $t = Test::Mojo->new('GunplaServer');
+diag("Proposed to RX78 ");
+$t->get_ok('/game/hotspots?game=autotest&mecha=RX78')
+    ->status_is(200)
+    ->json_is(
+        {
+          'hotspots' => [
+                          {
+                            'y' => '10000',
+                            'z' => '9000',
+                            'id' => 0,
+                            'x' => '50000',
+                            'world_id' => 'AST-0',
+                            'map_type' => 'asteroid',
+                            'label' => 'asteroid (50000, 10000, 9000) d:28391'
+                          },
+                          {
+                            'map_type' => 'asteroid',
+                            'label' => 'asteroid (49000, 9000, 10000) d:29275',
+                            'world_id' => 'AST-1',
+                            'x' => '49000',
+                            'y' => '9000',
+                            'z' => '10000',
+                            'id' => 1
+                          }
+                        ]
+        });
+
+
+
+diag("Proposed to Hyakushiki");
+$t->get_ok('/game/hotspots?game=autotest&mecha=Hyakushiki')
+    ->status_is(200)
+    ->json_is({
+          'hotspots' => [
+                          {
+                            'world_id' => 'AST-0',
+                            'z' => '9000',
+                            'y' => '10000',
+                            'map_type' => 'asteroid',
+                            'id' => 0,
+                            'label' => 'asteroid (50000, 10000, 9000) d:125722',
+                            'x' => '50000'
+                          },
+                          {
+                            'x' => '49000',
+                            'label' => 'asteroid (49000, 9000, 10000) d:124728',
+                            'y' => '9000',
+                            'map_type' => 'asteroid',
+                            'id' => 1,
+                            'world_id' => 'AST-1',
+                            'z' => '10000'
+                          }
+                        ]
+        });
+
+open(my $log, "> /tmp/out1.log");
+print {$log} Dumper($t->tx->res->json) . "\n";
+close($log);
+
+diag("Drop gunpla_autotest db on local mongodb for final cleanup");
+$db = $mongo->get_database('gunpla_autotest');
+$db->drop();
+
+
+done_testing();

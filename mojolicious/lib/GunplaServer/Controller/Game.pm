@@ -172,7 +172,7 @@ sub all_hotspots {
     my ( $mecha ) = $db->get_collection('mechas')->find({ name => $mecha_name })->all();
     if($type && $id)
     {
-        my ( $hot ) = $db->get_collection('map')->find({ type => $type, id => $id } )->all();
+        my ( $hot ) = $db->get_collection('map')->find({ type => $type, id => $id } )->sort({id => 1, type => 1})->all();
         $c->render(json => { hotspot => hotspot_from_mongo_to_json($hot, $mecha) });
     }
     else
