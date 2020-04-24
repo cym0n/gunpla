@@ -50,10 +50,18 @@ App = {
             if(data.command.command)
             {
                 var previous;
+                var seccommand = '';
+                var secparams = '';
                 if(data.command.secondarycommand)
                 {
                     previous = data.command.command +' '+ data.command.params+' ['+
-                               data.command.secondarycommand + ' ' + data.command.secondaryparams +']';
+                               data.command.secondarycommand;
+                    seccomand = data.command.secondarycommand;
+                    if(data.command.secondaryparams)
+                    {
+                        previous = previous + ' ' + data.command.secondaryparams +']';
+                        secparams = data.command.secondaryparams;
+                    }
                 }
                 else
                 {
@@ -67,8 +75,8 @@ App = {
                         <input type="hidden" name="mechaname" value="${m.name}">
                         <input type="hidden" name="command" value="${data.command.command}">
                         <input type="hidden" name="params" value="${data.command.params}">
-                        <input type="hidden" name="secondarycommand" value="${data.command.secondarycommand}">
-                        <input type="hidden" name="secondaryparams" value="${data.command.secondaryparams}">
+                        <input type="hidden" name="secondarycommand" value="${seccommand}">
+                        <input type="hidden" name="secondaryparams" value="${secparams}">
                         <p><b>Previous command</b>:<br />${previous}</p>
                         <button name="resume" type="submit" class="btn btn-primary">Resume</button>
                     </form></div>`);

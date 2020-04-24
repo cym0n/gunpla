@@ -274,32 +274,42 @@ sub command
     $velocity = $self->velocity_target if(! $velocity);
     if($command eq 'FLY TO WAYPOINT')
     {
+        $self->stop_attack();    
         $self->set_destination($target->{position}->clone());
         $self->movement_target({ type => 'waypoint', 'name' => $target->{name}, class => 'fixed'  });
         $self->velocity_target($velocity);
     }
     elsif($command eq 'FLY TO HOTSPOT')
     {
+        $self->stop_attack();    
         $self->set_destination($target->{position}->clone());
         $self->movement_target({ type => $target->{type}, 'name' => $target->{id}, class => 'fixed', nearby => 1  });
         $self->velocity_target($velocity);
     }
     elsif($command eq 'FLY TO MECHA')
     {
+        $self->stop_attack();    
         $self->set_destination($target->position->clone());
         $self->movement_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic', nearby => 1  });
         $self->velocity_target($velocity);
     }
     elsif($command eq 'SWORD ATTACK')
     {
-        my $attack = 'SWORD';
-
-        $self->attack($attack);
-        $self->set_destination($target->position->clone());
-        $self->movement_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
-        $self->attack_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
-        $self->attack_limit(SWORD_ATTACK_TIME_LIMIT);
-        $self->attack_gauge(SWORD_GAUGE_VELOCITY_BONUS * $self->velocity);
+        if($self->attack && $self->attack eq 'SWORD' && $self->attack_limit > 0 && $self->attack_target->{name} eq $target->name)
+        {
+            #Resume. We do nothing, leaving sword going on
+        }
+        else
+        {
+            $self->stop_movement();
+            $self->stop_attack();    
+            $self->attack('SWORD');
+            $self->set_destination($target->position->clone());
+            $self->movement_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
+            $self->attack_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
+            $self->attack_limit(SWORD_ATTACK_TIME_LIMIT);
+            $self->attack_gauge(SWORD_GAUGE_VELOCITY_BONUS * $self->velocity);
+        }
     }
     elsif($command eq 'GET AWAY')
     {
@@ -312,6 +322,7 @@ sub command
         {
             $position = $target->position;
         }
+        $self->stop_attack();    
         my $destination = $self->position->away_from($position, GET_AWAY_DISTANCE);
         $self->set_destination($destination);
         $self->movement_target({ type => 'void', name => 'space', class => 'fixed'  });
@@ -330,6 +341,7 @@ sub command
         }
         else
         {
+            $self->stop_attack();    
             $self->stop_movement();
             $self->attack_limit(RIFLE_ATTACK_TIME_LIMIT);
             $self->attack('RIFLE');
@@ -345,6 +357,7 @@ sub command
         }
         else
         {
+            $self->stop_attack();    
             $self->attack_limit(MACHINEGUN_SHOTS);
             $self->attack('MACHINEGUN');
             $self->attack_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
