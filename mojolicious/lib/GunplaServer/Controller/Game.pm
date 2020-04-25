@@ -57,6 +57,18 @@ sub hotspot_from_mongo_to_json
              distance => $distance,
     }
 }
+sub command_from_mongo_to_json
+{
+    my $command = shift;
+    my $mecha_name = shift;
+    my $game = shift;
+    delete $command->{_id};
+    my $callback = $command->{params_callback};
+    $callback =~ s/%%GAME%%/$game/;
+    $callback =~ s/%%MECHA%%/$mecha_name/;
+    $command->{params_callback} = $callback;
+    return $command;
+}
 
 
 sub all_mechas {
@@ -310,15 +322,11 @@ sub available_commands
         my $yes = 1;
         for(@{$c->{conditions}})
         {
-            if($_ eq 'sighted_foe')
-            {
-                my @mecha = _get_sighted_mechas($game, $mecha_name);
-                $yes = 0 if(@mecha == 0);
-            }
+            #No conditions defined yet
         }
         if($yes)
         {
-            push @commands, { code => $c->{code}, label => $c->{label} }
+            push @commands, command_from_mongo_to_json($c, $mecha_name, $game);
         }
     }
     $c->render(json => { commands => \@commands });
@@ -335,10 +343,6 @@ sub command_details
     my $db = $client->get_database('gunpla_' . $game);
     my ( $command_details ) = $db->get_collection('available_commands')->find({ code => $command })->all();
     
-    my $callback = $command_details->{params_callback};
-    $callback =~ s/%%GAME%%/$game/;
-    $callback =~ s/%%MECHA%%/$mecha_name/;
-    $command_details->{params_callback} = $callback;
     if($command_details->{machinegun})
     { 
         my @mecha = _get_sighted_mechas($game, $mecha_name);
@@ -347,8 +351,7 @@ sub command_details
             $command_details->{machinegun} = 0;
         }
     }
-    delete $command_details->{_id};
-    $c->render(json => { command => $command_details });
+    $c->render(json => { command => command_from_mongo_to_json($command_details, $mecha_name, $game) });
 }
 
 

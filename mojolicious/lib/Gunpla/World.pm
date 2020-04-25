@@ -151,7 +151,7 @@ sub build_commands
     $self->configure_command( {
             code => 'flymec',
             label => 'FLY TO MECHA',
-            conditions => [ 'sighted_foe' ],
+            conditions => [  ],
             params_label => 'Select a Mecha',
             params_callback => '/game/sighted?game=%%GAME%%&mecha=%%MECHA%%',
             params_masternode => 'mechas',
@@ -171,7 +171,7 @@ sub build_commands
     $self->configure_command( {
             code => 'sword',
             label => 'SWORD ATTACK',
-            conditions => [ 'sighted_foe' ],
+            conditions => [  ],
             params_label => 'Select a Mecha',
             params_callback => '/game/sighted?game=%%GAME%%&mecha=%%MECHA%%',
             params_masternode => 'mechas',
@@ -191,10 +191,20 @@ sub build_commands
     $self->configure_command( {
             code => 'rifle',
             label => 'RIFLE',
-            conditions => [ 'sighted_foe' ],
+            conditions => [  ],
             params_label => 'Select a Mecha',
             params_callback => '/game/sighted?game=%%GAME%%&mecha=%%MECHA%%',
             params_masternode => 'mechas',
+            machinegun => 0,
+            velocity => 0
+        }, 1);
+    $self->configure_command( {
+            code => 'land',
+            label => 'LAND',
+            conditions => [  ],
+            params_label => 'Select a Hotspot',
+            params_callback => '/game/hotspots?game=%%GAME%%&mecha=%%MECHA%%&action=land',
+            params_masternode => 'hotspots',
             machinegun => 0,
             velocity => 0
         }, 1);

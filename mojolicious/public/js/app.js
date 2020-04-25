@@ -41,7 +41,12 @@ App = {
         .then(function(response) { return response.json(); })
         .then(function(data) { 
             data.commands.forEach(function(c, index, array) {
-                $( "#maincommands_"+m.name).append('<option value="'+c.code+'">'+c.label+'</option>');
+                fetch(c.params_callback).then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if(data[c.params_masternode].length > 0)
+                    {
+                        $( "#maincommands_"+m.name).append('<option value="'+c.code+'">'+c.label+'</option>');
+                    }});
             });
         });
         fetch('/game/command?game='+App.game+'&mecha='+m.name+'&prev=1')
