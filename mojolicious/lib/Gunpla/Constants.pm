@@ -31,6 +31,8 @@ use constant SWORD_VELOCITY => 8;
 use constant SWORD_WIN => 12;
 use constant VELOCITY_LIMIT => 11;
 use constant LANDING_RANGE => 20000;
+use constant LANDING_VELOCITY => 3;
+use constant LANDING_DISTANCE => 10;
 
 our @EXPORT_OK = (
     'GET_AWAY_DISTANCE',
@@ -59,6 +61,8 @@ our @EXPORT_OK = (
     'SWORD_WIN',
     'VELOCITY_LIMIT',
     'LANDING_RANGE',
+    'LANDING_VELOCITY',
+    'LANDING_DISTANCE',
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 

@@ -418,6 +418,17 @@ sub action
                         $self->manage_attack('SWORD', $m);
                     }
                 }
+                elsif($m->action && $m->action eq 'LAND')
+                {
+                    if($m->position->distance($m->destination) > LANDING_DISTANCE)
+                    {
+                        $m->plan_and_move();
+                    }
+                    else
+                    {
+                        $self->manage_action('LAND', $m);
+                    }
+                }
                 else
                 {
                     if($m->movement_target->{class} eq 'dynamic')
@@ -610,6 +621,21 @@ sub manage_attack
         }
     
     }
+}
+
+sub manage_action
+{
+    my $self = shift;
+    my $action = shift;
+    my $mecha = shift;
+    if($action eq 'LAND')
+    {
+        $mecha->stop_action();
+        $mecha->add_status('landed');
+        $mecha->velocity(0);
+        $self->event($mecha->name . " landed on " . $mecha->movement_target->{type} . " " . $mecha->movement_target->{name} , [$mecha->name]);
+    }
+    
 }
 
 sub dice

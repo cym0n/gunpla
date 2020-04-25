@@ -156,6 +156,18 @@ sub mod_attack_gauge
     $self->attack_gauge($new_value);
 }
 
+sub stop_landing
+{
+    my $self = shift;
+    $self->stop_action() if ($self->action && $self->action eq 'LANDING');
+}
+
+sub stop_action
+{
+    my $self = shift;
+    $self->action(undef);
+}
+
 sub stop_movement
 {
     my $self = shift;
@@ -229,7 +241,7 @@ sub ok_velocity
     }
     elsif($self->velocity > $self->velocity_target)
     {
-        $self->velocity = $self->velocity_target;
+        $self->velocity($self->velocity_target);
     }
     return $move;
 }
@@ -269,6 +281,7 @@ sub move
     {
         if($self->ok_velocity)
         {
+            $self->delete_status('landed') if $self->is_status('landed');
             my $ax = $self->course->{axis};
             $self->position->$ax($self->position->$ax + $self->course->{direction});
             $self->course->{steps} = $self->course->{steps} - 1;
@@ -316,6 +329,7 @@ sub command
     if($command eq 'FLY TO WAYPOINT')
     {
         $self->stop_attack();    
+        $self->stop_landing();    
         $self->set_destination($target->{position}->clone());
         $self->movement_target({ type => 'waypoint', 'name' => $target->{name}, class => 'fixed'  });
         $self->velocity_target($velocity);
@@ -323,6 +337,7 @@ sub command
     elsif($command eq 'FLY TO HOTSPOT')
     {
         $self->stop_attack();    
+        $self->stop_landing();    
         $self->set_destination($target->{position}->clone());
         $self->movement_target({ type => $target->{type}, 'name' => $target->{id}, class => 'fixed', nearby => 1  });
         $self->velocity_target($velocity);
@@ -330,12 +345,14 @@ sub command
     elsif($command eq 'FLY TO MECHA')
     {
         $self->stop_attack();    
+        $self->stop_landing();    
         $self->set_destination($target->position->clone());
         $self->movement_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic', nearby => 1  });
         $self->velocity_target($velocity);
     }
     elsif($command eq 'SWORD ATTACK')
     {
+        $self->stop_landing();    
         if($self->attack && $self->attack eq 'SWORD' && $self->attack_limit > 0 && $self->attack_target->{name} eq $target->name)
         {
             #Resume. We do nothing, leaving sword going on
@@ -363,6 +380,7 @@ sub command
         {
             $position = $target->position;
         }
+        $self->stop_landing();    
         $self->stop_attack();    
         my $destination = $self->position->away_from($position, GET_AWAY_DISTANCE);
         $self->set_destination($destination);
@@ -373,6 +391,7 @@ sub command
     {
         $self->stop_movement();
         $self->stop_attack();    
+        $self->stop_action();    
     }
     elsif($command eq 'RIFLE')
     {
@@ -382,6 +401,7 @@ sub command
         }
         else
         {
+            $self->stop_landing();    
             $self->stop_attack();    
             $self->stop_movement();
             $self->attack_limit(RIFLE_ATTACK_TIME_LIMIT);
@@ -389,6 +409,15 @@ sub command
             $self->attack_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
             $self->attack_gauge(0);
         }
+    }
+    elsif($command eq 'LAND')
+    {
+        $self->stop_attack();    
+        $self->action("LAND");
+        $self->set_destination($target->{position}->clone());
+        $self->velocity_target(LANDING_VELOCITY);
+        $self->movement_target({ type => $target->{type}, 'name' => $target->{id}, class => 'fixed' });
+        
     }
     elsif($command eq 'MACHINEGUN')
     {
@@ -435,7 +464,9 @@ sub to_mongo
         attack_target => $self->attack_target,
         attack_limit => $self->attack_limit,
         attack_gauge => $self->attack_gauge,
-        life => $self->life
+        life => $self->life,
+        status => $self->status,
+        action => $self->action,
     }
 }
 
