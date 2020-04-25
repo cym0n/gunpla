@@ -30,6 +30,7 @@ use constant SWORD_GAUGE_VELOCITY_BONUS => 20;
 use constant SWORD_VELOCITY => 8;
 use constant SWORD_WIN => 12;
 use constant VELOCITY_LIMIT => 11;
+use constant LANDING_RANGE => 20000;
 
 our @EXPORT_OK = (
     'GET_AWAY_DISTANCE',
@@ -57,6 +58,7 @@ our @EXPORT_OK = (
     'SWORD_VELOCITY',
     'SWORD_WIN',
     'VELOCITY_LIMIT',
+    'LANDING_RANGE',
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 

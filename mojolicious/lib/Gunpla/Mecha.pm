@@ -96,15 +96,56 @@ has attack_limit => (
 has attack_gauge => (
     is => 'rw',
 );
-has life => (
+#Action
+has action => (
     is => 'rw'
 );
 
 
 #Characteristics
+has life => (
+    is => 'rw'
+);
 has sensor_range => (
     is => 'ro',
 );
+has status => (
+    is => 'rw',
+    default => sub { [] }
+);
+
+sub is_status
+{
+    my $self = shift;
+    my $status = shift;
+    if(grep { $_ eq $status } @{$self->status})
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+
+sub add_status
+{
+    my $self = shift;
+    my $status = shift;
+    if(! $self->is_status($status))
+    {
+        push @{$self->status}, $status;
+    }
+}
+
+sub delete_status
+{
+    my $self = shift;
+    my $status  = shift;
+    my @new = grep { $_ ne $status} @{$self->status};
+    $self->status(\@new);
+}
 
 sub mod_attack_gauge
 {
