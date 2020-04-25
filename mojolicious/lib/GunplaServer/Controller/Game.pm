@@ -4,6 +4,7 @@ use Mojo::Base 'Mojolicious::Controller';
 use lib "../../";
 
 use MongoDB;
+use Gunpla::Constants ':all';
 use Gunpla::Position;
 use Data::Dumper;
 
@@ -39,6 +40,7 @@ sub hotspot_from_mongo_to_json
 {
     my $hot = shift;
     my $mecha = shift;
+    return waypoint_from_mongo_to_json($hot) if $hot->{type} eq 'waypoint';
     my $hot_pos = Gunpla::Position->from_mongo($hot->{position});
     my $mecha_pos = Gunpla::Position->from_mongo($mecha->{position});
     my $distance = $mecha_pos->distance($hot_pos);
@@ -51,7 +53,8 @@ sub hotspot_from_mongo_to_json
              world_id => $tags{$hot->{type}} . '-' . $hot->{id},
              x    => $hot->{position}->{x},
              y    => $hot->{position}->{y},
-             z    => $hot->{position}->{z} 
+             z    => $hot->{position}->{z},
+             distance => $distance,
     }
 }
 
@@ -164,6 +167,7 @@ sub all_hotspots {
     my $c = shift;
     my $game = $c->param('game');
     my $mecha_name = $c->param('mecha');
+    my $action = $c->param('action');
     my $type = $c->param('type');
     my $id = $c->param('id');
 
@@ -181,10 +185,19 @@ sub all_hotspots {
         my @out = ();
         for(@hs)
         {
-            if($_->{type} ne 'waypoint')
+            my $hs_data = hotspot_from_mongo_to_json($_, $mecha);
+            my $to_add = 1;
+            if($hs_data->{map_type} eq 'waypoint')
             {
-                push @out, hotspot_from_mongo_to_json($_, $mecha);
+                $to_add = 0;
             }
+            if($action && $action eq 'land' && 
+                (($hs_data->{map_type} ne 'asteroid') || 
+                ($hs_data->{map_type} eq 'asteroid' && $hs_data->{distance} > LANDING_RANGE)))
+            {
+                $to_add = 0;
+            }
+            push @out, $hs_data if $to_add;
         }
         $c->render(json => { hotspots => \@out });
     }
