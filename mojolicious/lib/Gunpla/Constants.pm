@@ -20,7 +20,7 @@ use constant RIFLE_MAX_DISTANCE => 40000;
 use constant RIFLE_MIN_DISTANCE => 2000;
 use constant RIFLE_SWORD_GAUGE_DAMAGE => 600; 
 use constant RIFLE_WIN => 11;
-use constant SIGHT_TOLERANCE => 10000;
+use constant RIFLE_LANDED_BONUS => 1;
 use constant SWORD_ATTACK_TIME_LIMIT => 4000;
 use constant SWORD_BOUNCE => 200;
 use constant SWORD_DAMAGE => 200;
@@ -33,6 +33,9 @@ use constant VELOCITY_LIMIT => 11;
 use constant LANDING_RANGE => 20000;
 use constant LANDING_VELOCITY => 3;
 use constant LANDING_DISTANCE => 10;
+use constant SIGHT_TOLERANCE => 10000;
+use constant SIGHT_LANDED_BONUS => 40000;
+use constant SIGHT_MINIMUM => 10000;
 
 our @EXPORT_OK = (
     'GET_AWAY_DISTANCE',
@@ -50,7 +53,7 @@ our @EXPORT_OK = (
     'RIFLE_MIN_DISTANCE',
     'RIFLE_SWORD_GAUGE_DAMAGE',
     'RIFLE_WIN',
-    'SIGHT_TOLERANCE',
+    'RIFLE_LANDED_BONUS',
     'SWORD_ATTACK_TIME_LIMIT',
     'SWORD_BOUNCE',
     'SWORD_DAMAGE',
@@ -63,6 +66,9 @@ our @EXPORT_OK = (
     'LANDING_RANGE',
     'LANDING_VELOCITY',
     'LANDING_DISTANCE',
+    'SIGHT_TOLERANCE',
+    'SIGHT_LANDED_BONUS',
+    'SIGHT_MINIMUM',
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 

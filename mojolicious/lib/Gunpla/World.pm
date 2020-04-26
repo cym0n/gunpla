@@ -606,6 +606,7 @@ sub manage_attack
         my $distance = $attacker->position->distance($defender->position);
         my $distance_bonus = 3 - ceil((3 * $distance) / RIFLE_MAX_DISTANCE);
         my $roll = $self->dice(1, 20);
+        $roll += RIFLE_LANDED_BONUS if($attacker->is_status('landed'));
         if($roll + $distance_bonus >= RIFLE_WIN)
         {
             $defender->life($defender->life - RIFLE_DAMAGE);   
@@ -829,7 +830,13 @@ sub calculate_sighting_matrix
                 {
                     $self->sighting_matrix->{$m->name}->{$other->name} = 0;
                 }
-                if($m->position->distance($other->position) < $m->sensor_range)
+                my $threshold = $m->sensor_range;
+                if($threshold > 0) #Blind mechas remain blind
+                {
+                    $threshold -= SIGHT_LANDED_BONUS if $other->is_status('landed');
+                    $threshold = SIGHT_MINIMUM if $threshold < SIGHT_MINIMUM;
+                }
+                if($m->position->distance($other->position) < $threshold)
                 {
                     if($self->sighting_matrix->{$m->name}->{$other->name} == 0)
                     {
