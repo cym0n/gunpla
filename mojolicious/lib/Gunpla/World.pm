@@ -633,6 +633,7 @@ sub manage_action
         $mecha->stop_action();
         $mecha->add_status('landed');
         $mecha->velocity(0);
+        $mecha->position($mecha->destination);
         $self->event($mecha->name . " landed on " . $mecha->movement_target->{type} . " " . $mecha->movement_target->{name} , [$mecha->name]);
     }
     
