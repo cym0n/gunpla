@@ -82,7 +82,7 @@ $t2->get_ok('/game/event?game=autotest&mecha=RX78')->status_is(200)->json_is(
 
 
 diag("MongoDB cleanup");
-#$db->drop();
+$db->drop();
 
 
 

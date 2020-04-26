@@ -44,26 +44,6 @@ is($world->armies->[0]->position->x, 29423);
 is($world->armies->[0]->position->y, 9423);
 is($world->armies->[0]->position->z, 9424);
 
-$world->armies->[0]->waiting(0);
-$world->add_command('RX78', { command =>'LAND', params => 'AST-0'});
-is($world->action(), 1);
-$world->save;
-diag("RX78 landed on the asteroid");
-$t->get_ok('/game/event?game=autotest&mecha=RX78')->status_is(200)->json_is(
-    {
-        events => [
-            {
-                mecha => 'RX78',
-                message => 'RX78 landed on asteroid 0'
-            }
-        ]
-    }
-);
-is($world->armies->[0]->position->x, 30000);
-is($world->armies->[0]->position->y, 10000);
-is($world->armies->[0]->position->z, 10000);
-is($world->armies->[0]->velocity, 0);
-is($world->armies->[0]->is_status('landed'), 1);
 
 open(my $log, "> /tmp/out1.log");
 print {$log} Dumper($t->tx->res->json) . "\n";

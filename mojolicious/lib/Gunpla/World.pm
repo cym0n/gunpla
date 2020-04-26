@@ -77,6 +77,8 @@ has mecha_templates => (
             'Gelgoog'  => { sensor_range => 130000,  life => 1000, max_velocity => 6, acceleration => 100000 },
             'Dummy'  => { sensor_range => 0,  life => 1000, max_velocity => 10, acceleration => 100 },
             'RX78' => { sensor_range => 140000, life => 1000, max_velocity => 10, acceleration => 100  },
+            'Deathscythe' => { sensor_range => 69000, life => 1000, max_velocity => 10, acceleration => 100  },
+            'Sandrock' => { sensor_range => 30000, life => 1000, max_velocity => 10, acceleration => 100  },
             'Hyakushiki' => { sensor_range => 80000, life => 1000, max_velocity => 10, acceleration => 100  },
         }
     }
@@ -93,9 +95,11 @@ sub add_mecha
     my $faction = shift;
     #TODO: check if mecha already exists
     my $template = $self->mecha_templates->{$name};
+    die "NO TEMPLATE for $name" if ! $template;
     $template->{name} = $name;
     $template->{faction} = $faction;
     my $mecha = Gunpla::Mecha->new($template);
+    
     $mecha->position($self->waypoints->{$self->spawn_points->{$faction}}->clone());
     $mecha->set_destination($mecha->position->clone());
     push @{$self->armies}, $mecha;
