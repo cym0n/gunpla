@@ -8,20 +8,12 @@ use Test::Mojo;
 use lib 'lib';
 use Data::Dumper;
 use Gunpla::World;
+use Gunpla::Test;
 use Gunpla::Position;
 
-diag("Drop gunpla_autotest db on local mongodb");
-my $mongo = MongoDB->connect(); 
-my $db = $mongo->get_database('gunpla_autotest');
-$db->drop();
-
-
-diag("Generate a world and save it on db");
-my $world = Gunpla::World->new(name => 'autotest');
-$world->init_test('duel');
-$world->save();
-
+my $world = Gunpla::Test::test_bootstrap('duel.csv');
 my $t = Test::Mojo->new('GunplaServer');
+
 diag("Proposed to RX78 ");
 $t->get_ok('/game/hotspots?game=autotest&mecha=RX78')
     ->status_is(200)
@@ -50,8 +42,6 @@ $t->get_ok('/game/hotspots?game=autotest&mecha=RX78')
                           }
                         ]
         });
-
-
 
 diag("Proposed to Hyakushiki");
 $t->get_ok('/game/hotspots?game=autotest&mecha=Hyakushiki')
@@ -88,11 +78,13 @@ $t->get_ok('/game/hotspots?game=autotest&mecha=RX78&action=land')
         {
           'hotspots' => []
         });
+
 diag("Moving RX78 near an asteroid");
 $world->armies->[0]->position->x(69500);
 $world->armies->[0]->position->y(10000);
 $world->armies->[0]->position->z(9000);
 $world->save;
+
 diag("Proposed to RX78 for landing (one)");
 $t->get_ok('/game/hotspots?game=autotest&mecha=RX78&action=land')
     ->status_is(200)
@@ -109,14 +101,8 @@ $t->get_ok('/game/hotspots?game=autotest&mecha=RX78&action=land')
               'distance' => 19500,
             }]
     });
+Gunpla::Test::dump_api($t);
 
-open(my $log, "> /tmp/out1.log");
-print {$log} Dumper($t->tx->res->json) . "\n";
-close($log);
-
-diag("Drop gunpla_autotest db on local mongodb for final cleanup");
-$db = $mongo->get_database('gunpla_autotest');
-$db->drop();
-
+Gunpla::Test::clean_db('autotest', 1);
 
 done_testing();

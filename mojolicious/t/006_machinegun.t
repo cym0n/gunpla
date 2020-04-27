@@ -8,21 +8,16 @@ use Test::Mojo;
 use lib 'lib';
 use Data::Dumper;
 use Gunpla::World;
+use Gunpla::Test;
 use Gunpla::Position;
 
-diag("Drop gunpla_autotest db on local mongodb");
-my $mongo = MongoDB->connect(); 
-my $db = $mongo->get_database('gunpla_autotest');
-$db->drop();
-
-
-diag("Generate a world and save it on db");
-my $world = Gunpla::World->new(name => 'autotest', dice_results => [20, 3, 20]);
-$world->init_test('dummy');
-
+my $world = Gunpla::Test::test_bootstrap('dummy.csv', [20, 3, 20]);
 my $t = Test::Mojo->new('GunplaServer');
+my $commands = { 'RX78' => { command => 'FLY TO WAYPOINT', params => 'WP-center', secondarycommand => 'machinegun', secondaryparams => 'MEC-Dummy', velocity => 10},
+                 'Dummy' => { command => 'WAITING' } };
 
-resume(2); #Counting non-blocking events
+is(Gunpla::Test::emulate_commands($world, $commands), 2);
+
 diag("=== First shot");
 diag("Checking event generation (using API)");
 $t->get_ok('/game/event?game=autotest&mecha=Dummy')->status_is(200)->json_is(
@@ -35,6 +30,7 @@ $t->get_ok('/game/event?game=autotest&mecha=Dummy')->status_is(200)->json_is(
         ]
     }
 );
+
 diag("Checking mechas stats");
 is($world->armies->[0]->position->x, 1000);
 is($world->armies->[0]->velocity, 10);
@@ -42,7 +38,8 @@ is($world->armies->[0]->attack_limit, 2);
 is($world->armies->[0]->attack_gauge, 0);
 is($world->armies->[1]->life, 980);
 
-resume(5); #Counting non-blocking events
+is(Gunpla::Test::emulate_commands($world, $commands), 5);
+
 diag("=== Second shot misses, no events");
 diag("=== Third shot - action ended");
 diag("Checking event generation (using API)");
@@ -74,34 +71,6 @@ is($world->armies->[0]->attack_limit, 0);
 is($world->armies->[0]->attack_gauge, 0);
 is($world->armies->[1]->life, 960);
 
-
-
-
-
-
-diag("MongoDB cleanup");
-$db->drop();
-
-
+Gunpla::Test::clean_db('autotest', 1);
 
 done_testing();
-
-sub resume
-{
-    my $events = shift;
-    if($world->armies->[0]->waiting)
-    {
-        diag("Resuming RX78 action");
-        $world->armies->[0]->waiting(0);
-        $world->add_command('RX78', { command => 'FLY TO WAYPOINT', params => 'WP-center', secondarycommand => 'machinegun', secondaryparams => 'MEC-Dummy', velocity => 10});
-    }
-    if($world->armies->[1]->waiting)
-    {
-        diag("Resuming Dummy action");
-        $world->armies->[1]->waiting(0);
-        $world->add_command('Dummy', {command => 'WAITING'});
-    }
-    is($world->action(), $events);
-    $world->save;
-}
-

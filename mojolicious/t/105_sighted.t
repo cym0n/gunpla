@@ -8,17 +8,10 @@ use Test::Mojo;
 use lib 'lib';
 use Data::Dumper;
 use Gunpla::World;
+use Gunpla::Test;
 use Gunpla::Position;
 
-diag("Drop gunpla_autotest db on local mongodb");
-my $mongo = MongoDB->connect(); 
-my $db = $mongo->get_database('gunpla_autotest');
-$db->drop();
-
-
-diag("Generate a world and save it on db");
-my $world = Gunpla::World->new(name => 'autotest');
-$world->init_test('duel');
+my $world = Gunpla::Test::test_bootstrap('duel.csv');
 $world->add_mecha("Gelgoog", "eagle");
 $world->get_mecha_by_name("RX78")->position(Gunpla::Position->new(x => 0, y => 0, z => 0));
 $world->get_mecha_by_name("Hyakushiki")->position(Gunpla::Position->new(x => 50000, y => 0, z => 0));
@@ -27,8 +20,8 @@ $world->calculate_sighting_matrix("RX78");
 $world->calculate_sighting_matrix("Hyakushiki");
 $world->calculate_sighting_matrix("Gelgoog");
 $world->save();
-
 my $t = Test::Mojo->new('GunplaServer');
+
 diag("What RX78 sighted");
 $t->get_ok('/game/sighted?game=autotest&mecha=RX78')
     ->status_is(200)
@@ -69,6 +62,8 @@ $t->get_ok('/game/sighted?game=autotest&mecha=RX78')
                         }
                       ]
            });
+
+diag("What Hyakushiki sighted");
 $t->get_ok('/game/sighted?game=autotest&mecha=Hyakushiki')
     ->status_is(200)
     ->json_is({
@@ -91,14 +86,8 @@ $t->get_ok('/game/sighted?game=autotest&mecha=Hyakushiki')
                         },
                       ]
            });
+Gunpla::Test::dump_api($t);
 
-open(my $log, "> /tmp/out1.log");
-print {$log} Dumper($t->tx->res->json) . "\n";
-close($log);
-
-diag("Drop gunpla_autotest db on local mongodb for final cleanup");
-$db = $mongo->get_database('gunpla_autotest');
-$db->drop();
-
+Gunpla::Test::clean_db('autotest', 1);
 
 done_testing();

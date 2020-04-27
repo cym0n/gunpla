@@ -8,27 +8,17 @@ use Test::Mojo;
 use lib 'lib';
 use Data::Dumper;
 use Gunpla::World;
+use Gunpla::Test;
 use Gunpla::Position;
 
-diag("Drop gunpla_autotest db on local mongodb");
-my $mongo = MongoDB->connect(); 
-my $db = $mongo->get_database('gunpla_autotest');
-$db->drop();
-
-
-diag("Generate a world and save it on db");
-my $world = Gunpla::World->new(name => 'autotest', dice_results => [20]);
-$world->init_scenario('t009.csv');
-
-#Dummy flies toward RX78 waiting to shoot
-$world->armies->[0]->waiting(0);
-$world->add_command("RX78", { command => 'RIFLE', params => 'MEC-Dummy' });
-$world->armies->[1]->waiting(0);
-$world->armies->[1]->velocity(6);
-$world->add_command("Dummy", { command => 'FLY TO WAYPOINT', params => 'WP-blue', velocity => 6 });
-is($world->action(), 2);
-$world->save();
+my $world = Gunpla::Test::test_bootstrap('t009.csv', [20]);
 my $t = Test::Mojo->new('GunplaServer');
+my $commands = { 'RX78' => { command =>'RIFLE', params => 'MEC-Dummy'},
+                 'Dummy' => { command => 'FLY TO WAYPOINT', params => 'WP-blue', velocity => 6 } };
+
+is(Gunpla::Test::emulate_commands($world, $commands), 2);
+$world->armies->[1]->velocity(6);
+
 $t->get_ok('/game/event?game=autotest&mecha=RX78')->status_is(200)->json_is(
     {
         events => [
@@ -49,13 +39,10 @@ $t->get_ok('/game/event?game=autotest&mecha=Dummy')->status_is(200)->json_is(
         ]
     }
 );
-
 is($world->armies->[1]->position->x, 2000);
 
 
-diag("MongoDB cleanup");
-$db->drop();
-
+Gunpla::Test::clean_db('autotest', 1);
 
 
 done_testing();

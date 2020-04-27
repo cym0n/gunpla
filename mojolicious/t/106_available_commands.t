@@ -8,18 +8,12 @@ use Test::Mojo;
 use lib 'lib';
 use Data::Dumper;
 use Gunpla::World;
+use Gunpla::Test;
 use Gunpla::Position;
 
-diag("Drop gunpla_autotest db on local mongodb");
-my $mongo = MongoDB->connect(); 
-my $db = $mongo->get_database('gunpla_autotest');
-$db->drop();
-
-
-diag("Generate a world with no target sighted and save it on db");
-my $world = Gunpla::World->new(name => 'autotest');
-$world->init_test('duel');
+my $world = Gunpla::Test::test_bootstrap('duel.csv');
 my $t = Test::Mojo->new('GunplaServer');
+
 diag("No mecha sighted, FLY TO WAYPOINT and GET AWAY are the only available command");
 $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
     ->status_is(200)
@@ -97,9 +91,7 @@ $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
                           }
                         ]
            });
-open(my $log, "> /tmp/out1.log");
-print {$log} Dumper($t->tx->res->json) . "\n";
-close($log);
+Gunpla::Test::dump_api($t);
 
 diag("FLY TO WAYPOINT details - machinegun is off");
 $t->get_ok('/game/command-details?game=autotest&mecha=RX78&command=flywp')
@@ -117,19 +109,11 @@ $t->get_ok('/game/command-details?game=autotest&mecha=RX78&command=flywp')
                         }
     });
 
-$db->drop();
 diag("Generate a world with a target sighted and save it on db");
-$world = Gunpla::World->new(name => 'autotest');
-$world->init_test('dummy');
-$world->armies->[0]->waiting(0);
-$world->add_command('RX78', {command => 'WAITING'});
-$world->armies->[1]->waiting(0);
-$world->add_command('Dummy', { command => 'WAITING'});
-$world->save();
-
+$world = Gunpla::Test::test_bootstrap('dummy.csv');
 my $t2 = Test::Mojo->new('GunplaServer');
-diag("Available-commands give back always the same result");
 
+diag("Available-commands give back always the same result");
 diag("FLY TO WAYPOINT details - machinegun is on");
 $t2->get_ok('/game/command-details?game=autotest&mecha=RX78&command=flywp')
     ->status_is(200)
@@ -160,9 +144,7 @@ $t2->get_ok('/game/command-details?game=autotest&mecha=RX78&command=flymec')
                           'velocity' => 1,
                         }
     });
-diag("Drop gunpla_autotest db");
-$db = $mongo->get_database('gunpla_autotest');
-$db->drop();
 
+Gunpla::Test::clean_db('autotest', 1);
 
 done_testing();
