@@ -3,6 +3,7 @@ package Gunpla::World;
 use v5.10;
 use POSIX;
 use Moo;
+use DateTime;
 use MongoDB;
 use Cwd 'abs_path';
 use Gunpla::Constants ':all';
@@ -728,6 +729,12 @@ sub save
     $db->get_collection('mechas')->drop();
     $db->get_collection('map')->drop();
     $db->get_collection('status')->drop();
+
+    my $masterdb = $mongo->get_database('gunpla__core');
+    my $now = DateTime->now();
+    $now->set_time_zone("Europe/Rome");
+    $masterdb->get_collection('games')->replace_one({ name => $self->name}, { name => $self->name, update_time => $now, timestamp => $self->timestamp }, { upsert => 1 } ); 
+
     foreach my $m (@{$self->armies})
     {
         $db->get_collection('mechas')->insert_one($m->to_mongo);
