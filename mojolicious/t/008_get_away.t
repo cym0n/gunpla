@@ -34,7 +34,6 @@ Gunpla::Test::dump_api($t);
 diag("Check RX78 position");
 is($world->armies->[0]->position->x, 230000);
 
-
 Gunpla::Test::clean_db('autotest', 1);
 
 

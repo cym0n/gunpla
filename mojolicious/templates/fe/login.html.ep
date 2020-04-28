@@ -1,0 +1,24 @@
+<h1>Login</h1>
+<div class="row col-sm-5">
+% for my $g (@$games) {
+    <div class="well">
+        <h2><%= $g->{name} %></h2>
+        <div class="row">
+            <div class="col-sm-6">
+                <form method="post">
+                    <input type="hidden" name="user" value="amuro">
+                    <input type="hidden" name="game" value="<%= $g->{name} %>">
+                    <button type="submit" class="btn btn-primary">Enter as Amuro</button>
+                </form>
+            </div>
+            <div class="col-sm-6">
+                <form method="post">
+                    <input type="hidden" name="user" value="char">
+                    <input type="hidden" name="game" value="<%= $g->{name} %>">
+                    <button type="submit" class="btn btn-primary">Enter as Char</button>
+                </form>
+            </div>
+        </div>
+    </div>
+% }
+</div>

@@ -18,7 +18,9 @@ sub startup {
 
   # Normal route to controller
   $r->get('/')->to('example#welcome');
-  $r->get('/fe')->to('fe#main');
+  $r->get('/fe/login')->to('fe#login');
+  $r->post('/fe/login')->to('fe#to_the_game');
+  $r->get('/fe/game')->to('fe#main');
   $r->get('/game/mechas')->to('game#all_mechas');
   $r->get('/game/sighted')->to('game#sighted_mechas');
   $r->get('/game/waypoints')->to('game#all_waypoints');
