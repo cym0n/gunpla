@@ -1,6 +1,5 @@
-<div class="row">
 <div class="col-sm-5">
-<h1>Mechas</h1>
+<h1>Mechas <span class="badge badge-primary"><%= $user %></span></h1>
 <div id="mechas"></div>
 </div>
 <div class="col-sm-5">

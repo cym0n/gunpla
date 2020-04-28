@@ -57,6 +57,10 @@ has timestamp => (
     is => 'rw',
     default => 0
 );
+has control => (
+    is => 'ro',
+    default => sub { {} }
+);
 
 #Only for test purpose
 has dice_results => (
@@ -268,7 +272,10 @@ sub init_scenario
             push @{$self->map_elements}, { id => $counters{'AST'}, type => 'asteroid', 
                                            position =>  Gunpla::Position->new(x => $values[1], y => $values[2], z => $values[3]) };
             $counters{'AST'} = $counters{'AST'} + 1;
-                
+        }
+        elsif($values[0] eq 'PLY')
+        {
+            $self->control->{$values[1]} = $values[2];
         }
     }
     $self->no_events(1);
@@ -763,6 +770,12 @@ sub save
     $sighting_matrix->{status_element} = 'sighting_matrix';
     $db->get_collection('status')->insert_one($sighting_matrix);
     $db->get_collection('status')->insert_one({status_element => 'timestamp', timestamp => $self->timestamp});
+    for(keys %{$self->control})
+    {
+        $db->get_collection('control')->insert_one({ mecha => $_, player => $self->control->{$_} });
+    }
+
+
 }
 sub save_mecha_status
 {
@@ -813,6 +826,11 @@ sub load
     for(@commands)
     {
         $self->configure_command($_);
+    }
+    my @control = $db->get_collection('control')->find()->all();
+    for(@control)
+    {
+        $self->control->{$_->{mecha}} = $_->{player};
     }
 }
 

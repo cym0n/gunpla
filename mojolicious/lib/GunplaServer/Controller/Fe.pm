@@ -7,6 +7,7 @@ use MongoDB;
 sub main {
     my $c = shift;
     my $game = $c->param('game');
+    $c->stash(user => $c->session('user'));
     $c->render(game => $game);
 }
 

@@ -70,6 +70,12 @@ sub command_from_mongo_to_json
     return $command;
 }
 
+sub owned
+{
+    my $mecha = shift;
+    my $ownership = shift;
+    return grep {$_->{mecha} eq $mecha} @{$ownership}
+}
 
 sub all_mechas {
     my $c = shift;
@@ -77,10 +83,19 @@ sub all_mechas {
     my $mecha_name = $c->param('mecha');
     my $client = MongoDB->connect();
     my $db = $client->get_database('gunpla_' . $game);
-    if($mecha_name)
+    my $user = $c->session('user');
+    my @controlled = $db->get_collection('control')->find({ player => $user})->all();
+    if($mecha_name && owned($mecha_name, \@controlled) )
     {
-        my ( $mecha ) = $db->get_collection('mechas')->find({ name => $mecha_name })->all();
-        $c->render(json => { mecha => mecha_from_mongo_to_json($mecha) });
+        if(owned($mecha_name, \@controlled))
+        {
+            my ( $mecha ) = $db->get_collection('mechas')->find({ name => $mecha_name })->all();
+            $c->render(json => { mecha => mecha_from_mongo_to_json($mecha) });
+        }
+        else
+        {
+            $c->render(json => { mechas => [] });
+        }
     }
     else
     {
@@ -88,7 +103,10 @@ sub all_mechas {
         my @out = ();
         for(@mecha)
         {
-            push @out, mecha_from_mongo_to_json($_);
+            if(owned($_->{name}, \@controlled))
+            {
+                push @out, mecha_from_mongo_to_json($_);
+            }
         }
         $c->render(json => { mechas => \@out });
     }
