@@ -58,7 +58,7 @@ has timestamp => (
     default => 0
 );
 has control => (
-    is => 'ro',
+    is => 'rw',
     default => sub { {} }
 );
 
@@ -711,6 +711,25 @@ sub event
         }
         $self->generated_events($self->generated_events + 1);
     }
+}
+
+sub get_events
+{
+    my $self = shift;
+    my $mecha = shift;
+    my $cmd_index = shift;
+
+    my $mecha_obj = $self->get_mecha_by_name($mecha);
+    $cmd_index = $mecha_obj->cmd_index if ! $cmd_index;
+    my $mongo = MongoDB->connect(); 
+    my $db = $mongo->get_database('gunpla_' . $self->name);
+    my @events = $db->get_collection('events')->find({ mecha => $mecha_obj->name, cmd_index => $cmd_index, blocking => 1})->all();
+    my @out = ();
+    for(@events)
+    {
+        push @out, $_->{message},
+    } 
+    return \@out;
 }
 
 sub is_spawn_point

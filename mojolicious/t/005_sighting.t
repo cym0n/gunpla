@@ -3,7 +3,6 @@ use v5.10;
 use lib 'lib';
 
 use Test::More;
-use Test::Mojo;
 use Gunpla::Position;
 use Gunpla::Test;
 use Gunpla::World;
@@ -24,18 +23,8 @@ is($world->armies->[1]->waiting, 0);
 is($world->armies->[1]->cmd_index, 0);
 is($world->armies->[1]->position->x, -71240);
 
-diag("Checking event generation (using API)");
-my $t = Test::Mojo->new('GunplaServer');
-$t->get_ok('/game/event?game=autotest&mecha=RX78')->status_is(200)->json_is(
-    {
-        events => [
-            {
-                mecha => 'RX78',
-                message => 'RX78 sighted Hyakushiki'
-            }
-        ]
-    }
-);
+diag("Checking event generation");
+is_deeply($world->get_events('RX78'), [ 'RX78 sighted Hyakushiki' ]);
 
 diag("Flying away from Hyakushiki");
 is(Gunpla::Test::emulate_commands($world,
@@ -52,17 +41,7 @@ is($world->armies->[1]->cmd_index, 0, "Hyakushiki CMD index");
 is($world->armies->[1]->position->x, -70217, "Hyakushiki X position");
 
 diag("Checking event generation (using API)");
-my $t2 = Test::Mojo->new('GunplaServer');
-$t2->get_ok('/game/event?game=autotest&mecha=RX78')->status_is(200)->json_is(
-    {
-        events => [
-            {
-                mecha => 'RX78',
-                message => 'RX78 lost contact with Hyakushiki'
-            }
-        ]
-    }
-);
+is_deeply($world->get_events('RX78'), [ 'RX78 lost contact with Hyakushiki' ]);
 
 Gunpla::Test::clean_db('autotest', 1);
 done_testing();
