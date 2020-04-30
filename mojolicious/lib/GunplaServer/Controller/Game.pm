@@ -85,17 +85,10 @@ sub all_mechas {
     my $db = $client->get_database('gunpla_' . $game);
     my $user = $c->session('user');
     my @controlled = $db->get_collection('control')->find({ player => $user})->all();
-    if($mecha_name && owned($mecha_name, \@controlled) )
+    if($mecha_name)
     {
-        if(owned($mecha_name, \@controlled))
-        {
-            my ( $mecha ) = $db->get_collection('mechas')->find({ name => $mecha_name })->all();
-            $c->render(json => { mecha => mecha_from_mongo_to_json($mecha) });
-        }
-        else
-        {
-            $c->render(json => { mechas => [] });
-        }
+        my ( $mecha ) = $db->get_collection('mechas')->find({ name => $mecha_name })->all();
+        $c->render(json => { mecha => mecha_from_mongo_to_json($mecha) });
     }
     else
     {
