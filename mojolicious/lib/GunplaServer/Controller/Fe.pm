@@ -3,7 +3,11 @@ use Mojo::Base 'Mojolicious::Controller';
 
 use MongoDB;
 
-# This action will render a template
+sub hp {
+    my $c = shift;
+    $c->redirect_to("/fe/login");
+}
+
 sub main {
     my $c = shift;
     my $game = $c->param('game');

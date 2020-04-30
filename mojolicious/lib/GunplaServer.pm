@@ -47,7 +47,7 @@ sub startup {
 
 
   # Normal route to controller
-  $r->get('/')->to('example#welcome');
+  $r->get('/')->to('fe#hp');
   $r->get('/fe/login')->to('fe#login');
   $r->post('/fe/login')->to('fe#to_the_game');
   $r->get('/fe/game')->to('fe#main');
