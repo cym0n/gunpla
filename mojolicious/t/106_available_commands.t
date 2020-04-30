@@ -13,6 +13,7 @@ use Gunpla::Position;
 
 my $world = Gunpla::Test::test_bootstrap('duel.csv');
 my $t = Test::Mojo->new('GunplaServer');
+$t->app->config->{no_login} = 1;
 
 diag("No mecha sighted, FLY TO WAYPOINT and GET AWAY are the only available command");
 $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
@@ -112,6 +113,7 @@ $t->get_ok('/game/command-details?game=autotest&mecha=RX78&command=flywp')
 diag("Generate a world with a target sighted and save it on db");
 $world = Gunpla::Test::test_bootstrap('dummy.csv');
 my $t2 = Test::Mojo->new('GunplaServer');
+$t2->app->config->{no_login} = 1;
 
 diag("Available-commands give back always the same result");
 diag("FLY TO WAYPOINT details - machinegun is on");

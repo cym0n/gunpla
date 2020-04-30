@@ -13,6 +13,7 @@ use Gunpla::Position;
 
 my $world = Gunpla::Test::test_bootstrap('duel.csv');
 my $t = Test::Mojo->new('GunplaServer');
+$t->app->config->{no_login} = 1;
 
 diag("Proposed to RX78 ");
 $t->get_ok('/game/hotspots?game=autotest&mecha=RX78')

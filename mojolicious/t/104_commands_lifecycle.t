@@ -12,6 +12,7 @@ use Gunpla::Test;
 
 my $world = Gunpla::Test::test_bootstrap('duel.csv');
 my $t = Test::Mojo->new('GunplaServer');
+$t->app->config->{no_login} = 1;
 
 diag("Adding a command to RX78");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
@@ -51,6 +52,7 @@ diag("Running script to elaborate actions");
 say `script/gunpla.pl action autotest`;
 
 my $t2 = Test::Mojo->new('GunplaServer');
+$t2->app->config->{no_login} = 1;
 diag("Getting the event - distance is exactly 140000");
 $t2->get_ok('/game/event?game=autotest&mecha=RX78')->status_is(200)->json_is(
     {

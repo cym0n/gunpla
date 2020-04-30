@@ -20,22 +20,27 @@ sub startup {
 
   $self->app->hook(before_dispatch => sub {
     my $c = shift;
-    if($c->param('mecha'))
+    if($c->app->config->{no_login})
     {
-        my $mecha = $c->param('mecha');
-        my $game = $c->param('game');
-        my $client = MongoDB->connect();
-        my $db = $client->get_database('gunpla_' . $game);
-        my $user = $c->session('user');
-        my ( $controlled ) = $db->get_collection('control')->find({ player => $user, mecha => $mecha })->all();
-        if(! $controlled)
+        $self->app->log->debug('--- no login ---');
+    }
+    else
+    {
+        if($c->param('mecha'))
         {
-            say "Not Allowed call for $user";
-            $c->render(json => { error => 'Mecha not owned' }, status => 403)
+            my $mecha = $c->param('mecha');
+            my $game = $c->param('game');
+            my $client = MongoDB->connect();
+            my $db = $client->get_database('gunpla_' . $game);
+            my $user = $c->session('user');
+            my ( $controlled ) = $db->get_collection('control')->find({ player => $user, mecha => $mecha })->all();
+            if(! $controlled)
+            {
+                $self->app->log->debug("Not Allowed call for $user");
+                $c->render(json => { error => 'Mecha not owned' }, status => 403)
+            }
         }
     }
-
-
   });
 
 

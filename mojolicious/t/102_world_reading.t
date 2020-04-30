@@ -12,6 +12,11 @@ use Gunpla::Test;
 my $world = Gunpla::Test::test_bootstrap('duel.csv');
 my $t = Test::Mojo->new('GunplaServer');
 
+diag("Login");
+$t->post_ok('/fe/login' => {Accept => '*/*'} => form => { game => 'autotest',
+                                                          user => 'amuro' }) 
+    ->status_is(302);
+
 diag("Mechas read API - all");
 $t->get_ok('/game/mechas?game=autotest')->status_is(200)->json_has('/mechas');
 
@@ -22,7 +27,7 @@ $t->get_ok('/game/mechas?game=autotest&mecha=RX78')->status_is(200)->json_is(
             name => 'RX78',
             label => 'RX78',
             world_id => 'MEC-RX78',
-            map_type => 'mecha',
+           map_type => 'mecha',
             life => 1000,
             faction => 'wolf',
             position => { x => 75000, y => 0, z => 0 },
@@ -30,6 +35,13 @@ $t->get_ok('/game/mechas?game=autotest&mecha=RX78')->status_is(200)->json_is(
             velocity => 0,
             max_velocity => 10,
         }
+    }
+);
+
+diag("Mechas read API - single - not allowed");
+$t->get_ok('/game/mechas?game=autotest&mecha=Zaku')->status_is(403)->json_is(
+    {
+        error => 'Mecha not owned'
     }
 );
 Gunpla::Test::dump_api($t);

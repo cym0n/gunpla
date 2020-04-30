@@ -9,6 +9,7 @@ use Gunpla::Test;
 
 my $world = Gunpla::Test::test_bootstrap('duel.csv');
 my $t = Test::Mojo->new('GunplaServer');
+$t->app->config->{no_login} = 1;
 
 diag("Adding a command to RX78");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',

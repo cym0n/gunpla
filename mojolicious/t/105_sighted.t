@@ -21,6 +21,7 @@ $world->calculate_sighting_matrix("Hyakushiki");
 $world->calculate_sighting_matrix("Gelgoog");
 $world->save();
 my $t = Test::Mojo->new('GunplaServer');
+$t->app->config->{no_login} = 1;
 
 diag("What RX78 sighted");
 $t->get_ok('/game/sighted?game=autotest&mecha=RX78')
