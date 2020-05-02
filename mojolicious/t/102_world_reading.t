@@ -44,24 +44,73 @@ $t->get_ok('/game/mechas?game=autotest&mecha=Zaku')->status_is(403)->json_is(
         error => 'Mecha not owned'
     }
 );
-Gunpla::Test::dump_api($t);
 
 diag("Waypoints read API");
-$t->get_ok('/game/waypoints?game=autotest')->status_is(200)->json_has('/waypoints');
-diag("Waypoints read API - single");
-$t->get_ok('/game/waypoints?game=autotest&waypoint=center')->status_is(200)->json_is(
-    {
-        waypoint => {
-            name => 'center',
-            label => 'center',
-            map_type => 'waypoint',
-            world_id => 'WP-center',
-            x => 0,
-            y => 0,
-            z => 0
+$t->get_ok('/game/targets?game=autotest&filter=waypoints')->status_is(200)->json_is(
+{
+    'targets' => [
+        {
+            'id' => 'alpha',
+            'label' => 'waypoint alpha (0, -200000, 0)',
+            'map_type' => 'waypoint',
+            'x' => '0',
+            'y' => '-200000',
+            'z' => '0',
+            'distance' => undef
+        },
+        {
+            'id' => 'blue',
+            'label' => 'waypoint blue (75000, 0, 0)',
+            'map_type' => 'waypoint',
+            'x' => '75000',
+            'y' => '0',
+            'z' => '0',
+            'distance' => undef,
+        },
+        {
+            'id' => 'center',
+            'label' => 'waypoint center (0, 0, 0)',
+            'map_type' => 'waypoint',
+            'x' => '0',
+            'y' => '0',
+            'z' => '0',
+            'distance' => undef,
+        },
+        {
+            'id' => 'magellan',
+            'label' => 'waypoint magellan (50000, 10000, 10000)',
+            'map_type' => 'waypoint',
+            'x' => '50000',
+            'y' => '10000',
+            'z' => '10000',
+            'distance' => undef,
+        },
+        {
+            'id' => 'red',
+            'label' => 'waypoint red (-75000, 0, 0)',
+            'map_type' => 'waypoint',
+            'x' => '-75000',
+            'y' => '0',
+            'z' => '0',
+            'distance' => undef,
         }
-    }
+    ]}
 );
+Gunpla::Test::dump_api($t);
+#diag("Waypoints read API - single");
+#$t->get_ok('/game/waypoints?game=autotest&waypoint=center')->status_is(200)->json_is(
+#    {
+#        waypoint => {
+#            name => 'center',
+#            label => 'center',
+#            map_type => 'waypoint',
+#            world_id => 'WP-center',
+#            x => 0,
+#            y => 0,
+#            z => 0
+#        }
+#    }
+#);
 
 Gunpla::Test::clean_db('autotest', 1);
 

@@ -36,6 +36,9 @@ use constant LANDING_DISTANCE => 10;
 use constant SIGHT_TOLERANCE => 10000;
 use constant SIGHT_LANDED_BONUS => 40000;
 use constant SIGHT_MINIMUM => 10000;
+use constant ELEMENT_TAGS => { 'asteroid' => 'AST',
+                               'mecha'    => 'MEC',
+                               'waypoint' => 'WP' };
 
 our @EXPORT_OK = (
     'GET_AWAY_DISTANCE',
@@ -69,6 +72,7 @@ our @EXPORT_OK = (
     'SIGHT_TOLERANCE',
     'SIGHT_LANDED_BONUS',
     'SIGHT_MINIMUM',
+    'ELEMENT_TAGS',
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 

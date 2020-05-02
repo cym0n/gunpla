@@ -1,7 +1,10 @@
 package GunplaServer;
 use Mojo::Base 'Mojolicious';
 
+use lib "../../";
+
 use MongoDB;
+use Gunpla::Utils qw(controlled);
 
 # This method will run once at server start
 sub startup {
@@ -30,11 +33,8 @@ sub startup {
         {
             my $mecha = $c->param('mecha');
             my $game = $c->param('game');
-            my $client = MongoDB->connect();
-            my $db = $client->get_database('gunpla_' . $game);
             my $user = $c->session('user');
-            my ( $controlled ) = $db->get_collection('control')->find({ player => $user, mecha => $mecha })->all();
-            if(! $controlled)
+            if(! controlled($game, $mecha, $user))
             {
                 $self->app->log->debug("Not Allowed call for $user");
                 $c->render(json => { error => 'Mecha not owned' }, status => 403)
@@ -52,6 +52,7 @@ sub startup {
   $r->post('/fe/login')->to('fe#to_the_game');
   $r->get('/fe/game')->to('fe#main');
   $r->get('/game/mechas')->to('game#all_mechas');
+  $r->get('/game/targets')->to('game#targets');
   $r->get('/game/sighted')->to('game#sighted_mechas');
   $r->get('/game/waypoints')->to('game#all_waypoints');
   $r->get('/game/hotspots')->to('game#all_hotspots');

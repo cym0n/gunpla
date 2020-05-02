@@ -5,58 +5,11 @@ use lib "../../";
 
 use MongoDB;
 use Gunpla::Constants ':all';
+use Gunpla::Utils qw(controlled target_from_mongo_to_json mecha_from_mongo_to_json);
 use Gunpla::Position;
 use Data::Dumper;
 
 
-sub mecha_from_mongo_to_json
-{
-    my $mecha = shift;
-    return { name     => $mecha->{name},
-             label     => $mecha->{name},
-             map_type => 'mecha',
-             world_id => 'MEC-' . $mecha->{name},   
-             life     => $mecha->{life},
-             faction  => $mecha->{faction},
-             position => $mecha->{position},
-             velocity => $mecha->{velocity},
-             max_velocity => $mecha->{max_velocity},
-             waiting  => $mecha->{waiting} };
-}
-
-sub waypoint_from_mongo_to_json
-{
-    my $wp = shift;
-    return { name     => $wp->{name},
-             label     => $wp->{name},
-             map_type => 'waypoint',
-             world_id => 'WP-' . $wp->{name},   
-             x    => $wp->{position}->{x},
-             y    => $wp->{position}->{y},
-             z    => $wp->{position}->{z} }
-}
-
-sub hotspot_from_mongo_to_json
-{
-    my $hot = shift;
-    my $mecha = shift;
-    return waypoint_from_mongo_to_json($hot) if $hot->{type} eq 'waypoint';
-    my $hot_pos = Gunpla::Position->from_mongo($hot->{position});
-    my $mecha_pos = Gunpla::Position->from_mongo($mecha->{position});
-    my $distance = $mecha_pos->distance($hot_pos);
-    my %tags = ( 'asteroid' => 'AST' );
-
-
-    return { id => $hot->{id},
-             label => $hot->{type} . " " . $hot_pos->as_string . " d:$distance",
-             map_type => $hot->{type},
-             world_id => $tags{$hot->{type}} . '-' . $hot->{id},
-             x    => $hot->{position}->{x},
-             y    => $hot->{position}->{y},
-             z    => $hot->{position}->{z},
-             distance => $distance,
-    }
-}
 sub command_from_mongo_to_json
 {
     my $command = shift;
@@ -68,13 +21,6 @@ sub command_from_mongo_to_json
     $callback =~ s/%%MECHA%%/$mecha_name/;
     $command->{params_callback} = $callback;
     return $command;
-}
-
-sub owned
-{
-    my $mecha = shift;
-    my $ownership = shift;
-    return grep {$_->{mecha} eq $mecha} @{$ownership}
 }
 
 sub all_mechas {
@@ -96,7 +42,7 @@ sub all_mechas {
         my @out = ();
         for(@mecha)
         {
-            if(owned($_->{name}, \@controlled))
+            if(controlled($game, $_->{name}, $user))
             {
                 push @out, mecha_from_mongo_to_json($_);
             }
@@ -159,6 +105,44 @@ sub all_waypoints {
         $c->render(json => { waypoints => \@out });
     }
 }
+
+sub targets
+{
+    my $c = shift;
+    my $game = $c->param('game');
+    my $mecha = $c->param('mecha');
+    my $filter = $c->param('filter');
+
+    my @to_take = ();
+    my @out = ();
+
+    if($filter eq 'waypoints')
+    {
+        @to_take = ( 'waypoints');
+    }
+
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $game);
+
+    for(@to_take)
+    {
+        if($_ eq 'waypoints')    
+        {
+            my @wp = $db->get_collection('map')->find({ type => 'waypoint' } )->sort({id => 1, type => 1})->all();
+            for(@wp)
+            {
+                my $w = target_from_mongo_to_json($game, $mecha, 'map', $_);
+                push @out, $w;
+            }
+        }
+    }
+    $c->render(json => { targets => \@out });
+    
+}
+
+
+
+
 
 sub all_visible {
     my $c = shift;
