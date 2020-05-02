@@ -5,7 +5,7 @@ use lib "../../";
 
 use MongoDB;
 use Gunpla::Constants ':all';
-use Gunpla::Utils qw(controlled target_from_mongo_to_json mecha_from_mongo_to_json);
+use Gunpla::Utils qw(controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction);
 use Gunpla::Position;
 use Data::Dumper;
 
@@ -120,6 +120,18 @@ sub targets
     {
         @to_take = ( 'waypoints');
     }
+    elsif($filter eq 'mecha-sighted-by-me')
+    {
+        @to_take = ( 'mecha_sighted_by_me');
+    }
+    elsif($filter eq 'mecha-sighted-by-faction')
+    {
+        @to_take = ( 'mecha_sighted_by_faction');
+    }
+    else
+    {
+        $c->render(json => { error => 'Bad filter provided' }, status => 400)
+    }
 
     my $client = MongoDB->connect();
     my $db = $client->get_database('gunpla_' . $game);
@@ -133,6 +145,30 @@ sub targets
             {
                 my $w = target_from_mongo_to_json($game, $mecha, 'map', $_);
                 push @out, $w;
+            }
+        }
+        elsif($_ eq 'mecha_sighted_by_me')
+        {
+            my @mec = $db->get_collection('mechas')->find()->sort({name => 1})->all();
+            for(@mec)
+            {
+                if(sighted_by_me($game, $mecha, $_))
+                {
+                    my $m = target_from_mongo_to_json($game, $mecha, 'mechas', $_);
+                    push @out, $m;
+                }
+            }
+        }
+        elsif($_ eq 'mecha_sighted_by_faction')
+        {
+            my @mec = $db->get_collection('mechas')->find()->sort({name => 1})->all();
+            for(@mec)
+            {
+                if(sighted_by_faction($game, $mecha, $_))
+                {
+                    my $m = target_from_mongo_to_json($game, $mecha, 'mechas', $_);
+                    push @out, $m;
+                }
             }
         }
     }

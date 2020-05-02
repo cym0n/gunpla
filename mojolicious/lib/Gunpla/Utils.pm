@@ -1,7 +1,7 @@
 package Gunpla::Utils;
 
 use base 'Exporter';
-our @EXPORT_OK = qw( controlled target_from_mongo_to_json mecha_from_mongo_to_json );
+our @EXPORT_OK = qw( controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction);
 
 use Data::Dumper;
 use MongoDB;
@@ -36,7 +36,7 @@ sub target_from_mongo_to_json
         my ( $mecha_obj ) = $db->get_collection('mechas')->find({ name => $mecha })->all();
         if($mecha_obj)
         {
-            $mecha_pos_mongo = $mecha->{position} if $mecha_obj;
+            $mecha_pos_mongo = $mecha_obj->{position} if $mecha_obj;
             my $mecha_pos = Gunpla::Position->from_mongo($mecha_pos_mongo);
             $distance = $mecha_pos->distance($obj_pos);
         }
@@ -79,4 +79,26 @@ sub mecha_from_mongo_to_json
              velocity => $mecha->{velocity},
              max_velocity => $mecha->{max_velocity},
              waiting  => $mecha->{waiting} };
+}
+
+sub sighted_by_me
+{
+    my $game = shift;
+    my $mecha = shift;
+    my $obj = shift;
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $game);
+    my ( $sighting_matrix ) = $db->get_collection('status')->find({ status_element => 'sighting_matrix' })->all();
+    return $sighting_matrix->{$mecha}->{$obj->{name}} > 0;
+}
+sub sighted_by_faction
+{
+    my $game = shift;
+    my $mecha = shift;
+    my $obj = shift;
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $game);
+    my ( $mecha_obj ) = $db->get_collection('mechas')->find({ name => $mecha })->all();
+    my ( $sighting_matrix ) = $db->get_collection('status')->find({ status_element => 'sighting_matrix' })->all();
+    return $sighting_matrix->{__factions}->{$mecha_obj->{faction}}->{$obj->{name}} > 0;
 }

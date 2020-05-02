@@ -24,69 +24,48 @@ my $t = Test::Mojo->new('GunplaServer');
 $t->app->config->{no_login} = 1;
 
 diag("What RX78 sighted");
-$t->get_ok('/game/sighted?game=autotest&mecha=RX78')
+$t->get_ok('/game/targets?game=autotest&mecha=RX78&filter=mecha-sighted-by-me')
     ->status_is(200)
-    ->json_is({
-          'mechas' => [
-                        {
-                          'waiting' => 1,
-                          'faction' => 'eagle',
-                          'name' => 'Hyakushiki',
-                          'label' => 'Hyakushiki',
-                          'world_id' => 'MEC-Hyakushiki',
-                          'map_type' => 'mecha',
-                          'life' => 1000,
-                          'velocity' => 0,
-                          'max_velocity' => 10,
-                          'position' => {
-                                          'z' => 0,
-                                          'y' => 0,
-                                          'x' => 50000
-                                        }
-
-                        },
-                        {
-                          'position' => {
-                                          'y' => 0,
-                                          'z' => 0,
-                                          'x' => 120000
-                                        },
-                          'name' => 'Gelgoog',
-                          'label' => 'Gelgoog',
-                          'world_id' => 'MEC-Gelgoog',
-                          'map_type' => 'mecha',
-                          'faction' => 'eagle',
-                          'life' => 1000,
-                          'velocity' => 0,
-                          'max_velocity' => 6,
-                          'waiting' => 1
-                        }
-                      ]
-           });
+    ->json_is(
+        {
+            'targets' => [
+                {
+                    'id' => 'Gelgoog',
+                    'label' => 'mecha Gelgoog (120000, 0, 0) d:120000',
+                    'map_type' => 'mecha',
+                    'x' => 120000,
+                    'y' => 0,
+                    'z' => 0,
+                    'distance' => 120000,
+                },
+                {
+                    'id' => 'Hyakushiki',
+                    'label' => 'mecha Hyakushiki (50000, 0, 0) d:50000',
+                    'map_type' => 'mecha',
+                    'x' => 50000,
+                    'y' => 0,
+                    'z' => 0,
+                    'distance' => 50000,
+                }
+            ]
+        });
 
 diag("What Hyakushiki sighted");
-$t->get_ok('/game/sighted?game=autotest&mecha=Hyakushiki')
+$t->get_ok('/game/targets?game=autotest&mecha=Hyakushiki&filter=mecha-sighted-by-me')
     ->status_is(200)
     ->json_is({
-          'mechas' => [
-                        {
-                          'waiting' => 1,
-                          'faction' => 'wolf',
-                          'name' => 'RX78',
-                          'label' => 'RX78',
-                          'world_id' => 'MEC-RX78',
-                          'map_type' => 'mecha',
-                          'life' => 1000,
-                          'velocity' => 0,
-                          'max_velocity' => 10,
-                          'position' => {
-                                          'z' => 0,
-                                          'y' => 0,
-                                          'x' => 0
-                                        }
-                        },
-                      ]
-           });
+          'targets' => [
+                         {
+                           'id' => 'RX78',
+                           'label' => 'mecha RX78 (0, 0, 0) d:50000',
+                           'map_type' => 'mecha',
+                           'x' => 0,
+                           'z' => 0,
+                           'y' => 0,
+                           'distance' => 50000,
+                         }
+                       ]
+        });
 Gunpla::Test::dump_api($t);
 
 Gunpla::Test::clean_db('autotest', 1);
