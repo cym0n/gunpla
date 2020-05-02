@@ -150,6 +150,7 @@ sub build_commands
     $self->configure_command( {
             code => 'flywp',
             label => 'FLY TO WAYPOINT',
+            target_types => [ 'WP' ],
             conditions => [  ],
             params_label => 'Select a Waypoint',
             params_callback => '/game/waypoints?game=%%GAME%%',
@@ -160,6 +161,7 @@ sub build_commands
     $self->configure_command( {
             code => 'flymec',
             label => 'FLY TO MECHA',
+            target_types => [ 'MEC' ],
             conditions => [  ],
             params_label => 'Select a Mecha',
             params_callback => '/game/sighted?game=%%GAME%%&mecha=%%MECHA%%',
@@ -170,6 +172,7 @@ sub build_commands
     $self->configure_command( {
             code => 'flyhot',
             label => 'FLY TO HOTSPOT',
+            target_types => [ 'AST' ],
             conditions => [  ],
             params_label => 'Select a Hotspot',
             params_callback => '/game/hotspots?game=%%GAME%%&mecha=%%MECHA%%',
@@ -180,6 +183,7 @@ sub build_commands
     $self->configure_command( {
             code => 'sword',
             label => 'SWORD ATTACK',
+            target_types => [ 'MEC' ],
             conditions => [  ],
             params_label => 'Select a Mecha',
             params_callback => '/game/sighted?game=%%GAME%%&mecha=%%MECHA%%',
@@ -190,6 +194,7 @@ sub build_commands
     $self->configure_command( {
             code => 'away',
             label => 'GET AWAY',
+            target_types => [ 'WP', 'MEC', 'AST' ],
             conditions => [ ],
             params_label => 'Select a Element',
             params_callback => '/game/visible-elements?game=%%GAME%%&mecha=%%MECHA%%',
@@ -200,6 +205,7 @@ sub build_commands
     $self->configure_command( {
             code => 'rifle',
             label => 'RIFLE',
+            target_types => [ 'MEC' ],
             conditions => [  ],
             params_label => 'Select a Mecha',
             params_callback => '/game/sighted?game=%%GAME%%&mecha=%%MECHA%%',
@@ -210,6 +216,7 @@ sub build_commands
     $self->configure_command( {
             code => 'land',
             label => 'LAND',
+            target_types => [ 'AST' ],
             conditions => [  ],
             params_label => 'Select a Hotspot',
             params_callback => '/game/hotspots?game=%%GAME%%&mecha=%%MECHA%%&action=land',
@@ -768,6 +775,7 @@ sub save
     foreach my $wp (keys %{$self->waypoints})
     {
         my $wp_mongo = {
+            id => $wp,
             name => $wp,
             type => 'waypoint',
             position => $self->waypoints->{$wp}->to_mongo(),
@@ -868,6 +876,7 @@ sub calculate_sighting_matrix
     {
         @do = @{$self->armies};
     }
+    my %factions;
     foreach my $m (@do)
     {
         foreach my $other (@{$self->armies})      
@@ -903,9 +912,19 @@ sub calculate_sighting_matrix
                         }
                     }
                 }
+                if($self->sighting_matrix->{$m->name}->{$other->name} > 0)
+                {
+                    $factions{$m->faction}->{$other->name} = 1;
+
+                }
+                else
+                {
+                    $factions{$m->faction}->{$other->name} = 0 if ! exists $factions{$m->faction}->{$other->name};
+                }
             }
         }
     }
+    $self->sighting_matrix->{__factions} = \%factions;
 }
 
 1;
