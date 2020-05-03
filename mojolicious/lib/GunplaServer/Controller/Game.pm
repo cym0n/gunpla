@@ -5,23 +5,10 @@ use lib "../../";
 
 use MongoDB;
 use Gunpla::Constants ':all';
-use Gunpla::Utils qw(controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction);
+use Gunpla::Utils qw(controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction command_from_mongo_to_json);
 use Gunpla::Position;
 use Data::Dumper;
 
-
-sub command_from_mongo_to_json
-{
-    my $command = shift;
-    my $mecha_name = shift;
-    my $game = shift;
-    delete $command->{_id};
-    my $callback = $command->{params_callback};
-    $callback =~ s/%%GAME%%/$game/;
-    $callback =~ s/%%MECHA%%/$mecha_name/;
-    $command->{params_callback} = $callback;
-    return $command;
-}
 
 sub all_mechas {
     my $c = shift;
@@ -48,61 +35,6 @@ sub all_mechas {
             }
         }
         $c->render(json => { mechas => \@out });
-    }
-}
-
-sub _get_sighted_mechas
-{
-    my $game = shift;
-    my $mecha_name = shift;
-    my $client = MongoDB->connect();
-    my $db = $client->get_database('gunpla_' . $game);
-    my ( $sighting_matrix ) = $db->get_collection('status')->find({ status_element => 'sighting_matrix' })->all();
-    my @sighted;
-    for(keys %{$sighting_matrix->{$mecha_name}})
-    {
-        if(exists $sighting_matrix->{$mecha_name}->{$_} && $sighting_matrix->{$mecha_name}->{$_} > 0)
-        {
-            push @sighted, $_;
-        }
-    }
-    my @mecha = $db->get_collection('mechas')->find({ name => { '$in' => \@sighted }})->all();
-    return @mecha;
-}
-
-sub sighted_mechas {
-    my $c = shift;
-    my $game = $c->param('game');
-    my $mecha_name = $c->param('mecha');
-    my @mecha = _get_sighted_mechas($game, $mecha_name);
-    my @out = ();
-    for(@mecha)
-    {
-        push @out, mecha_from_mongo_to_json($_);
-    }
-    $c->render(json => { mechas => \@out });
-}
-
-sub all_waypoints {
-    my $c = shift;
-    my $game = $c->param('game');
-    my $wp_name = $c->param('waypoint');
-    my $client = MongoDB->connect();
-    my $db = $client->get_database('gunpla_' . $game);
-    if($wp_name)
-    {
-        my ( $wp ) = $db->get_collection('map')->find({ type => 'waypoint', name => $wp_name } )->all();
-        $c->render(json => { waypoint => waypoint_from_mongo_to_json($wp) });
-    }
-    else
-    {
-        my @wp = $db->get_collection('map')->find({ type => 'waypoint' } )->all();
-        my @out = ();
-        for(@wp)
-        {
-            push @out, waypoint_from_mongo_to_json($_);
-        }
-        $c->render(json => { waypoints => \@out });
     }
 }
 
@@ -195,75 +127,40 @@ sub targets
     
 }
 
-
-
-
-
-sub all_visible {
+sub game_commands
+{
     my $c = shift;
     my $game = $c->param('game');
     my $mecha_name = $c->param('mecha');
+    my $command = $c->param('command');
+   
+    my $query = undef;
+    my $node = 'commands';
+    if($command)
+    {
+        $node = 'command';
+        $query = { code => $command };
+    }
+ 
     my $client = MongoDB->connect();
     my $db = $client->get_database('gunpla_' . $game);
-
-    my @out = ();
-    my @wp = $db->get_collection('map')->find({ type => 'waypoint' } )->all();
-    for(@wp)
+    my @commands_mongo = $db->get_collection('available_commands')->find($query)->sort({code => 1})->all();
+    
+    my @commands = ();
+    foreach my $c (@commands_mongo)
     {
-        my $w = waypoint_from_mongo_to_json($_);
-        $w->{label} = $w->{name} . ' (W)';
-        push @out, $w;
+        push @commands, command_from_mongo_to_json($c, $mecha_name, $game);
     }
-    my @mecha = _get_sighted_mechas($game, $mecha_name);
-    for(@mecha)
+    if($node eq 'command')
     {
-        my $m_mongo = $_;
-        my $m = mecha_from_mongo_to_json($m_mongo);
-        $m->{label} = $m->{name} . ' (M)';
-        push @out, $m;
+        $c->render(json => { $node => $commands[0] });
     }
-    $c->render(json => { elements => \@out });
-}
-
-sub all_hotspots {
-    my $c = shift;
-    my $game = $c->param('game');
-    my $mecha_name = $c->param('mecha');
-    my $action = $c->param('action');
-    my $type = $c->param('type');
-    my $id = $c->param('id');
-
-    my $client = MongoDB->connect();
-    my $db = $client->get_database('gunpla_' . $game);
-    my ( $mecha ) = $db->get_collection('mechas')->find({ name => $mecha_name })->all();
-    if($type && $id)
+    elsif($node eq 'commands')
     {
-        my ( $hot ) = $db->get_collection('map')->find({ type => $type, id => $id } )->sort({id => 1, type => 1})->all();
-        $c->render(json => { hotspot => hotspot_from_mongo_to_json($hot, $mecha) });
-    }
-    else
-    {
-        my @hs = $db->get_collection('map')->find()->all();
-        my @out = ();
-        for(@hs)
-        {
-            my $hs_data = hotspot_from_mongo_to_json($_, $mecha);
-            my $to_add = 1;
-            if($hs_data->{map_type} eq 'waypoint')
-            {
-                $to_add = 0;
-            }
-            if($action && $action eq 'land' && 
-                (($hs_data->{map_type} ne 'asteroid') || 
-                ($hs_data->{map_type} eq 'asteroid' && $hs_data->{distance} > LANDING_RANGE)))
-            {
-                $to_add = 0;
-            }
-            push @out, $hs_data if $to_add;
-        }
-        $c->render(json => { hotspots => \@out });
+        $c->render(json => { $node => \@commands });
     }
 }
+
 
 sub add_command
 {
@@ -354,54 +251,6 @@ sub read_event
     }
 
     $c->render(json => { events => \@out });
-}
-
-sub available_commands
-{
-    my $c = shift;
-    my $game = $c->param('game');
-    my $mecha_name = $c->param('mecha');
-    
-    my $client = MongoDB->connect();
-    my $db = $client->get_database('gunpla_' . $game);
-    my @commands_mongo = $db->get_collection('available_commands')->find(undef)->sort({code => 1})->all();
-    
-    my @commands = ();
-    foreach my $c (@commands_mongo)
-    {
-        my $yes = 1;
-        for(@{$c->{conditions}})
-        {
-            #No conditions defined yet
-        }
-        if($yes)
-        {
-            push @commands, command_from_mongo_to_json($c, $mecha_name, $game);
-        }
-    }
-    $c->render(json => { commands => \@commands });
-}
-
-sub command_details
-{
-    my $c = shift;
-    my $game = $c->param('game');
-    my $command = $c->param('command');
-    my $mecha_name = $c->param('mecha');
-    
-    my $client = MongoDB->connect();
-    my $db = $client->get_database('gunpla_' . $game);
-    my ( $command_details ) = $db->get_collection('available_commands')->find({ code => $command })->all();
-    
-    if($command_details->{machinegun})
-    { 
-        my @mecha = _get_sighted_mechas($game, $mecha_name);
-        if(@mecha == 0)
-        {
-            $command_details->{machinegun} = 0;
-        }
-    }
-    $c->render(json => { command => command_from_mongo_to_json($command_details, $mecha_name, $game) });
 }
 
 

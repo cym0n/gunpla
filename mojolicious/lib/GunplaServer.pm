@@ -60,8 +60,7 @@ sub startup {
   $r->get('/game/event')->to('game#read_event');
   $r->get('/game/command')->to('game#read_command');
   $r->post('/game/command')->to('game#add_command');
-  $r->get('/game/available-commands')->to('game#available_commands');
-  $r->get('/game/command-details')->to('game#command_details');
+  $r->get('/game/available-commands')->to('game#game_commands');
 }
 
 1;

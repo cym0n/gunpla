@@ -15,135 +15,90 @@ my $world = Gunpla::Test::test_bootstrap('duel.csv');
 my $t = Test::Mojo->new('GunplaServer');
 $t->app->config->{no_login} = 1;
 
-diag("No mecha sighted, FLY TO WAYPOINT and GET AWAY are the only available command");
+diag("All commands retrieved by the API");
 $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
     ->status_is(200)
     ->json_is({
           'commands' => [ 
                           {
+                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=visible',
                             'velocity' => 1,
+                            'filter' => 'visible',
                             'label' => 'GET AWAY',
+                            'machinegun' => 1,
                             'code' => 'away',
-                            'params_label' => 'Select a Element',
-                            'params_callback' => '/game/visible-elements?game=autotest&mecha=RX78',
-                            'conditions' => [],
-                            'params_masternode' => 'elements',
-                            'machinegun' => 1
+                            'params_label' => 'Select a Element'
                           },
                           {
                             'velocity' => 1,
+                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=hotspots',
+                            'machinegun' => 1,
                             'code' => 'flyhot',
                             'label' => 'FLY TO HOTSPOT',
-                            'params_label' => 'Select a Hotspot',
-                            'params_callback' => '/game/hotspots?game=autotest&mecha=RX78',
-                            'conditions' => [],
-                            'params_masternode' => 'hotspots',
-                            'machinegun' => 1
+                            'filter' => 'hotspots',
+                            'params_label' => 'Select a Hotspot'
                           },
                           {
-                            'conditions' => [],
-                            'params_masternode' => 'mechas',
-                            'machinegun' => 1,
                             'label' => 'FLY TO MECHA',
+                            'filter' => 'sighted-by-faction',
                             'code' => 'flymec',
+                            'machinegun' => 1,
                             'velocity' => 1,
-                            'params_callback' => '/game/sighted?game=autotest&mecha=RX78',
+                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=sighted-by-faction',
                             'params_label' => 'Select a Mecha'
                           },
                           {
-                            'params_callback' => '/game/waypoints?game=autotest',
                             'params_label' => 'Select a Waypoint',
                             'label' => 'FLY TO WAYPOINT',
+                            'filter' => 'waypoints',
                             'code' => 'flywp',
-                            'velocity' => 1,
                             'machinegun' => 1,
-                            'params_masternode' => 'waypoints',
-                            'conditions' => []
+                            'velocity' => 1,
+                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=waypoints'
                           },
                           {
                             'params_label' => 'Select a Hotspot',
-                            'params_callback' => '/game/hotspots?game=autotest&mecha=RX78&action=land',
-                            'velocity' => 0,
-                            'code' => 'land',
+                            'filter' => 'landing',
                             'label' => 'LAND',
-                            'params_masternode' => 'hotspots',
+                            'code' => 'land',
                             'machinegun' => 0,
-                            'conditions' => []
+                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=landing',
+                            'velocity' => 0
                           },
                           {
-                            'conditions' => [],
+                            'params_label' => 'Select a Mecha',
                             'machinegun' => 0,
-                            'params_masternode' => 'mechas',
-                            'label' => 'RIFLE',
                             'code' => 'rifle',
-                            'velocity' => 0,
-                            'params_label' => 'Select a Mecha',
-                            'params_callback' => '/game/sighted?game=autotest&mecha=RX78'
+                            'label' => 'RIFLE',
+                            'filter' => 'sighted-by-faction',
+                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=sighted-by-faction',
+                            'velocity' => 0
                           },
                           {
-                            'params_label' => 'Select a Mecha',
-                            'params_callback' => '/game/sighted?game=autotest&mecha=RX78',
-                            'code' => 'sword',
-                            'label' => 'SWORD ATTACK',
+                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=sighted-by-faction',
                             'velocity' => 0,
+                            'code' => 'sword',
                             'machinegun' => 0,
-                            'params_masternode' => 'mechas',
-                            'conditions' => []
+                            'label' => 'SWORD ATTACK',
+                            'filter' => 'sighted-by-faction',
+                            'params_label' => 'Select a Mecha'
                           }
                         ]
            });
 Gunpla::Test::dump_api($t);
 
-diag("FLY TO WAYPOINT details - machinegun is off");
-$t->get_ok('/game/command-details?game=autotest&mecha=RX78&command=flywp')
+diag("FLY TO WAYPOINT details");
+$t->get_ok('/game/available-commands?game=autotest&mecha=RX78&command=flywp')
     ->status_is(200)
     ->json_is({
           'command' => {
                           'code' => 'flywp',
                           'label' => 'FLY TO WAYPOINT',
-                          'conditions' => [  ],
                           'params_label' => 'Select a Waypoint',
-                          'params_callback' => '/game/waypoints?game=autotest',
-                          'params_masternode' => 'waypoints',
-                          'machinegun' => 0,
-                          'velocity' => 1
-                        }
-    });
-
-diag("Generate a world with a target sighted and save it on db");
-$world = Gunpla::Test::test_bootstrap('dummy.csv');
-my $t2 = Test::Mojo->new('GunplaServer');
-$t2->app->config->{no_login} = 1;
-
-diag("Available-commands give back always the same result");
-diag("FLY TO WAYPOINT details - machinegun is on");
-$t2->get_ok('/game/command-details?game=autotest&mecha=RX78&command=flywp')
-    ->status_is(200)
-    ->json_is({
-          'command' => {
-                          'code' => 'flywp',
-                          'label' => 'FLY TO WAYPOINT',
-                          'conditions' => [  ],
-                          'params_label' => 'Select a Waypoint',
-                          'params_callback' => '/game/waypoints?game=autotest',
-                          'params_masternode' => 'waypoints',
+                          'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=waypoints',
+                          'filter' => 'waypoints',
                           'machinegun' => 1,
                           'velocity' => 1
-                        }
-    });
-diag("FLY TO MECHA details - machinegun is on");
-$t2->get_ok('/game/command-details?game=autotest&mecha=RX78&command=flymec')
-    ->status_is(200)
-    ->json_is({
-          'command' => {
-                          'code' => 'flymec',
-                          'label' => 'FLY TO MECHA',
-                          'conditions' => [  ],
-                          'params_label' => 'Select a Mecha',
-                          'params_callback' => '/game/sighted?game=autotest&mecha=RX78',
-                          'params_masternode' => 'mechas',
-                          'machinegun' => 1,
-                          'velocity' => 1,
                         }
     });
 

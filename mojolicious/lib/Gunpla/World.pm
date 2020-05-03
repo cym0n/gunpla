@@ -150,77 +150,56 @@ sub build_commands
     $self->configure_command( {
             code => 'flywp',
             label => 'FLY TO WAYPOINT',
-            target_types => [ 'WP' ],
-            conditions => [  ],
+            filter => 'waypoints',
             params_label => 'Select a Waypoint',
-            params_callback => '/game/waypoints?game=%%GAME%%',
-            params_masternode => 'waypoints',
             machinegun => 1,
             velocity => 1
         }, 1);
     $self->configure_command( {
             code => 'flymec',
             label => 'FLY TO MECHA',
-            target_types => [ 'MEC' ],
-            conditions => [  ],
+            filter => 'sighted-by-faction',
             params_label => 'Select a Mecha',
-            params_callback => '/game/sighted?game=%%GAME%%&mecha=%%MECHA%%',
-            params_masternode => 'mechas',
             velocity => 1,
             machinegun => 1
         }, 1);
     $self->configure_command( {
             code => 'flyhot',
             label => 'FLY TO HOTSPOT',
-            target_types => [ 'AST' ],
-            conditions => [  ],
+            filter => 'hotspots',
             params_label => 'Select a Hotspot',
-            params_callback => '/game/hotspots?game=%%GAME%%&mecha=%%MECHA%%',
-            params_masternode => 'hotspots',
             velocity => 1,
             machinegun => 1
         }, 1);
     $self->configure_command( {
             code => 'sword',
             label => 'SWORD ATTACK',
-            target_types => [ 'MEC' ],
-            conditions => [  ],
+            filter => 'sighted-by-faction',
             params_label => 'Select a Mecha',
-            params_callback => '/game/sighted?game=%%GAME%%&mecha=%%MECHA%%',
-            params_masternode => 'mechas',
             machinegun => 0,
             velocity => 0
         }, 1);
     $self->configure_command( {
             code => 'away',
             label => 'GET AWAY',
-            target_types => [ 'WP', 'MEC', 'AST' ],
-            conditions => [ ],
+            filter => 'visible',
             params_label => 'Select a Element',
-            params_callback => '/game/visible-elements?game=%%GAME%%&mecha=%%MECHA%%',
-            params_masternode => 'elements',
             machinegun => 1,
             velocity => 1
         }, 1);
     $self->configure_command( {
             code => 'rifle',
             label => 'RIFLE',
-            target_types => [ 'MEC' ],
-            conditions => [  ],
+            filter => 'sighted-by-faction',
             params_label => 'Select a Mecha',
-            params_callback => '/game/sighted?game=%%GAME%%&mecha=%%MECHA%%',
-            params_masternode => 'mechas',
             machinegun => 0,
             velocity => 0
         }, 1);
     $self->configure_command( {
             code => 'land',
             label => 'LAND',
-            target_types => [ 'AST' ],
-            conditions => [  ],
+            filter => 'landing',
             params_label => 'Select a Hotspot',
-            params_callback => '/game/hotspots?game=%%GAME%%&mecha=%%MECHA%%&action=land',
-            params_masternode => 'hotspots',
             machinegun => 0,
             velocity => 0
         }, 1);

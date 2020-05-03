@@ -1,7 +1,7 @@
 package Gunpla::Utils;
 
 use base 'Exporter';
-our @EXPORT_OK = qw( controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction);
+our @EXPORT_OK = qw( controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction command_from_mongo_to_json);
 
 use Data::Dumper;
 use MongoDB;
@@ -17,6 +17,18 @@ sub controlled
     my $db = $client->get_database('gunpla_' . $game);
     my ( $controlled ) = $db->get_collection('control')->find({ player => $user, mecha => $mecha })->all();
     return $controlled ? 1 : 0;
+}
+
+sub command_from_mongo_to_json
+{
+    my $command = shift;
+    my $mecha = shift;
+    my $game = shift;
+    my $filter = $command->{filter};
+    delete $command->{_id};
+    my $callback = '/game/targets?' . join('&', "game=$game", "mecha=$mecha", "filter=$filter");
+    $command->{params_callback} = $callback;
+    return $command;
 }
 
 sub target_from_mongo_to_json
