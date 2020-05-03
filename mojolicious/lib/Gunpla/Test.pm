@@ -42,7 +42,11 @@ sub clean_db
 {
     my $world = shift || 'autotest';
     my $last = shift;
-    diag("Test data about game $world preserved") if($last && $ENV{PRESERVE_MONGO});
+    if($last && $ENV{PRESERVE_MONGO})
+    {
+        diag("Test data about game $world preserved");
+        return;
+    }
     my $mongo = MongoDB->connect(); 
     my $masterdb = $mongo->get_database('gunpla__core');
     $masterdb->get_collection('games')->delete_one( { name => $world });

@@ -80,6 +80,7 @@ has mecha_templates => (
             'Diver' => { sensor_range => 140000, life => 1000, max_velocity => 6, acceleration => 100000  },
             'Zaku'  => { sensor_range => 80000,  life => 1000, max_velocity => 6, acceleration => 100000 },
             'Gelgoog'  => { sensor_range => 130000,  life => 1000, max_velocity => 6, acceleration => 100000 },
+            'Dom'  => { sensor_range => 110000,  life => 1000, max_velocity => 6, acceleration => 100000 },
             'Dummy'  => { sensor_range => 0,  life => 1000, max_velocity => 10, acceleration => 100 },
             'RX78' => { sensor_range => 140000, life => 1000, max_velocity => 10, acceleration => 100  },
             'Deathscythe' => { sensor_range => 69000, life => 1000, max_velocity => 10, acceleration => 100  },
@@ -855,7 +856,6 @@ sub calculate_sighting_matrix
     {
         @do = @{$self->armies};
     }
-    my %factions;
     foreach my $m (@do)
     {
         foreach my $other (@{$self->armies})      
@@ -877,6 +877,14 @@ sub calculate_sighting_matrix
                     if($self->sighting_matrix->{$m->name}->{$other->name} == 0)
                     {
                         $self->event($m->name . " sighted " . $other->name, [ $m->name ]);
+                        if($self->sighting_matrix->{__factions}->{$m->faction}->{$other->name})
+                        {
+                            $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} = $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} + 1;
+                        }
+                        else
+                        {
+                            $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} = 1;
+                        }
                     }
                     $self->sighting_matrix->{$m->name}->{$other->name} = SIGHT_TOLERANCE;
                 }
@@ -888,22 +896,26 @@ sub calculate_sighting_matrix
                         if($self->sighting_matrix->{$m->name}->{$other->name} == 0)
                         {
                             $self->event($m->name . " lost contact with " . $other->name, [ $m->name ]);
+                            if($self->sighting_matrix->{__factions}->{$m->faction}->{$other->name})
+                            {
+                                $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} = $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} + 1;
+                                if($self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} < 0)
+                                {
+                                    say "WARNING: " . $m->faction . " -> " . $other->name . " below 0";
+                                    $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} = 0;
+                                }
+                            }
+                            else
+                            {
+                                say "WARNING: " . $m->faction . " -> " . $other->name . " sighting matrix wasn't present";
+                                $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} = 0;
+                            }
                         }
                     }
-                }
-                if($self->sighting_matrix->{$m->name}->{$other->name} > 0)
-                {
-                    $factions{$m->faction}->{$other->name} = 1;
-
-                }
-                else
-                {
-                    $factions{$m->faction}->{$other->name} = 0 if ! exists $factions{$m->faction}->{$other->name};
                 }
             }
         }
     }
-    $self->sighting_matrix->{__factions} = \%factions;
 }
 
 1;

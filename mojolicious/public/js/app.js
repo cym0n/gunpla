@@ -43,7 +43,7 @@ App = {
             data.commands.forEach(function(c, index, array) {
                 fetch(c.params_callback).then(function(response) { return response.json(); })
                 .then(function(data) {
-                    if(data[c.params_masternode].length > 0)
+                    if(data.targets.length > 0)
                     {
                         $( "#maincommands_"+m.name).append('<option value="'+c.code+'">'+c.label+'</option>');
                     }});
@@ -180,17 +180,15 @@ App = {
     $('#'+name+'_machinegunform').remove()
     $('#'+name+'_velocityform').remove()
     var machinegun = 0;
-    var masternode = '';
-    fetch('/game/command-details?game='+App.game+'&mecha='+name+'&command='+select.value)
+    fetch('/game/available-commands?game='+App.game+'&mecha='+name+'&command='+select.value)
     .then(function(response) { return response.json(); })
     .then(function(data) {
         machinegun = data.command.machinegun;
-        masternode = data.command.params_masternode;
         paramDiv.append('<lable for="params_'+name+'>'+data.command.params_label+'</label>');
         paramDiv.append('<div class="form-group"><select class="form-control" name="params_'+name+'" id="params_'+name+'"></select></div>');
         fetch(data.command.params_callback).then(function(response) { return response.json(); })
         .then(function(data) {
-            data[masternode].forEach(function(d, index, array) {
+            data.targets.forEach(function(d, index, array) {
                 $( "#params_"+name).append('<option value="'+d.world_id+'">'+d.label+'</option>');
             });
         });
@@ -224,23 +222,25 @@ App = {
     $(form).insertAfter(div); });
   },
   machinegunForm : function(name, div) {
-    $(`
-        <div class="form-group" id="${name}_machinegunform">
-        <div class="form-check">
-        <input type="checkbox" class="form-check-input" id="machinegun" name="machinegun">
-        <label class="form-check-label" for="machinegun">Fire machinegun</label>
-        </div>
-        <label for="target">Select Mecha</label>
-        <select class="form-control" name="secondarytarget" id="secparams_${name}"></select>
-        </div>
-    `).insertAfter(div);
-     fetch('/game/sighted?game='+App.game+'&mecha='+name)
+     fetch('/game/targets?game='+App.game+'&mecha='+name+'&filter=sighted-by-faction')
         .then(function(response) { return response.json(); })
         .then(function(data) {
-            console.log("populate " + name);
-            data.mechas.forEach(function(m, index, array) {
-                $( "#secparams_"+name).append('<option value="'+m.world_id+'">'+m.name+'</option>');
-            });
+            if(data.targets.length > 0)
+            {
+                $(`
+                    <div class="form-group" id="${name}_machinegunform">
+                    <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="machinegun" name="machinegun">
+                    <label class="form-check-label" for="machinegun">Fire machinegun</label>
+                    </div>
+                    <label for="target">Select Mecha</label>
+                    <select class="form-control" name="secondarytarget" id="secparams_${name}"></select>
+                    </div>
+                `).insertAfter(div);
+                data.targets.forEach(function(m, index, array) {
+                    $( "#secparams_"+name).append('<option value="'+m.world_id+'">'+m.name+'</option>');
+                });
+            }
         });
   },
   addCommand : function(el) {

@@ -1,0 +1,12 @@
+WP;center;0;0;0
+WP;blue;200000;0;0;wolf
+WP;red;-200000;0;0;eagle
+WP;alpha;0;-200000;0
+WP;magellan;100000;50000;-50000
+AST;100000;40000;-35000
+AST;100000;35000;65000
+AST;90000;52000;-52000
+MEC;Diver;wolf
+MEC;Zaku;eagle
+PLY;Diver;amuro
+PLY;Zaku;amuro

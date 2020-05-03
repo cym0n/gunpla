@@ -98,7 +98,7 @@ sub targets
                 }
             }
         }
-        elsif($_ eq 'mecha_sighted_by_me')
+        elsif($_ eq 'sighted_by_me')
         {
             my @mec = $db->get_collection('mechas')->find()->sort({name => 1})->all();
             for(@mec)
@@ -110,7 +110,7 @@ sub targets
                 }
             }
         }
-        elsif($_ eq 'mecha_sighted_by_faction')
+        elsif($_ eq 'sighted_by_faction')
         {
             my @mec = $db->get_collection('mechas')->find()->sort({name => 1})->all();
             for(@mec)
