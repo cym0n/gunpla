@@ -27,7 +27,7 @@ $t->get_ok('/game/mechas?game=autotest&mecha=RX78')->status_is(200)->json_is(
             name => 'RX78',
             label => 'RX78',
             world_id => 'MEC-RX78',
-           map_type => 'mecha',
+            map_type => 'mecha',
             life => 1000,
             faction => 'wolf',
             position => { x => 75000, y => 0, z => 0 },
@@ -51,6 +51,7 @@ $t->get_ok('/game/targets?game=autotest&filter=waypoints')->status_is(200)->json
     'targets' => [
         {
             'id' => 'alpha',
+            'world_id' => 'WP-alpha',
             'label' => 'waypoint alpha (0, -200000, 0)',
             'map_type' => 'waypoint',
             'x' => '0',
@@ -60,6 +61,7 @@ $t->get_ok('/game/targets?game=autotest&filter=waypoints')->status_is(200)->json
         },
         {
             'id' => 'blue',
+            'world_id' => 'WP-blue',
             'label' => 'waypoint blue (75000, 0, 0)',
             'map_type' => 'waypoint',
             'x' => '75000',
@@ -69,6 +71,7 @@ $t->get_ok('/game/targets?game=autotest&filter=waypoints')->status_is(200)->json
         },
         {
             'id' => 'center',
+            'world_id' => 'WP-center',
             'label' => 'waypoint center (0, 0, 0)',
             'map_type' => 'waypoint',
             'x' => '0',
@@ -78,6 +81,7 @@ $t->get_ok('/game/targets?game=autotest&filter=waypoints')->status_is(200)->json
         },
         {
             'id' => 'magellan',
+            'world_id' => 'WP-magellan',
             'label' => 'waypoint magellan (50000, 10000, 10000)',
             'map_type' => 'waypoint',
             'x' => '50000',
@@ -87,6 +91,7 @@ $t->get_ok('/game/targets?game=autotest&filter=waypoints')->status_is(200)->json
         },
         {
             'id' => 'red',
+            'world_id' => 'WP-red',
             'label' => 'waypoint red (-75000, 0, 0)',
             'map_type' => 'waypoint',
             'x' => '-75000',

@@ -116,31 +116,8 @@ sub targets
     my @to_take = ();
     my @out = ();
 
-    if($filter eq 'waypoints')
-    {
-        @to_take = ( 'waypoints');
-    }
-    elsif($filter eq 'mecha-sighted-by-me')
-    {
-        @to_take = ( 'mecha_sighted_by_me');
-    }
-    elsif($filter eq 'mecha-sighted-by-faction')
-    {
-        @to_take = ( 'mecha_sighted_by_faction');
-    }
-    elsif($filter eq 'visible')
-    {
-        @to_take = ( 'mecha_sighted_by_faction', 'map_elements' );
-    }
-    elsif($filter eq 'hotspots')
-    {
-        @to_take = ( 'hotspots' );
-    }
-    elsif($filter eq 'landing')
-    {
-        @to_take = ( 'landing' );
-    }
-    else
+    @to_take = keys %{FILTERS->{$filter}};
+    if(! @to_take)
     {
         $c->render(json => { error => 'Bad filter provided' }, status => 400)
     }

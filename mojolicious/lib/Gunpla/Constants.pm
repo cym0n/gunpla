@@ -39,6 +39,14 @@ use constant SIGHT_MINIMUM => 10000;
 use constant ELEMENT_TAGS => { 'asteroid' => 'AST',
                                'mecha'    => 'MEC',
                                'waypoint' => 'WP' };
+use constant FILTERS => { 'waypoints' => { 'waypoints' => ['WP'] },
+                          'mecha-sighted-by-me' => { 'mecha_sighted_by_me' => ['MEC'] },
+                          'mecha-sighted-by-faction' =>  { 'mecha_sighted_by_faction' => ['MEC'] },
+                          'visible' => {  'mecha_sighted_by_faction' => ['MEC'],
+                                          'map_elements' => ['WP', 'AST'] },
+                          'hotspots' => { 'hotspots' => ['AST'] },
+                          'landing' => { 'landing' => ['AST'] },
+                        };
 
 our @EXPORT_OK = (
     'GET_AWAY_DISTANCE',
@@ -73,6 +81,7 @@ our @EXPORT_OK = (
     'SIGHT_LANDED_BONUS',
     'SIGHT_MINIMUM',
     'ELEMENT_TAGS',
+    'FILTERS',
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 

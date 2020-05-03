@@ -31,6 +31,7 @@ $t->get_ok('/game/targets?game=autotest&mecha=RX78&filter=mecha-sighted-by-me')
             'targets' => [
                 {
                     'id' => 'Gelgoog',
+                    'world_id' => 'MEC-Gelgoog',
                     'label' => 'mecha Gelgoog (120000, 0, 0) d:120000',
                     'map_type' => 'mecha',
                     'x' => 120000,
@@ -40,6 +41,7 @@ $t->get_ok('/game/targets?game=autotest&mecha=RX78&filter=mecha-sighted-by-me')
                 },
                 {
                     'id' => 'Hyakushiki',
+                    'world_id' => 'MEC-Hyakushiki',
                     'label' => 'mecha Hyakushiki (50000, 0, 0) d:50000',
                     'map_type' => 'mecha',
                     'x' => 50000,
@@ -57,6 +59,7 @@ $t->get_ok('/game/targets?game=autotest&mecha=Hyakushiki&filter=mecha-sighted-by
           'targets' => [
                          {
                            'id' => 'RX78',
+                           'world_id' => 'MEC-RX78',
                            'label' => 'mecha RX78 (0, 0, 0) d:50000',
                            'map_type' => 'mecha',
                            'x' => 0,
