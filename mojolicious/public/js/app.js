@@ -236,9 +236,10 @@ App = {
                     <label for="target">Select Mecha</label>
                     <select class="form-control" name="secondarytarget" id="secparams_${name}"></select>
                     </div>
-                `).insertAfter(div);
+                `).insertAfter(div)
                 data.targets.forEach(function(m, index, array) {
-                    $( "#secparams_"+name).append('<option value="'+m.world_id+'">'+m.name+'</option>');
+                    console.log("Append to "+name+" "+m.world_id);
+                    $( "#secparams_"+name).append('<option value="'+m.world_id+'">'+m.label+'</option>');
                 });
             }
         });
