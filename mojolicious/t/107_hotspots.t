@@ -16,11 +16,11 @@ my $t = Test::Mojo->new('GunplaServer');
 $t->app->config->{no_login} = 1;
 
 diag("Proposed to RX78 ");
-$t->get_ok('/game/hotspots?game=autotest&mecha=RX78')
+$t->get_ok('/game/targets?game=autotest&mecha=RX78&filter=hotspots')
     ->status_is(200)
     ->json_is(
         {
-          'hotspots' => [
+          'targets' => [
                           {
                             'y' => '10000',
                             'z' => '9000',
@@ -28,12 +28,12 @@ $t->get_ok('/game/hotspots?game=autotest&mecha=RX78')
                             'x' => '50000',
                             'world_id' => 'AST-0',
                             'map_type' => 'asteroid',
-                            'label' => 'asteroid (50000, 10000, 9000) d:28391',
+                            'label' => 'asteroid 0 (50000, 10000, 9000) d:28391',
                             'distance' => 28391,
                           },
                           {
                             'map_type' => 'asteroid',
-                            'label' => 'asteroid (49000, 9000, 10000) d:29275',
+                            'label' => 'asteroid 1 (49000, 9000, 10000) d:29275',
                             'world_id' => 'AST-1',
                             'x' => '49000',
                             'y' => '9000',
@@ -45,23 +45,23 @@ $t->get_ok('/game/hotspots?game=autotest&mecha=RX78')
         });
 
 diag("Proposed to Hyakushiki");
-$t->get_ok('/game/hotspots?game=autotest&mecha=Hyakushiki')
+$t->get_ok('/game/targets?game=autotest&mecha=Hyakushiki&filter=hotspots')
     ->status_is(200)
     ->json_is({
-          'hotspots' => [
+          'targets' => [
                           {
                             'world_id' => 'AST-0',
                             'z' => '9000',
                             'y' => '10000',
                             'map_type' => 'asteroid',
                             'id' => 0,
-                            'label' => 'asteroid (50000, 10000, 9000) d:125722',
+                            'label' => 'asteroid 0 (50000, 10000, 9000) d:125722',
                             'x' => '50000',
                             'distance' => 125722,
                           },
                           {
                             'x' => '49000',
-                            'label' => 'asteroid (49000, 9000, 10000) d:124728',
+                            'label' => 'asteroid 1 (49000, 9000, 10000) d:124728',
                             'y' => '9000',
                             'map_type' => 'asteroid',
                             'id' => 1,
@@ -73,11 +73,11 @@ $t->get_ok('/game/hotspots?game=autotest&mecha=Hyakushiki')
         });
 
 diag("Proposed to RX78 for landing (none) ");
-$t->get_ok('/game/hotspots?game=autotest&mecha=RX78&action=land')
+$t->get_ok('/game/targets?game=autotest&mecha=RX78&filter=landing')
     ->status_is(200)
     ->json_is(
         {
-          'hotspots' => []
+          'targets' => []
         });
 
 diag("Moving RX78 near an asteroid");
@@ -87,14 +87,14 @@ $world->armies->[0]->position->z(9000);
 $world->save;
 
 diag("Proposed to RX78 for landing (one)");
-$t->get_ok('/game/hotspots?game=autotest&mecha=RX78&action=land')
+$t->get_ok('/game/targets?game=autotest&mecha=RX78&filter=landing')
     ->status_is(200)
     ->json_is({
-          'hotspots' => [
+          'targets' => [
             {
               'id' => 0,
               'world_id' => 'AST-0',
-              'label' => 'asteroid (50000, 10000, 9000) d:19500',
+              'label' => 'asteroid 0 (50000, 10000, 9000) d:19500',
               'map_type' => 'asteroid',
               'x' => '50000',
               'y' => '10000',

@@ -128,6 +128,18 @@ sub targets
     {
         @to_take = ( 'mecha_sighted_by_faction');
     }
+    elsif($filter eq 'visible')
+    {
+        @to_take = ( 'mecha_sighted_by_faction', 'map_elements' );
+    }
+    elsif($filter eq 'hotspots')
+    {
+        @to_take = ( 'hotspots' );
+    }
+    elsif($filter eq 'landing')
+    {
+        @to_take = ( 'landing' );
+    }
     else
     {
         $c->render(json => { error => 'Bad filter provided' }, status => 400)
@@ -145,6 +157,36 @@ sub targets
             {
                 my $w = target_from_mongo_to_json($game, $mecha, 'map', $_);
                 push @out, $w;
+            }
+        }
+        elsif($_ eq 'hotspots')    
+        {
+            my @wp = $db->get_collection('map')->find({ type => 'asteroid' } )->sort({id => 1, type => 1})->all();
+            for(@wp)
+            {
+                my $w = target_from_mongo_to_json($game, $mecha, 'map', $_);
+                push @out, $w;
+            }
+        }
+        elsif($_ eq 'map_elements')
+        {
+            my @me = $db->get_collection('map')->find()->sort({id => 1, type => 1})->all();
+            for(@me)
+            {
+                my $mp = target_from_mongo_to_json($game, $mecha, 'map', $_);
+                push @out, $mp;
+            }
+        }
+        elsif($_ eq 'landing')
+        {
+            my @me = $db->get_collection('map')->find({ type => 'asteroid' })->sort({id => 1, type => 1})->all();
+            for(@me)
+            {
+                my $mp = target_from_mongo_to_json($game, $mecha, 'map', $_);
+                if($mp->{distance} < LANDING_RANGE)
+                {
+                    push @out, $mp;
+                }
             }
         }
         elsif($_ eq 'mecha_sighted_by_me')

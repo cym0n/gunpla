@@ -54,9 +54,10 @@ sub target_from_mongo_to_json
     }
     my $label = $type . " " . $id . " " . $obj_pos->as_string;
     $label .= " d:$distance" if($distance);
-    my $world_id = ELEMENT_TAGS->{$type} . '_' . $id;
+    my $world_id = ELEMENT_TAGS->{$type} . '-' . $id;
 
     return { id => $id,
+             world_id => $world_id,
              label => $label,
              map_type => $type,
              x    => $obj->{position}->{x},
