@@ -61,7 +61,7 @@ sub targets
     {
         if($_ eq 'waypoints')    
         {
-            my @wp = $db->get_collection('map')->find({ type => 'waypoint' } )->sort({id => 1, type => 1})->all();
+            my @wp = $db->get_collection('map')->find({ type => 'waypoint' } )->all();
             for(@wp)
             {
                 my $w = target_from_mongo_to_json($game, $mecha, 'map', $_);
@@ -70,7 +70,7 @@ sub targets
         }
         elsif($_ eq 'hotspots')    
         {
-            my @wp = $db->get_collection('map')->find({ type => 'asteroid' } )->sort({id => 1, type => 1})->all();
+            my @wp = $db->get_collection('map')->find({ type => 'asteroid' } )->all();
             for(@wp)
             {
                 my $w = target_from_mongo_to_json($game, $mecha, 'map', $_);
@@ -79,7 +79,7 @@ sub targets
         }
         elsif($_ eq 'map_elements')
         {
-            my @me = $db->get_collection('map')->find()->sort({id => 1, type => 1})->all();
+            my @me = $db->get_collection('map')->find()->all();
             for(@me)
             {
                 my $mp = target_from_mongo_to_json($game, $mecha, 'map', $_);
@@ -88,7 +88,7 @@ sub targets
         }
         elsif($_ eq 'landing')
         {
-            my @me = $db->get_collection('map')->find({ type => 'asteroid' })->sort({id => 1, type => 1})->all();
+            my @me = $db->get_collection('map')->find({ type => 'asteroid' })->all();
             for(@me)
             {
                 my $mp = target_from_mongo_to_json($game, $mecha, 'map', $_);
@@ -100,7 +100,7 @@ sub targets
         }
         elsif($_ eq 'sighted_by_me')
         {
-            my @mec = $db->get_collection('mechas')->find()->sort({name => 1})->all();
+            my @mec = $db->get_collection('mechas')->find()->all();
             for(@mec)
             {
                 if(sighted_by_me($game, $mecha, $_))
@@ -112,7 +112,7 @@ sub targets
         }
         elsif($_ eq 'sighted_by_faction')
         {
-            my @mec = $db->get_collection('mechas')->find()->sort({name => 1})->all();
+            my @mec = $db->get_collection('mechas')->find()->all();
             for(@mec)
             {
                 if(sighted_by_faction($game, $mecha, $_))
@@ -123,6 +123,7 @@ sub targets
             }
         }
     }
+    @out = sort { $a->{world_id} cmp $b->{world_id} } @out;
     $c->render(json => { targets => \@out });
     
 }
