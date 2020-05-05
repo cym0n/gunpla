@@ -162,6 +162,33 @@ sub game_commands
     }
 }
 
+sub traffic_light
+{
+    my $c = shift;
+    my $game = $c->param('game');
+    my $user = $c->session('user');
+    my $out = 'GREEN';
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $game);
+    my @mecha = $db->get_collection('mechas')->find()->all();
+    for(@mecha)
+    {
+        if($_->{waiting} == 1)
+        {
+            if(controlled($game, $_->{name}, $user))
+            {
+                $c->render(json => { status => 'RED' });
+                return;
+            }
+            else
+            {
+                $out = 'YELLOW';
+            }
+        }
+    }
+    $c->render(json => { status => $out });
+}
+
 
 sub add_command
 {
