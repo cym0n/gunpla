@@ -16,6 +16,54 @@ App = {
                 App.getLastEvent(m.name, false);
             });
         });
+        poll(function() {
+            return fetch('/game/traffic-light?game='+App.game)
+                .then(function(response) { return response.json(); })
+            },
+            function(data) {
+                return ! $('#trafficlight').hasClass("light"+data.status)
+            },
+            3600000, 10000).then(function(data) { 
+                App.updateTrafficLight(data.status); 
+            })
+  },
+  updateTrafficLight: function(status) {
+    var tl = $('#trafficlight');
+    tl.empty();
+    tl.removeClass('lightRED');
+    tl.removeClass('alert-success');
+    tl.removeClass('lightYELLOW');
+    tl.removeClass('alert-warning');
+    tl.removeClass('lightGREEN');
+    tl.removeClass('alert-danger');
+    if(status == 'RED')
+    {
+        tl.addClass('alert-danger');
+        tl.addClass('lightRED');
+        tl.append("Action waited from you");
+    }
+    if(status == 'YELLOW')
+    {
+        tl.addClass('alert-warning');
+        tl.addClass('lightYELLOW');
+        tl.append("Action waited from other players");
+    }
+    if(status == 'GREEN')
+    {
+        tl.addClass('alert-success');
+        tl.addClass('lightGREEN');
+        tl.append("Elaborating...");
+    }
+    poll(function() {
+        return fetch('/game/traffic-light?game='+App.game)
+                .then(function(response) { return response.json(); })
+        },
+        function(data) {
+            return ! $('#trafficlight').hasClass("light"+data.status)
+        },
+        3600000, 10000).then(function(data) { 
+            App.updateTrafficLight(data.status); 
+        })
   },
   renderMechaTemplate: function(m, poll_needed) {
     $('#mecha_' + m.name).append('<p id="desc_'+m.name+'">'+ App.mechaDescription(m) + '</p>');
