@@ -5,7 +5,7 @@ use lib "../../";
 
 use MongoDB;
 use Gunpla::Constants ':all';
-use Gunpla::Utils qw(controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction command_from_mongo_to_json);
+use Gunpla::Utils qw(controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction command_from_mongo_to_json get_from_id);
 use Gunpla::Position;
 use Data::Dumper;
 
@@ -148,9 +148,9 @@ sub game_commands
     my @commands_mongo = $db->get_collection('available_commands')->find($query)->sort({code => 1})->all();
     
     my @commands = ();
-    foreach my $c (@commands_mongo)
+    foreach my $com (@commands_mongo)
     {
-        push @commands, command_from_mongo_to_json($c, $mecha_name, $game);
+        push @commands, command_from_mongo_to_json($com, $mecha_name, $game);
     }
     if($node eq 'command')
     {
@@ -207,16 +207,68 @@ sub add_command
     {
         $params->{command} = $configured_command->{label};
     }
+    else
+    {
+        $c->render(json => { result => 'error', description => 'bad command'}, status => 400);
+        return;
+    }
 
     my ( $mecha ) = $db->get_collection('mechas')->find({ name => $params->{mecha} })->all();
     if(! $mecha->{waiting}) #Strong enough?
     {
-        $c->render(json => { result => 'error', description => 'mecha not waiting for commands'});
+        $c->render(json => { result => 'error', description => 'mecha not waiting for commands'}, status => 403);
+        return;
     }
-    else
+
+    my @to_take = keys %{FILTERS->{$configured_command->{filter}}};
+    my @allowed_targets = (); 
+    for(@to_take)
     {
-        $c->app->log->debug("Adding command " . $params->{mecha} . '-' . $mecha->{cmd_index});
-        $db->get_collection('commands')->insert_one({ timestamp => $timestamp,
+        @allowed_targets = (@allowed_targets, @{FILTERS->{$configured_command->{filter}}->{$_}});
+    }
+    my ($target_type, $target_id) = split('-', $params->{params});
+    if(! grep {$_ eq $target_type} @allowed_targets)
+    {
+        $c->render(json => { result => 'error', description => 'bad target provided: ' . $params->{params}}, status => 400);
+        return;
+    }
+    my $target_obj = get_from_id($params->{params});
+
+    my $ok = 1;
+    if($configured_command->{filter} eq 'sighted-by-me')
+    {
+        $ok = sighted_by_me($params->{game}, $params->{mecha}, $target_obj);
+    }
+    elsif($configured_command->{filter} eq 'sighted-by-faction')
+    {
+        $ok = sighted_by_faction($params->{game}, $params->{mecha}, $target_obj);
+    }
+    elsif($configured_command->{filter} eq 'visible' && $target_type eq 'MEC')
+    {   
+        $ok = sighted_by_faction($params->{game}, $params->{mecha}, $target_obj);
+    }
+    elsif($configured_command->{filter} eq 'landing')
+    {
+        my $mp = target_from_mongo_to_json($params->{game}, $params->{mecha}, 'map', $target_obj);
+        $ok = $mp->{distance} < LANDING_RANGE;
+    }
+    if($params->{secondarycommand} && $params->{secondarycommand} eq 'machinegun')
+    {
+        $ok = $params->{secondaryparams} =~ /^MEC/ && sighted_by_faction($params->{game}, $params->{mecha}, get_from_id($params->{game}, $params->{secondaryparams}));
+    }
+    if(! $ok)
+    {
+        $c->render(json => { result => 'error', description => 'Misplaced target provided'}, status => 400);
+        return;
+    }
+    
+
+
+
+
+
+    $c->app->log->debug("Adding command " . $params->{mecha} . '-' . $mecha->{cmd_index});
+    $db->get_collection('commands')->insert_one({ timestamp => $timestamp,
                                                       command   => $params->{command},
                                                       params    => $params->{params},
                                                       secondarycommand   => $params->{secondarycommand},
@@ -224,18 +276,15 @@ sub add_command
                                                       velocity    => $params->{velocity},
                                                       mecha     => $params->{mecha},
                                                       cmd_index => $mecha->{cmd_index} });
-        $db->get_collection('mechas')->update_one( { 'name' => $params->{mecha} }, { '$set' => { 'waiting' => 0 } } );
-        $c->render(json => { result => 'OK',
-                             command => { command => $params->{command},
-                                          params  => $params->{params},
-                                          mecha   => $params->{mecha},
-                                          secondarycommand => $params->{secondarycommand},
-                                          secondaryparams => $params->{secondaryparams},
-                                          velocity    => $params->{velocity},
-                            } });
-
-
-    }
+    $db->get_collection('mechas')->update_one( { 'name' => $params->{mecha} }, { '$set' => { 'waiting' => 0 } } );
+    $c->render(json => { result => 'OK',
+                         command => { command => $params->{command},
+                                      params  => $params->{params},
+                                      mecha   => $params->{mecha},
+                                      secondarycommand => $params->{secondarycommand},
+                                      secondaryparams => $params->{secondaryparams},
+                                      velocity    => $params->{velocity},
+                       } });
 }
 
 sub read_command

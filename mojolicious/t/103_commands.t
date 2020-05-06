@@ -7,14 +7,14 @@ use lib 'lib';
 use Gunpla::World;
 use Gunpla::Test;
 
-my $world = Gunpla::Test::test_bootstrap('duel.csv');
+my $world = Gunpla::Test::test_bootstrap('t103.csv');
 my $t = Test::Mojo->new('GunplaServer');
 $t->app->config->{no_login} = 1;
 
 diag("Adding a command to RX78");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
                                                               mecha => 'RX78', 
-                                                              command => 'FLY TO WAYPOINT',
+                                                              command => 'flywp',
                                                               params => 'WP-center',
                                                               velocity => 4 })
     ->status_is(200)
@@ -27,7 +27,6 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
                     'secondaryparams' => undef,
                     'velocity' => 4,
                 } });
-Gunpla::Test::dump_api($t);
 
 diag("Veriying waiting mecha flag");
 $t->get_ok('/game/mechas?game=autotest&mecha=RX78')->status_is(200)->json_is("/mecha/waiting" => 0);
@@ -49,10 +48,10 @@ $t->get_ok('/game/command?game=autotest&mecha=RX78')->status_is(200)->json_is(
 diag("Adding a command to Hyakushiki");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
                                                               mecha => 'Hyakushiki', 
-                                                              command => 'FLY TO WAYPOINT',
+                                                              command => 'flywp',
                                                               params => 'WP-center',
                                                               secondarycommand => 'machinegun',
-                                                              secondaryparams => 'RX78',
+                                                              secondaryparams => 'MEC-RX78',
                                                               velocity => 5,
  })
     ->status_is(200)
@@ -62,10 +61,11 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
                     'command' => 'FLY TO WAYPOINT',
                     'mecha' => 'Hyakushiki',
                     'secondarycommand' => 'machinegun',
-                    'secondaryparams' => 'RX78',
+                    'secondaryparams' => 'MEC-RX78',
                     'velocity' => 5,
                 } });
 
+Gunpla::Test::dump_api($t);
 diag("Veriying waiting mecha flag");
 $t->get_ok('/game/mechas?game=autotest&mecha=Hyakushiki')->status_is(200)->json_is("/mecha/waiting" => 0);
 
@@ -77,7 +77,7 @@ $t->get_ok('/game/command?game=autotest&mecha=Hyakushiki')->status_is(200)->json
             'command' => 'FLY TO WAYPOINT',
             'mecha' => 'Hyakushiki',
             'secondarycommand' => 'machinegun',
-            'secondaryparams' => 'RX78',
+            'secondaryparams' => 'MEC-RX78',
             'velocity' => 5,
         }
     }

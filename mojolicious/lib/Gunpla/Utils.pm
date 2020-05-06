@@ -1,7 +1,7 @@
 package Gunpla::Utils;
 
 use base 'Exporter';
-our @EXPORT_OK = qw( controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction command_from_mongo_to_json);
+our @EXPORT_OK = qw( controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction command_from_mongo_to_json get_from_id);
 
 use Data::Dumper;
 use MongoDB;
@@ -114,4 +114,27 @@ sub sighted_by_faction
     my ( $mecha_obj ) = $db->get_collection('mechas')->find({ name => $mecha })->all();
     my ( $sighting_matrix ) = $db->get_collection('status')->find({ status_element => 'sighting_matrix' })->all();
     return $sighting_matrix->{__factions}->{$mecha_obj->{faction}}->{$obj->{name}} > 0;
+}
+
+sub get_from_id
+{
+    my $game = shift;
+    my $world_id = shift;
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $game);
+    my ($type, $id) = split('-', $world_id);
+    my $obj = undef;
+    if($type eq 'MEC')
+    {
+        ( $obj ) = $db->get_collection('mechas')->find({ name => $id })->all();
+    }
+    elsif($type eq 'WP')
+    {
+        ( $obj ) = $db->get_collection('map')->find({ type => 'waypoiny', id => $id })->all();
+    }
+    elsif($type eq 'AST')
+    {
+        ( $obj ) = $db->get_collection('map')->find({ type => 'asteroid', id => $id })->all();
+    }
+    return $obj;
 }
