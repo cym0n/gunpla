@@ -11,7 +11,27 @@ my $world = Gunpla::Test::test_bootstrap('t103.csv');
 my $t = Test::Mojo->new('GunplaServer');
 $t->app->config->{no_login} = 1;
 
-diag("Adding a command to RX78");
+diag("KO - Adding a command to RX78 - bad command");
+$t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
+                                                              mecha => 'RX78', 
+                                                              command => 'xxx',
+                                                              params => 'WP-center',
+                                                              velocity => 4 })
+    ->status_is(400)
+    ->json_is({ result => 'error',
+                description => 'bad command'});
+
+diag("KO - Adding a command to RX78 - bad target");
+$t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
+                                                              mecha => 'RX78', 
+                                                              command => 'flywp',
+                                                              params => 'MEC-Hyakushiki',
+                                                              velocity => 4 })
+    ->status_is(400)
+    ->json_is({ result => 'error',
+                description => 'bad target provided: MEC-Hyakushiki'});
+
+diag("OK - Adding a command to RX78");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
                                                               mecha => 'RX78', 
                                                               command => 'flywp',
@@ -44,6 +64,19 @@ $t->get_ok('/game/command?game=autotest&mecha=RX78')->status_is(200)->json_is(
         }
     }
 );
+
+diag("KO - Adding a command to Hyakushiki - Bad machinegun target");
+$t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
+                                                              mecha => 'Hyakushiki', 
+                                                              command => 'flywp',
+                                                              params => 'WP-center',
+                                                              secondarycommand => 'machinegun',
+                                                              secondaryparams => 'MEC-Gelgoog',
+                                                              velocity => 5,
+ })
+    ->status_is(400)
+    ->json_is({ result => 'error',
+                description => 'Bad target provided: MEC-Gelgoog'});
 
 diag("Adding a command to Hyakushiki");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',

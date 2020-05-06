@@ -1,10 +1,11 @@
 WP;center;0;0;0
 WP;blue;35000;0;0;wolf
 WP;red;-35000;0;0;eagle
-WP;alpha;0;-200000;0
+WP;alpha;0;-200000;0;tiger
 WP;magellan;50000;10000;10000
 AST;50000;10000;9000
 AST;49000;9000;10000
 MEC;RX78;wolf
 MEC;Hyakushiki;eagle
+MEC;Gelgoog;tiger
 PLY;RX78;amuro

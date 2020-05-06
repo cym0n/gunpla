@@ -252,15 +252,21 @@ sub add_command
         my $mp = target_from_mongo_to_json($params->{game}, $params->{mecha}, 'map', $target_obj);
         $ok = $mp->{distance} < LANDING_RANGE;
     }
+    if(! $ok)
+    {
+        $c->render(json => { result => 'error', description => 'Bad target provided: ' . $params->{params}}, status => 400);
+        return;
+    }
     if($params->{secondarycommand} && $params->{secondarycommand} eq 'machinegun')
     {
         $ok = $params->{secondaryparams} =~ /^MEC/ && sighted_by_faction($params->{game}, $params->{mecha}, get_from_id($params->{game}, $params->{secondaryparams}));
     }
     if(! $ok)
     {
-        $c->render(json => { result => 'error', description => 'Misplaced target provided'}, status => 400);
+        $c->render(json => { result => 'error', description => 'Bad target provided: ' . $params->{secondaryparams}}, status => 400);
         return;
     }
+    
     
 
 
