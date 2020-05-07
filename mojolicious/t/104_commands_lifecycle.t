@@ -17,7 +17,7 @@ $t->app->config->{no_login} = 1;
 diag("Adding a command to RX78");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
                                                               mecha => 'RX78', 
-                                                              command => 'FLY TO WAYPOINT',
+                                                              command => 'flywp',
                                                               params => 'WP-center',
                                                               velocity => 4 })
     ->status_is(200)
@@ -34,7 +34,7 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
 diag("Adding a command to Hyakushiki");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
                                                               mecha => 'Hyakushiki', 
-                                                              command => 'FLY TO WAYPOINT',
+                                                              command => 'flywp',
                                                               params => 'WP-alpha',
                                                               velocity => 5 })
     ->status_is(200)

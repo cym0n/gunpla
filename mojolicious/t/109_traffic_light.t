@@ -28,7 +28,7 @@ $t->get_ok('/game/traffic-light?game=autotest')->status_is(200)->json_is(
 diag("Adding a command to RX78");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
                                                               mecha => 'RX78', 
-                                                              command => 'FLY TO WAYPOINT',
+                                                              command => 'flywp',
                                                               params => 'WP-center',
                                                               velocity => 4 })
     ->status_is(200);
