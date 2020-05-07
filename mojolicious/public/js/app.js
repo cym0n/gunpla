@@ -257,9 +257,14 @@ App = {
         var form = '<div class="form-group row" id="'+name+'_velocityform">'+
                         '<label class="col-sm-8">Velocity</label>'+
                         '<div class="col-sm-12">';
+        def = data.mecha.velocity;
+        if(! def)
+        {
+            def = data.mecha.max_velocity -2;
+        }
         for (i = 1; i <= data.mecha.max_velocity; i++) {
             checked = '';
-            if(i == data.mecha.velocity)
+            if(i == def)
             {
                 checked = 'checked';
             }
