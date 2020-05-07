@@ -209,7 +209,12 @@ sub add_command
     }
     else
     {
-        $c->render(json => { result => 'error', description => 'bad command'}, status => 400);
+        $c->render(json => { result => 'error', description => 'bad command code'}, status => 400);
+        return;
+    }
+    if($configured_command->{velocity} && ! $params->{velocity})
+    {
+        $c->render(json => { result => 'error', description => 'bad command: velocity needed'}, status => 400);
         return;
     }
 
@@ -232,7 +237,7 @@ sub add_command
         $c->render(json => { result => 'error', description => 'bad target provided: ' . $params->{params}}, status => 400);
         return;
     }
-    my $target_obj = get_from_id($params->{params});
+    my $target_obj = get_from_id($params->{game}, $params->{params});
 
     my $ok = 1;
     if($configured_command->{filter} eq 'sighted-by-me')
@@ -255,6 +260,11 @@ sub add_command
     if(! $ok)
     {
         $c->render(json => { result => 'error', description => 'Bad target provided: ' . $params->{params}}, status => 400);
+        return;
+    }
+    if($params->{secondarycommand} && $params->{secondarycommand} eq 'machinegun' && ! $configured_command->{'machinegun'})
+    {
+        $c->render(json => { result => 'error', description => 'Bad command: machinegun not allowed' }, status => 400);
         return;
     }
     if($params->{secondarycommand} && $params->{secondarycommand} eq 'machinegun')

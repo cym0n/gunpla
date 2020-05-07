@@ -19,7 +19,7 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
                                                               velocity => 4 })
     ->status_is(400)
     ->json_is({ result => 'error',
-                description => 'bad command'});
+                description => 'bad command code'});
 
 diag("KO - Adding a command to RX78 - bad target");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
@@ -30,6 +30,17 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
     ->status_is(400)
     ->json_is({ result => 'error',
                 description => 'bad target provided: MEC-Hyakushiki'});
+
+diag("KO - Adding a command to RX78 - no velocity");
+$t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
+                                                              mecha => 'RX78', 
+                                                              command => 'flywp',
+                                                              params => 'MEC-Hyakushiki',
+                                                            })
+    ->status_is(400)
+    ->json_is({ result => 'error',
+                description => 'bad command: velocity needed'});
+
 
 diag("OK - Adding a command to RX78");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
@@ -77,6 +88,21 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
     ->status_is(400)
     ->json_is({ result => 'error',
                 description => 'Bad target provided: MEC-Gelgoog'});
+
+diag("KO - Adding command to Hyakushiki - Sword not compatible with machinegun");
+$t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
+                                                              mecha => 'Hyakushiki', 
+                                                              command => 'sword',
+                                                              params => 'MEC-RX78',
+                                                              secondarycommand => 'machinegun',
+                                                              secondaryparams => 'MEC-RX78',
+                                                              velocity => 5,
+ })
+    ->status_is(400)
+    ->json_is({ result => 'error',
+                description => 'Bad command: machinegun not allowed'});
+
+
 
 diag("Adding a command to Hyakushiki");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
