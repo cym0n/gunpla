@@ -39,6 +39,7 @@ sub race
 {
     my $self = shift;
     my $waypoints = shift;
+    my $velocity = shift;
     my $steps = shift;
     if($self->report)
     {
@@ -55,7 +56,7 @@ sub race
     foreach my $wp (@{$waypoints})
     {
         $self->armies->[0]->waiting(0);
-        $self->add_command('Diver', 'FLY TO WAYPOINT', $wp);
+        $self->add_command('Diver', { command => 'FLY TO WAYPOINT', params => $wp, velocity => $velocity });
         while($self->all_ready && (! $steps || $self->counter < $steps))
         {
             for(@{$self->armies})
@@ -88,13 +89,15 @@ sub race
                         }
                     }
                 }
+                $m->energy_routine();
                 my $scan = "Step: " . $self->counter . "\n" .
                            "Waypoint: $wp" . "\n" .
                            "Mecha position: " . $m->position->as_string() . "\n" .
                            "Velocity: " . $m->velocity . "\n" .
                            "Velocity Gauge: " . $m->velocity_gauge . "\n" .
                            "Acceleration Gauge: " . $m->velocity_gauge . "\n" .
-                           "Velocity vector: " . $m->velocity_vector->as_string();
+                           "Velocity vector: " . $m->velocity_vector->as_string() . "\n" .
+                           "Energy: " . $m->energy;
 
                 if($self->counter % 1000 == 0)
                 {
