@@ -106,6 +106,12 @@ has action => (
 has life => (
     is => 'rw'
 );
+has energy => (
+    is => 'rw'
+);
+has max_energy => (
+    is => 'ro'
+);
 has sensor_range => (
     is => 'ro',
 );
@@ -319,6 +325,21 @@ sub plan_and_move
     }
 }
 
+sub energy_routine
+{
+    my $self = shift;
+    my $energy_delta = ENERGY_STANDARD_BONUS;
+    if($self->velocity == $self->max_velocity)
+    {
+        $energy_delta -= ENERGY_MAX_SPEED_MALUS;
+    }
+    elsif($self->velocity == $self->max_velocity - 1)
+    {
+        $energy_delta -= ENERGY_HIGH_SPEED_MALUS;
+    }
+    $self->energy($self->energy + $energy_delta);
+}
+
 sub command
 {
     my $self = shift;
@@ -467,6 +488,8 @@ sub to_mongo
         life => $self->life,
         status => $self->status,
         action => $self->action,
+        energy => $self->energy,
+        max_energy => $self->max_energy,
     }
 }
 

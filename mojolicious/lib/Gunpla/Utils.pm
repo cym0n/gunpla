@@ -90,6 +90,7 @@ sub mecha_from_mongo_to_json
              faction  => $mecha->{faction},
              position => $mecha->{position},
              velocity => $mecha->{velocity},
+             energy   => $mecha->{energy},
              max_velocity => $mecha->{max_velocity},
              waiting  => $mecha->{waiting} };
 }

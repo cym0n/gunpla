@@ -47,6 +47,9 @@ use constant FILTERS => { 'waypoints' => { 'waypoints' => ['WP'] },
                           'hotspots' => { 'hotspots' => ['AST'] },
                           'landing' => { 'landing' => ['AST'] },
                         };
+use constant ENERGY_STANDARD_BONUS => 1;
+use constant ENERGY_HIGH_SPEED_MALUS => 1;
+use constant ENERGY_MAX_SPEED_MALUS => 2;
 
 our @EXPORT_OK = (
     'GET_AWAY_DISTANCE',
@@ -82,6 +85,9 @@ our @EXPORT_OK = (
     'SIGHT_MINIMUM',
     'ELEMENT_TAGS',
     'FILTERS',
+    'ENERGY_STANDARD_BONUS',
+    'ENERGY_HIGH_SPEED_MALUS',
+    'ENERGY_MAX_SPEED_MALUS',
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 
