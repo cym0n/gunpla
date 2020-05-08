@@ -76,16 +76,17 @@ has dice_results => (
 has mecha_templates => (
     is => 'ro',
     default => sub {
+        my $energy = 700000;
         {
-            'Diver' => { sensor_range => 140000, life => 1000, max_velocity => 6, acceleration => 100000, max_energy => 1000, energy => 1000  },
-            'Zaku'  => { sensor_range => 80000,  life => 1000, max_velocity => 6, acceleration => 100000, max_energy => 1000, energy => 1000 },
-            'Gelgoog'  => { sensor_range => 130000,  life => 1000, max_velocity => 6, acceleration => 100000, max_energy => 1000, energy => 1000 },
-            'Dom'  => { sensor_range => 110000,  life => 1000, max_velocity => 6, acceleration => 100000, max_energy => 1000, energy => 1000 },
-            'Dummy'  => { sensor_range => 0,  life => 1000, max_velocity => 10, acceleration => 100, max_energy => 1000, energy => 1000 },
-            'RX78' => { sensor_range => 140000, life => 1000, max_velocity => 10, acceleration => 100, max_energy => 1000, energy => 1000  },
-            'Deathscythe' => { sensor_range => 69000, life => 1000, max_velocity => 10, acceleration => 100, max_energy => 1000, energy => 1000  },
-            'Sandrock' => { sensor_range => 30000, life => 1000, max_velocity => 10, acceleration => 100, max_energy => 1000, energy => 1000  },
-            'Hyakushiki' => { sensor_range => 80000, life => 1000, max_velocity => 10, acceleration => 100, max_energy => 1000, energy => 1000  },
+            'Diver' => { sensor_range => 140000, life => 1000, max_velocity => 6, acceleration => 100000, max_energy => $energy, energy => $energy },
+            'Zaku'  => { sensor_range => 80000,  life => 1000, max_velocity => 6, acceleration => 100000, max_energy => $energy, energy => $energy },
+            'Gelgoog'  => { sensor_range => 130000,  life => 1000, max_velocity => 6, acceleration => 100000, max_energy => $energy, energy => $energy },
+            'Dom'  => { sensor_range => 110000,  life => 1000, max_velocity => 6, acceleration => 100000, max_energy => $energy, energy => $energy },
+            'Dummy'  => { sensor_range => 0,  life => 1000, max_velocity => 10, acceleration => 100, max_energy => $energy, energy => $energy },
+            'RX78' => { sensor_range => 140000, life => 1000, max_velocity => 10, acceleration => 100, max_energy => $energy, energy => $energy  },
+            'Deathscythe' => { sensor_range => 69000, life => 1000, max_velocity => 10, acceleration => 100, max_energy => $energy, energy => $energy  },
+            'Sandrock' => { sensor_range => 30000, life => 1000, max_velocity => 10, acceleration => 100, max_energy => $energy, energy => $energy  },
+            'Hyakushiki' => { sensor_range => 80000, life => 1000, max_velocity => 10, acceleration => 100, max_energy => $energy, energy => $energy  },
         }
     }
 );

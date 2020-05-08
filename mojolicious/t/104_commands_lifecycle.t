@@ -79,7 +79,7 @@ $t2->get_ok('/game/mechas?game=autotest&mecha=RX78')->status_is(200)->json_is(
             waiting => 1,
             velocity => 4,
             max_velocity => 10,
-            energy => 85303,
+            energy => 700000,
         }
     }
 );
@@ -98,7 +98,7 @@ $t2->get_ok('/game/mechas?game=autotest&mecha=Hyakushiki')->status_is(200)->json
             waiting => 0,
             velocity => 5,
             max_velocity => 10,
-            energy => 85303,
+            energy => 700000,
         }
     }
 );

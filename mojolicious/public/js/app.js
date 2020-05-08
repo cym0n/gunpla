@@ -171,7 +171,7 @@ App = {
     }
   },
   mechaDescription(m) {
-    return m.name + ' (' + m.faction + ')<br />[' + m.position.x +', '+ m.position.y +', '+ m.position.z + ']<br />Velocity: '+m.velocity+'<br />Life: '+ m.life
+    return m.name + ' (' + m.faction + ')<br />[' + m.position.x +', '+ m.position.y +', '+ m.position.z + ']<br />Velocity: '+m.velocity+'<br />Life: '+ m.life + '<br />Energy: '+m.energy
   },
   refreshMechaDescription(name, m) {
     console.log("Refreshing mecha "+name);

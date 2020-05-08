@@ -337,8 +337,28 @@ sub energy_routine
     {
         $energy_delta -= ENERGY_HIGH_SPEED_MALUS;
     }
-    $self->energy($self->energy + $energy_delta);
+    $self->add_energy($energy_delta);
 }
+sub add_energy
+{
+    my $self = shift;
+    my $energy = shift;
+    my $new = $self->energy + $energy;
+    $new = 0 if($new < 0);
+    $new = $self->max_energy if($new > $self->max_energy);
+    $self->energy($new);
+    $self->energy_exhausted if($self->energy == 0);
+}
+sub energy_exhausted
+{
+    my $self = shift;
+    if($self->velocity > $self->max_velocity - 2)
+    {
+        $self->velocity($self->max_velocity - 2);
+        $self->velocity_target($self->max_velocity - 2);
+    }
+}
+
 
 sub command
 {
