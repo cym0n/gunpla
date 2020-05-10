@@ -272,6 +272,10 @@ sub set_destination
                     $self->velocity($self->acceleration_matrix->{$l}) if $self->velocity > $self->acceleration_matrix->{$l};
                     last;
                 }
+                else
+                {
+                    last;
+                }
             }
         }
     }
@@ -329,11 +333,13 @@ sub energy_routine
 {
     my $self = shift;
     my $energy_delta = ENERGY_STANDARD_BONUS;
+
+    my $high_velocity = $self->max_velocity - 1;
     if($self->velocity == $self->max_velocity)
     {
         $energy_delta -= ENERGY_MAX_SPEED_MALUS;
     }
-    elsif($self->velocity == $self->max_velocity - 1)
+    elsif($self->velocity == $high_velocity)
     {
         $energy_delta -= ENERGY_HIGH_SPEED_MALUS;
     }
@@ -530,6 +536,14 @@ sub from_mongo
     return $m;  
 }
 
+sub log
+{
+    my $self = shift;
+    my $message = shift;
+    open(my $fh, '>> log');
+    print {$fh} $message . "\n";
+    close($fh);
+}
 
 
 

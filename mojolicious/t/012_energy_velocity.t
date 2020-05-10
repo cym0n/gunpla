@@ -9,21 +9,30 @@ use Gunpla::World;
 use Gunpla::Test;
 use Gunpla::Position;
 
+
 diag("Reaching parallel waypoints");
 my $world = Gunpla::Test::test_bootstrap('t012.csv');
-my $commands = { 'Diver' => { command =>'FLY TO WAYPOINT', params => 'WP-paris', velocity => 6},
-                 'Zaku' => { command =>'FLY TO WAYPOINT', params => 'WP-rome', velocity => 4}};
-$world->armies->[0]->velocity(4);
-$world->armies->[1]->velocity(4);
+my $commands = { 'Guncannon' => { command =>'FLY TO WAYPOINT', params => 'WP-paris', velocity => 6},
+                 'Psychogundam' => { command =>'FLY TO WAYPOINT', params => 'WP-rome', velocity => 5}};
+$world->armies->[0]->set_destination($world->waypoints->{'paris'});
+$world->armies->[0]->velocity(5);
+$world->armies->[1]->set_destination($world->waypoints->{'rome'});
+$world->armies->[1]->velocity(5);
+$world->armies->[1]->energy(10000);
 is(Gunpla::Test::emulate_commands($world, $commands), 1);
-diag("Diver reached destination as first. Energy consumed, max velocity");
-is_deeply($world->get_events('Diver'), [ 'Diver reached destination: waypoint paris' ]);
-is($world->armies->[0]->energy, 687382);
+diag("Guncannon reached destination as first. Energy consumed, max velocity");
+is_deeply($world->get_events('Guncannon'), [ 'Guncannon reached destination: waypoint paris' ]);
+is($world->armies->[0]->energy, 460085);
 is($world->armies->[0]->velocity, 6);
-diag("Zaku reached destination as second. Energy not consumed, velocity 4");
-is(Gunpla::Test::emulate_commands($world, { 'Diver' => { command => 'WAITING' }}), 1);
-is_deeply($world->get_events('Zaku'), [ 'Zaku reached destination: waypoint rome' ]);
-is($world->armies->[1]->energy, 700000);
+diag("Psychogundam reached destination as second. Energy not consumed, velocity 5");
+is(Gunpla::Test::emulate_commands($world, { 'Guncannon' => { command => 'WAITING' }}), 1);
+is_deeply($world->get_events('Psychogundam'), [ 'Psychogundam reached destination: waypoint rome' ]);
+is($world->armies->[1]->energy, 10000);
+is($world->armies->[1]->velocity, 5);
+diag("Psychogundam tries to do another trip max energy exhausting small reserve");
+is(Gunpla::Test::emulate_commands($world, { 'Psychogundam' => { command =>'FLY TO WAYPOINT', params => 'WP-blue', velocity => 6}}), 1);
+is_deeply($world->get_events('Psychogundam'), [ 'Psychogundam exhausted energy' ]);
+is($world->armies->[1]->energy, 0);
 is($world->armies->[1]->velocity, 4);
 
 Gunpla::Test::clean_db('autotest', 1);

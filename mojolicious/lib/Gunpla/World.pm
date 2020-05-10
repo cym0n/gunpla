@@ -87,6 +87,8 @@ has mecha_templates => (
             'Deathscythe' => { sensor_range => 69000, life => 1000, max_velocity => 10, acceleration => 100, max_energy => $energy, energy => $energy  },
             'Sandrock' => { sensor_range => 30000, life => 1000, max_velocity => 10, acceleration => 100, max_energy => $energy, energy => $energy  },
             'Hyakushiki' => { sensor_range => 80000, life => 1000, max_velocity => 10, acceleration => 100, max_energy => $energy, energy => $energy  },
+            'Guncannon' => { sensor_range => 140000, life => 1000, max_velocity => 6, acceleration => 100, max_energy => $energy, energy => $energy },
+            'Psychogundam'  => { sensor_range => 80000,  life => 1000, max_velocity => 6, acceleration => 100, max_energy => $energy, energy => $energy },
         }
     }
 );
@@ -496,6 +498,10 @@ sub action
                 }
             }
             $m->energy_routine();
+            if($m->energy == 0)
+            {
+                $self->event($m->name . " exhausted energy", [$m->name]);
+            }
             $self->calculate_sighting_matrix($m->name);
         }
         $counter++;

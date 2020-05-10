@@ -82,7 +82,7 @@ sub distance
     my $result = sqrt(($vector->x ** 2) + ($vector->y ** 2) + ($vector->z ** 2));
     if($floating)
     {
-        return sprintf("%.3f", $result)
+        return sprintf("%.3f", $result)+0;
     }
     else
     {

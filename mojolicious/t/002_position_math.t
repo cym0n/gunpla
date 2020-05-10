@@ -79,6 +79,11 @@ is($away2->x, -308);
 is($away2->y, -414);
 is($away2->z, -837);
 
+diag("Testing a bug on 10-05-2020");
+my $vect1 = Gunpla::Position->new(x => 0, y => 1, z => 0);
+my $vect2 = Gunpla::Position->new(x => 0, y => 1, z => 0);
+is($vect1->sum($vect2, 1), 2);
+
 
 
 done_testing();
