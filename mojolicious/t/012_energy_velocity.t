@@ -34,6 +34,10 @@ is(Gunpla::Test::emulate_commands($world, { 'Psychogundam' => { command =>'FLY T
 is_deeply($world->get_events('Psychogundam'), [ 'Psychogundam exhausted energy' ]);
 is($world->armies->[1]->energy, 0);
 is($world->armies->[1]->velocity, 4);
+diag("Psychogundam reach destination and velocity 4, recharging");
+is(Gunpla::Test::emulate_commands($world, { 'Psychogundam' => { command =>'FLY TO WAYPOINT', params => 'WP-blue', velocity => 4}}), 1);
+is($world->armies->[1]->energy, 66327);
+is($world->armies->[1]->velocity, 4);
 
 Gunpla::Test::clean_db('autotest', 1);
 done_testing();
