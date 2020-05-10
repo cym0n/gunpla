@@ -212,13 +212,23 @@ sub add_command
         $c->render(json => { result => 'error', description => 'bad command code'}, status => 400);
         return;
     }
-    if($configured_command->{velocity} && ! $params->{velocity})
+    my ( $mecha ) = $db->get_collection('mechas')->find({ name => $params->{mecha} })->all();
+    my $mecha_data =  mecha_from_mongo_to_json($mecha);
+    if($configured_command->{velocity})
     {
-        $c->render(json => { result => 'error', description => 'bad command: velocity needed'}, status => 400);
-        return;
+        if( ! $params->{velocity} )
+        {
+            $c->render(json => { result => 'error', description => 'bad command: velocity needed'}, status => 400);
+            return;
+        }
+        if($params->{velocity} >= $mecha_data->{available_max_velocity})
+        {
+            $c->app->log->debug($params->{velocity} . " <= " . $mecha_data->{available_max_velocity} . " " . $mecha_data->{energy});
+            $c->render(json => { result => 'error', description => 'bad command: velocity not allowed'}, status => 400);
+            return;
+        }
     }
 
-    my ( $mecha ) = $db->get_collection('mechas')->find({ name => $params->{mecha} })->all();
     if(! $mecha->{waiting}) #Strong enough?
     {
         $c->render(json => { result => 'error', description => 'mecha not waiting for commands'}, status => 403);
