@@ -221,9 +221,8 @@ sub add_command
             $c->render(json => { result => 'error', description => 'bad command: velocity needed'}, status => 400);
             return;
         }
-        if($params->{velocity} >= $mecha_data->{available_max_velocity})
+        if($params->{velocity} > $mecha_data->{available_max_velocity})
         {
-            $c->app->log->debug($params->{velocity} . " <= " . $mecha_data->{available_max_velocity} . " " . $mecha_data->{energy});
             $c->render(json => { result => 'error', description => 'bad command: velocity not allowed'}, status => 400);
             return;
         }

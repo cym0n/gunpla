@@ -268,6 +268,10 @@ App = {
             {
                 checked = 'checked';
             }
+            else if(i > data.mecha.available_max_velocity)
+            {
+                checked = 'disabled';
+            }
             form = form +
                 '<label class="radio-inline"> <input type="radio" name="velocity" id="velocity'+i+'" value="'+i+'" '+checked+'>'+i+'</label>';
         }
