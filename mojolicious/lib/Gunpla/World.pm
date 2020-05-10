@@ -610,6 +610,11 @@ sub manage_attack
     }
     elsif($attack eq 'RIFLE')
     {
+        if($attacker->energy < RIFLE_ENERGY)
+        {
+            $self->event($attacker->name . ": not enough energy for rifle", [$attacker->name]);
+            return;
+        }
         my $distance = $attacker->position->distance($defender->position);
         my $distance_bonus = 3 - ceil((3 * $distance) / RIFLE_MAX_DISTANCE);
         my $roll = $self->dice(1, 20);
@@ -627,7 +632,7 @@ sub manage_attack
         {
             $self->event($attacker->name . " missed " . $defender->name . " with rifle", [$attacker->name]);
         }
-    
+        $attacker->add_energy(-1 * RIFLE_ENERGY);
     }
 }
 

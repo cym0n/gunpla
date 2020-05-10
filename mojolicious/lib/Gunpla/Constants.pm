@@ -21,6 +21,7 @@ use constant RIFLE_MIN_DISTANCE => 2000;
 use constant RIFLE_SWORD_GAUGE_DAMAGE => 600; 
 use constant RIFLE_WIN => 11;
 use constant RIFLE_LANDED_BONUS => 1;
+use constant RIFLE_ENERGY => 30000;
 use constant SWORD_ATTACK_TIME_LIMIT => 4000;
 use constant SWORD_BOUNCE => 200;
 use constant SWORD_DAMAGE => 200;
@@ -69,6 +70,7 @@ our @EXPORT_OK = (
     'RIFLE_SWORD_GAUGE_DAMAGE',
     'RIFLE_WIN',
     'RIFLE_LANDED_BONUS',
+    'RIFLE_ENERGY',
     'SWORD_ATTACK_TIME_LIMIT',
     'SWORD_BOUNCE',
     'SWORD_DAMAGE',
