@@ -335,13 +335,17 @@ sub energy_routine
     my $energy_delta = ENERGY_STANDARD_BONUS;
 
     my $high_velocity = $self->max_velocity - 1;
-    if($self->velocity == $self->max_velocity)
+    if($self->get_velocity == SWORD_VELOCITY)
     {
-        $energy_delta -= ENERGY_MAX_SPEED_MALUS;
+        $energy_delta -= ENERGY_SWORD_VELOCITY_MALUS;
     }
-    elsif($self->velocity == $high_velocity)
+    elsif($self->get_velocity == $self->max_velocity)
     {
-        $energy_delta -= ENERGY_HIGH_SPEED_MALUS;
+        $energy_delta -= ENERGY_MAX_VELOCITY_MALUS;
+    }
+    elsif($self->get_velocity == $high_velocity)
+    {
+        $energy_delta -= ENERGY_HIGH_VELOCITY_MALUS;
     }
     $self->add_energy($energy_delta);
 }

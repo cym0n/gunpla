@@ -30,6 +30,7 @@ use constant SWORD_DISTANCE => 10;
 use constant SWORD_GAUGE_VELOCITY_BONUS => 20;
 use constant SWORD_VELOCITY => 8;
 use constant SWORD_WIN => 12;
+use constant SWORD_ENERGY => 50000;
 use constant VELOCITY_LIMIT => 11;
 use constant LANDING_RANGE => 20000;
 use constant LANDING_VELOCITY => 3;
@@ -49,8 +50,9 @@ use constant FILTERS => { 'waypoints' => { 'waypoints' => ['WP'] },
                           'landing' => { 'landing' => ['AST'] },
                         };
 use constant ENERGY_STANDARD_BONUS => 1;
-use constant ENERGY_HIGH_SPEED_MALUS => 1;
-use constant ENERGY_MAX_SPEED_MALUS => 2;
+use constant ENERGY_HIGH_VELOCITY_MALUS => 1;
+use constant ENERGY_MAX_VELOCITY_MALUS => 2;
+use constant ENERGY_SWORD_VELOCITY_MALUS => 4;
 use constant ENERGY_AVAILABLE_FOR_HIGH_SPEED => 1000;
 
 our @EXPORT_OK = (
@@ -79,6 +81,7 @@ our @EXPORT_OK = (
     'SWORD_GAUGE_VELOCITY_BONUS',
     'SWORD_VELOCITY',
     'SWORD_WIN',
+    'SWORD_ENERGY',
     'VELOCITY_LIMIT',
     'LANDING_RANGE',
     'LANDING_VELOCITY',
@@ -89,8 +92,9 @@ our @EXPORT_OK = (
     'ELEMENT_TAGS',
     'FILTERS',
     'ENERGY_STANDARD_BONUS',
-    'ENERGY_HIGH_SPEED_MALUS',
-    'ENERGY_MAX_SPEED_MALUS',
+    'ENERGY_HIGH_VELOCITY_MALUS',
+    'ENERGY_MAX_VELOCITY_MALUS',
+    'ENERGY_SWORD_VELOCITY_MALUS',
     'ENERGY_AVAILABLE_FOR_HIGH_SPEED', 
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );

@@ -535,11 +535,16 @@ sub manage_attack
     my $defender = $self->get_mecha_by_name($attacker->attack_target->{name});
     if($attack eq 'SWORD')
     {
+        if($attacker->energy < SWORD_ENERGY)
+        {
+            $self->event($attacker->name . ": not enough energy for sword", [$attacker->name]);
+            return;
+        }
         #If both are attacking with sword the one with more impact gauge wins
         my $clash = 1;
         if($defender->attack && $defender->attack eq 'SWORD' && $defender->attack_target->{name} eq $attacker->name)
         {
-            if($defender->attack_gauge > $attacker->attack_gauge)
+            if($defender->attack_gauge > $attacker->attack_gauge || $defender->energy < SWORD_ENERGY)
             {
                 my $switch = $attacker;
                 $attacker = $defender;
@@ -551,8 +556,10 @@ sub manage_attack
                 $clash = 0;
                 $attacker->stop_attack();
                 $attacker->stop_movement();
+                $attacker->add_energy(-1 * SWORD_ENERGY);
                 $defender->stop_attack();
                 $defender->stop_movement();
+                $attacker->add_energy(-1 * SWORD_ENERGY);
             }
         }
         if($clash)
@@ -581,6 +588,7 @@ sub manage_attack
         $defender->position->$bounce_direction($defender->position->$bounce_direction + SWORD_BOUNCE);
         $defender->stop_attack();
         $defender->stop_movement();
+        $attacker->add_energy(-1 * SWORD_ENERGY);
     }
     elsif($attack eq 'MACHINEGUN')
     {
