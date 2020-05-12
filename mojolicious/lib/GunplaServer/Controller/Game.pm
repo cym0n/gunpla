@@ -122,10 +122,31 @@ sub targets
                 }
             }
         }
+        elsif($_ eq 'last_sight')
+        {
+            my ( $the_mecha ) = $db->get_collection('mechas')->find({ name => $mecha })->all();
+            my $target = undef;
+        
+            if((! $the_mecha->{movement_target} || ! $the_mecha->{movement_target}->{type} eq 'none') && $the_mecha->{attack_target} && $the_mecha->{attack_target}->{type} eq 'mecha') 
+            {
+                $target =  $the_mecha->{attack_target}
+            }
+            elsif($the_mecha->{movement_target} && $the_mecha->{movement_target}->{type} eq 'mecha') 
+            {
+                $target =  $the_mecha->{movement_target}
+            }
+            if($target)
+            {
+                my ( $target_mecha ) = $db->get_collection('mechas')->find({ name => $target->{name} })->all();
+                if($target_mecha && ! sighted_by_faction($game, $mecha, $target_mecha))
+                {
+                    push @out, target_from_mongo_to_json($game, $mecha, 'position', { id => 0, position => $the_mecha->{destination} });
+                }
+            }
+        }
     }
     @out = sort { $a->{world_id} cmp $b->{world_id} } @out;
     $c->render(json => { targets => \@out });
-    
 }
 
 sub game_commands

@@ -31,12 +31,18 @@ sub command_from_mongo_to_json
     return $command;
 }
 
+
 sub target_from_mongo_to_json
 {
     my $game = shift;
     my $mecha = shift;
     my $source = shift;
     my $obj = shift;
+
+    if($source eq 'position')
+    {
+        $obj->{type} = 'position';
+    }
 
     my $distance = undef;
     my $obj_pos = Gunpla::Position->from_mongo($obj->{position});
@@ -63,6 +69,10 @@ sub target_from_mongo_to_json
     elsif($source eq 'map')
     {
         $type = $obj->{type}
+    }
+    elsif($source eq 'position')
+    {
+        $type = 'position'
     }
     my $label = $type . " " . $id . " " . $obj_pos->as_string;
     $label .= " d:$distance" if($distance);

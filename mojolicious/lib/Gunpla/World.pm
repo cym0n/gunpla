@@ -451,6 +451,11 @@ sub action
                     }
                 }
             }
+            elsif($m->attack_target->{class} eq 'dynamic')
+            {
+                #We record the position of the target to track him (this is only on RIFLE)
+                $m->destination($self->get_position_from_movement_target($m->attack_target));
+            }
             if($m->attack)
             {
                 if($m->attack eq 'MACHINEGUN')
@@ -919,7 +924,7 @@ sub calculate_sighting_matrix
                             $self->event($m->name . " lost contact with " . $other->name, [ $m->name ]);
                             if($self->sighting_matrix->{__factions}->{$m->faction}->{$other->name})
                             {
-                                $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} = $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} + 1;
+                                $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} = $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} - 1;
                                 if($self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} < 0)
                                 {
                                     say "WARNING: " . $m->faction . " -> " . $other->name . " below 0";

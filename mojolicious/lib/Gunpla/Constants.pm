@@ -40,7 +40,8 @@ use constant SIGHT_LANDED_BONUS => 40000;
 use constant SIGHT_MINIMUM => 10000;
 use constant ELEMENT_TAGS => { 'asteroid' => 'AST',
                                'mecha'    => 'MEC',
-                               'waypoint' => 'WP' };
+                               'waypoint' => 'WP', 
+                               'position' => 'POS' };
 use constant FILTERS => { 'waypoints' => { 'waypoints' => ['WP'] },
                           'sighted-by-me' => { 'sighted_by_me' => ['MEC'] },
                           'sighted-by-faction' =>  { 'sighted_by_faction' => ['MEC'] },
@@ -48,6 +49,7 @@ use constant FILTERS => { 'waypoints' => { 'waypoints' => ['WP'] },
                                           'map_elements' => ['WP', 'AST'] },
                           'hotspots' => { 'hotspots' => ['AST'] },
                           'landing' => { 'landing' => ['AST'] },
+                          'last-sight' => { 'last_sight' => ['POS'] },
                         };
 use constant ENERGY_STANDARD_BONUS => 1;
 use constant ENERGY_HIGH_VELOCITY_MALUS => 1;
