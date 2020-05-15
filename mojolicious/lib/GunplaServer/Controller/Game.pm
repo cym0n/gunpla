@@ -343,12 +343,25 @@ sub read_command
     $cmd_index-- if $prev;
     $c->app->log->debug("Getting command " . $mecha->{name} . '-' . $cmd_index);
     my ( $command ) = $db->get_collection('commands')->find({ mecha => $mecha->{name}, cmd_index => $cmd_index })->all();
-    $c->render(json => { command => { command => $command->{command},
-                                      params  => $command->{params},
-                                      mecha   => $command->{mecha},
-                                      secondarycommand => $command->{secondarycommand},
-                                      secondaryparams => $command->{secondaryparams},
-                                      velocity    => $command->{velocity}}});
+    my $ok = 1;
+    if($command->{params} =~ /^MEC/)
+    {
+        my $target_obj = get_from_id($game, $command->{params});
+        $ok = sighted_by_faction($game, $mecha_name, $target_obj);
+    }
+    if($ok)
+    {
+        $c->render(json => { command => { command => $command->{command},
+                                          params  => $command->{params},
+                                          mecha   => $command->{mecha},
+                                          secondarycommand => $command->{secondarycommand},
+                                          secondaryparams => $command->{secondaryparams},
+                                          velocity    => $command->{velocity}}});
+    }
+    else
+    {
+        $c->render(json => { command => { } });
+    }
 }
 
 sub read_event

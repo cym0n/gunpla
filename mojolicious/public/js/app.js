@@ -134,6 +134,13 @@ App = {
                         <button name="resume" type="submit" class="btn btn-primary">Resume</button>
                     </form></div>`);
             }
+            else
+            {
+               $('#mecha_' + m.name).append(`
+                <div class="well">
+                    <p>Impossible to resume last command</p>
+                </div>`);
+            }
         });
 
     }
