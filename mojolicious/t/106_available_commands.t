@@ -56,6 +56,7 @@ $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
                             'velocity' => 1,
                             'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=waypoints'
                           },
+
                           {
                             'params_label' => 'Select a Hotspot',
                             'filter' => 'landing',
@@ -64,6 +65,15 @@ $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
                             'machinegun' => 0,
                             'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=landing',
                             'velocity' => 0
+                          },
+                          {
+                            code => 'last',
+                            label => 'FLY TO LAST KNOWN POSITION',
+                            filter => 'last-sight',
+                            params_label => 'Select a Mecha',
+                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=last-sight',
+                            machinegun => 1,
+                            velocity => 1
                           },
                           {
                             'params_label' => 'Select a Mecha',
@@ -87,7 +97,7 @@ $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
            });
 Gunpla::Test::dump_api($t);
 
-diag("FLY TO WAYPOINT details");
+diag("flywp details");
 $t->get_ok('/game/available-commands?game=autotest&mecha=RX78&command=flywp')
     ->status_is(200)
     ->json_is({

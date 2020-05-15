@@ -207,6 +207,15 @@ sub build_commands
             machinegun => 0,
             velocity => 0
         }, 1);
+    $self->configure_command( {
+            code => 'last',
+            label => 'FLY TO LAST KNOWN POSITION',
+            filter => 'last-sight',
+            params_label => 'Select a Mecha',
+            machinegun => 1,
+            velocity => 1
+        }, 1);
+
 }
 
 
@@ -337,15 +346,25 @@ sub add_command
     my $secondary_params = $command_mongo->{secondaryparams};
     my $velocity = $command_mongo->{velocity};
     my $m = $self->get_mecha_by_name($mecha);
-    $m->command($command, $self->get_target_from_world_id($params), $velocity);
-    if($secondary_command)
-    {
-        if($secondary_command eq 'machinegun')
+    eval {
+        $m->command($command, $self->get_target_from_world_id($params), $velocity);
+        if($secondary_command)
         {
-            $m->command('MACHINEGUN', $self->get_target_from_world_id($secondary_params), undef);
+            if($secondary_command eq 'machinegun')
+            {
+                $m->command('machinegun', $self->get_target_from_world_id($secondary_params), undef);
+            }
         }
+    };
+    if($@)
+    {
+        $m->waiting(1);
+        $self->cmd_index_up();
     }
-    $m->cmd_fetched(1);
+    else
+    {
+        $m->cmd_fetched(1);
+    }
 }
 
 sub fetch_commands_from_mongo
@@ -451,7 +470,7 @@ sub action
                     }
                 }
             }
-            elsif($m->attack_target->{class} eq 'dynamic')
+            elsif($m->attack_target->{class} && $m->attack_target->{class} eq 'dynamic')
             {
                 #We record the position of the target to track him (this is only on RIFLE)
                 $m->destination($self->get_position_from_movement_target($m->attack_target));

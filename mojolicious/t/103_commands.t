@@ -52,7 +52,7 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
     ->json_is({ result => 'OK',
                 'command' => {
                     'params' => 'WP-center',
-                    'command' => 'FLY TO WAYPOINT',
+                    'command' => 'flywp',
                     'mecha' => 'RX78',
                     'secondarycommand' => undef,
                     'secondaryparams' => undef,
@@ -67,7 +67,7 @@ $t->get_ok('/game/command?game=autotest&mecha=RX78')->status_is(200)->json_is(
     {
         'command' => {
             'params' => 'WP-center',
-            'command' => 'FLY TO WAYPOINT',
+            'command' => 'flywp',
             'mecha' => 'RX78',
             'secondarycommand' => undef,
             'secondaryparams' => undef,
@@ -117,7 +117,7 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
     ->json_is({ result => 'OK',
                 'command' => {
                     'params' => 'WP-center',
-                    'command' => 'FLY TO WAYPOINT',
+                    'command' => 'flywp',
                     'mecha' => 'Hyakushiki',
                     'secondarycommand' => 'machinegun',
                     'secondaryparams' => 'MEC-RX78',
@@ -133,7 +133,7 @@ $t->get_ok('/game/command?game=autotest&mecha=Hyakushiki')->status_is(200)->json
     {
         'command' => {
             'params' => 'WP-center',
-            'command' => 'FLY TO WAYPOINT',
+            'command' => 'flywp',
             'mecha' => 'Hyakushiki',
             'secondarycommand' => 'machinegun',
             'secondaryparams' => 'MEC-RX78',

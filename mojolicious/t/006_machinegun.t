@@ -11,8 +11,8 @@ use Gunpla::Position;
 
 my $world = Gunpla::Test::test_bootstrap('dummy.csv', [20, 3, 20]);
 
-my $commands = { 'RX78' => { command => 'FLY TO WAYPOINT', params => 'WP-center', secondarycommand => 'machinegun', secondaryparams => 'MEC-Dummy', velocity => 10},
-                 'Dummy' => { command => 'WAITING' } };
+my $commands = { 'RX78' => { command => 'flywp', params => 'WP-center', secondarycommand => 'machinegun', secondaryparams => 'MEC-Dummy', velocity => 10},
+                 'Dummy' => { command => 'wait' } };
 
 is(Gunpla::Test::emulate_commands($world, $commands), 2);
 

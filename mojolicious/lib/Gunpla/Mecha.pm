@@ -377,7 +377,7 @@ sub command
     my $target = shift;
     my $velocity = shift;
     $velocity = $self->velocity_target if(! $velocity);
-    if($command eq 'FLY TO WAYPOINT')
+    if($command eq 'flywp')
     {
         $self->stop_attack();    
         $self->stop_landing();    
@@ -385,7 +385,7 @@ sub command
         $self->movement_target({ type => 'waypoint', 'name' => $target->{name}, class => 'fixed'  });
         $self->velocity_target($velocity);
     }
-    elsif($command eq 'FLY TO HOTSPOT')
+    elsif($command eq 'flyhot')
     {
         $self->stop_attack();    
         $self->stop_landing();    
@@ -393,7 +393,7 @@ sub command
         $self->movement_target({ type => $target->{type}, 'name' => $target->{id}, class => 'fixed', nearby => 1  });
         $self->velocity_target($velocity);
     }
-    elsif($command eq 'FLY TO MECHA')
+    elsif($command eq 'flymec')
     {
         $self->stop_attack();    
         $self->stop_landing();    
@@ -401,7 +401,7 @@ sub command
         $self->movement_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic', nearby => 1  });
         $self->velocity_target($velocity);
     }
-    elsif($command eq 'SWORD ATTACK')
+    elsif($command eq 'sword')
     {
         $self->stop_landing();    
         if($self->attack && $self->attack eq 'SWORD' && $self->attack_limit > 0 && $self->attack_target->{name} eq $target->name)
@@ -420,7 +420,7 @@ sub command
             $self->attack_gauge(SWORD_GAUGE_VELOCITY_BONUS * $self->velocity);
         }
     }
-    elsif($command eq 'GET AWAY')
+    elsif($command eq 'away')
     {
         my $position;
         if(ref $target eq 'HASH')
@@ -438,13 +438,13 @@ sub command
         $self->movement_target({ type => 'void', name => 'space', class => 'fixed'  });
         $self->velocity_target($velocity);
     }
-    elsif($command eq 'WAITING')
+    elsif($command eq 'wait')
     {
         $self->stop_movement();
         $self->stop_attack();    
         $self->stop_action();    
     }
-    elsif($command eq 'RIFLE')
+    elsif($command eq 'rifle')
     {
         if($self->attack && $self->attack eq 'RIFLE' && $self->attack_limit > 0 && $self->attack_target->{name} eq $target->name)
         {
@@ -461,7 +461,7 @@ sub command
             $self->attack_gauge(0);
         }
     }
-    elsif($command eq 'LAND')
+    elsif($command eq 'land')
     {
         $self->stop_attack();    
         $self->action("LAND");
@@ -470,7 +470,7 @@ sub command
         $self->movement_target({ type => $target->{type}, 'name' => $target->{id}, class => 'fixed' });
         
     }
-    elsif($command eq 'MACHINEGUN')
+    elsif($command eq 'machinegun')
     {
         if($self->attack && $self->attack eq 'MACHINEGUN' && $self->attack_limit > 0 && $self->attack_target->{name} eq $target->name)
         {
@@ -484,6 +484,13 @@ sub command
             $self->attack_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
             $self->attack_gauge(0);
         }
+    }
+    elsif($command eq 'last')
+    {
+    }
+    else
+    {
+        die "Unrecognized command $command";    
     }
 }
 

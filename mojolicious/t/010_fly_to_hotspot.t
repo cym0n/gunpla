@@ -10,8 +10,8 @@ use Gunpla::Test;
 use Gunpla::Position;
 
 my $world = Gunpla::Test::test_bootstrap('dummy.csv');
-my $commands = { 'RX78' => { command =>'FLY TO HOTSPOT', params => 'AST-0', velocity => 10},
-                 'Dummy' => { command => 'WAITING' }};
+my $commands = { 'RX78' => { command =>'flyhot', params => 'AST-0', velocity => 10},
+                 'Dummy' => { command => 'wait' }};
 
 is(Gunpla::Test::emulate_commands($world, $commands), 1);
 

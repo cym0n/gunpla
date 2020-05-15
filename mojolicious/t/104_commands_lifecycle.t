@@ -24,7 +24,7 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
     ->json_is({ result => 'OK',
                 'command' => {
                     'params' => 'WP-center',
-                    'command' => 'FLY TO WAYPOINT',
+                    'command' => 'flywp',
                     'mecha' => 'RX78',
                     'secondarycommand' => undef,
                     'secondaryparams' => undef,
@@ -41,7 +41,7 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
     ->json_is({ result => 'OK',
                 'command' => {
                     'params' => 'WP-alpha',
-                    'command' => 'FLY TO WAYPOINT',
+                    'command' => 'flywp',
                     'mecha' => 'Hyakushiki',
                     'secondarycommand' => undef,
                     'secondaryparams' => undef,

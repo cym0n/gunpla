@@ -140,7 +140,7 @@ sub targets
                 my ( $target_mecha ) = $db->get_collection('mechas')->find({ name => $target->{name} })->all();
                 if($target_mecha && ! sighted_by_faction($game, $mecha, $target_mecha))
                 {
-                    push @out, target_from_mongo_to_json($game, $mecha, 'position', { id => 0, position => $the_mecha->{destination} });
+                    push @out, target_from_mongo_to_json($game, $mecha, 'position', { id => 0, label => $target_mecha->{name}, position => $the_mecha->{destination} });
                 }
             }
         }
@@ -224,11 +224,8 @@ sub add_command
     my $timestamp = $timestamp_mongo->{timestamp};
     
     my ( $configured_command ) = $db->get_collection('available_commands')->find({ code => $params->{command} })->all();
-    if($configured_command)
-    {
-        $params->{command} = $configured_command->{label};
-    }
-    else
+
+    if(! $configured_command)
     {
         $c->render(json => { result => 'error', description => 'bad command code'}, status => 400);
         return;

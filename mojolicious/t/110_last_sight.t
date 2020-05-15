@@ -12,8 +12,8 @@ use Gunpla::Test;
 use Gunpla::Position;
 
 my $world = Gunpla::Test::test_bootstrap('t110.csv');
-my $commands = { 'RX78' => { command => 'FLY TO WAYPOINT', params => 'WP-beta', velocity => 10},
-                 'Hyakushiki' => { command => 'FLY TO MECHA', params => 'MEC-RX78', velocity => 1 } };
+my $commands = { 'RX78' => { command => 'flywp', params => 'WP-beta', velocity => 10},
+                 'Hyakushiki' => { command => 'flymec', params => 'MEC-RX78', velocity => 1 } };
 is(Gunpla::Test::emulate_commands($world, $commands), 1);
 is_deeply($world->get_events('Hyakushiki'), [ 'Hyakushiki lost contact with RX78' ]);
 
@@ -25,8 +25,8 @@ $t->get_ok('/game/targets?game=autotest&mecha=Hyakushiki&filter=last-sight')
                          {
                            'x' => 87287,
                            'y' => 0,
-                           'world_id' => 'POS-0',
-                           'label' => 'position 0 (87287, 0, 0) d:84090',
+                           'world_id' => '(87287, 0, 0)',
+                           'label' => 'RX78 (87287, 0, 0) d:84090',
                            'map_type' => 'position',
                            'z' => 0,
                            'distance' => 84090,

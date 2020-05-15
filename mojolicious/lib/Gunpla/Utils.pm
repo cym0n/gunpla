@@ -61,22 +61,26 @@ sub target_from_mongo_to_json
     }
 
     my $id = exists $obj->{name} ? $obj->{name} : $obj->{id};
+    my $world_id;
     my $type;
     if($source eq 'mechas')
     {
         $type = 'mecha';
+        $world_id = ELEMENT_TAGS->{$type} . '-' . $id;
     }
     elsif($source eq 'map')
     {
-        $type = $obj->{type}
+        $type = $obj->{type};
+        $world_id = ELEMENT_TAGS->{$type} . '-' . $id;
     }
     elsif($source eq 'position')
     {
-        $type = 'position'
+        $world_id = $obj_pos->as_string;
+        $type = 'position';
     }
-    my $label = $type . " " . $id . " " . $obj_pos->as_string;
+    my $label = $obj->{label} ? $obj->{label} : $type . " " . $id;
+    $label .= " " . $obj_pos->as_string;
     $label .= " d:$distance" if($distance);
-    my $world_id = ELEMENT_TAGS->{$type} . '-' . $id;
 
     return { id => $id,
              world_id => $world_id,

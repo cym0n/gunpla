@@ -10,8 +10,8 @@ use Gunpla::World;
 my $world = Gunpla::Test::test_bootstrap('duel.csv');
 
 is(Gunpla::Test::emulate_commands($world,
-                                  { 'RX78' =>  { command => 'FLY TO WAYPOINT', params => 'WP-center', velocity => 6 },
-                                    'Hyakushiki' => {command => 'FLY TO WAYPOINT', params => 'WP-center', velocity => 2} }),
+                                  { 'RX78' =>  { command => 'flywp', params => 'WP-center', velocity => 6 },
+                                    'Hyakushiki' => {command => 'flywp', params => 'WP-center', velocity => 2} }),
 1);
 
 diag("Checking game status after the event");
@@ -28,7 +28,7 @@ is_deeply($world->get_events('RX78'), [ 'RX78 sighted Hyakushiki' ]);
 
 diag("Flying away from Hyakushiki");
 is(Gunpla::Test::emulate_commands($world,
-                                  { 'RX78' =>  { command => 'FLY TO WAYPOINT', params => 'WP-blue', velocity => 6 } }),
+                                  { 'RX78' =>  { command => 'flywp', params => 'WP-blue', velocity => 6 } }),
 1);
 
 diag("Checking game status after the event");
