@@ -25,8 +25,12 @@ sub command_from_mongo_to_json
     my $mecha = shift;
     my $game = shift;
     my $filter = $command->{filter};
+    my $min_distance = $command->{min_distance};
+    my $max_distance = $command->{max_distance};
     delete $command->{_id};
     my $callback = '/game/targets?' . join('&', "game=$game", "mecha=$mecha", "filter=$filter");
+    $callback .= "&min-distance=$min_distance" if defined $min_distance;
+    $callback .= "&max-distance=$max_distance" if defined $max_distance;
     $command->{params_callback} = $callback;
     return $command;
 }
@@ -142,17 +146,22 @@ sub get_from_id
     my $db = $client->get_database('gunpla_' . $game);
     my ($type, $id) = split('-', $world_id);
     my $obj = undef;
+    my $source = undef;
     if($type eq 'MEC')
     {
         ( $obj ) = $db->get_collection('mechas')->find({ name => $id })->all();
+        $source = 'mechas';
     }
     elsif($type eq 'WP')
     {
-        ( $obj ) = $db->get_collection('map')->find({ type => 'waypoiny', id => $id })->all();
+        ( $obj ) = $db->get_collection('map')->find({ type => 'waypoint', id => $id })->all();
+        $source = 'map';
     }
     elsif($type eq 'AST')
     {
         ( $obj ) = $db->get_collection('map')->find({ type => 'asteroid', id => $id })->all();
+        $source = 'map';
     }
+    $obj->{source} = $source;
     return $obj;
 }

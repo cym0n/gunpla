@@ -11,12 +11,17 @@ use Gunpla::World;
 use Gunpla::Test;
 use Gunpla::Position;
 
+
 my $world = Gunpla::Test::test_bootstrap('duel.csv');
 my $t = Test::Mojo->new('GunplaServer');
 $t->app->config->{no_login} = 1;
+my $callback;
 
-diag("Proposed to RX78 ");
-$t->get_ok('/game/targets?game=autotest&mecha=RX78&filter=hotspots')
+$t->get_ok('/game/available-commands?command=flyhot&game=autotest&mecha=RX78')->status_is(200);
+$callback = $t->tx->res->json->{command}->{params_callback};
+diag("FLY TO HOTSPOTS callback is $callback");
+diag("Hotspots proposed to RX78 ");
+$t->get_ok($callback)
     ->status_is(200)
     ->json_is(
         {
@@ -44,8 +49,11 @@ $t->get_ok('/game/targets?game=autotest&mecha=RX78&filter=hotspots')
                         ]
         });
 
-diag("Proposed to Hyakushiki");
-$t->get_ok('/game/targets?game=autotest&mecha=Hyakushiki&filter=hotspots')
+$t->get_ok('/game/available-commands?command=flyhot&game=autotest&mecha=Hyakushiki')->status_is(200);
+$callback = $t->tx->res->json->{command}->{params_callback};
+diag("FLY TO HOTSPOTS callback is $callback");
+diag("Hotspots proposed to Hyakushiki");
+$t->get_ok($callback)
     ->status_is(200)
     ->json_is({
           'targets' => [
@@ -72,8 +80,11 @@ $t->get_ok('/game/targets?game=autotest&mecha=Hyakushiki&filter=hotspots')
                         ]
         });
 
+$t->get_ok('/game/available-commands?command=land&game=autotest&mecha=RX78')->status_is(200);
+$callback = $t->tx->res->json->{command}->{params_callback};
+diag("LANDING callback is $callback");
 diag("Proposed to RX78 for landing (none) ");
-$t->get_ok('/game/targets?game=autotest&mecha=RX78&filter=landing')
+$t->get_ok($callback)
     ->status_is(200)
     ->json_is(
         {
@@ -87,7 +98,7 @@ $world->armies->[0]->position->z(9000);
 $world->save;
 
 diag("Proposed to RX78 for landing (one)");
-$t->get_ok('/game/targets?game=autotest&mecha=RX78&filter=landing')
+$t->get_ok($callback)
     ->status_is(200)
     ->json_is({
           'targets' => [
@@ -102,7 +113,6 @@ $t->get_ok('/game/targets?game=autotest&mecha=RX78&filter=landing')
               'distance' => 19500,
             }]
     });
-Gunpla::Test::dump_api($t);
 
 Gunpla::Test::clean_db('autotest', 1);
 

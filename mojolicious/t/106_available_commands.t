@@ -31,12 +31,13 @@ $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
                           },
                           {
                             'velocity' => 1,
-                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=hotspots',
+                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=hotspots&min-distance=1000',
                             'machinegun' => 1,
                             'code' => 'flyhot',
                             'label' => 'FLY TO HOTSPOT',
                             'filter' => 'hotspots',
-                            'params_label' => 'Select a Hotspot'
+                            'params_label' => 'Select a Hotspot',
+                            'min_distance' => 1000,
                           },
                           {
                             'label' => 'FLY TO MECHA',
@@ -54,7 +55,8 @@ $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
                             'code' => 'flywp',
                             'machinegun' => 1,
                             'velocity' => 1,
-                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=waypoints'
+                            'min_distance' => 0,
+                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=waypoints&min-distance=0',
                           },
 
                           {
@@ -63,17 +65,20 @@ $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
                             'label' => 'LAND',
                             'code' => 'land',
                             'machinegun' => 0,
-                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=landing',
-                            'velocity' => 0
+                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=landing&min-distance=0&max-distance=20000',
+                            'velocity' => 0,
+                            'max_distance' => 20000,
+                            'min_distance' => 0,
                           },
                           {
                             code => 'last',
                             label => 'FLY TO LAST KNOWN POSITION',
                             filter => 'last-sight',
                             params_label => 'Select a Mecha',
-                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=last-sight',
+                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=last-sight&min-distance=0',
                             machinegun => 1,
-                            velocity => 1
+                            velocity => 1,
+                            min_distance => 0
                           },
                           {
                             'params_label' => 'Select a Mecha',
@@ -105,7 +110,8 @@ $t->get_ok('/game/available-commands?game=autotest&mecha=RX78&command=flywp')
                           'code' => 'flywp',
                           'label' => 'FLY TO WAYPOINT',
                           'params_label' => 'Select a Waypoint',
-                          'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=waypoints',
+                          'min_distance' => 0,
+                          'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=waypoints&min-distance=0',
                           'filter' => 'waypoints',
                           'machinegun' => 1,
                           'velocity' => 1

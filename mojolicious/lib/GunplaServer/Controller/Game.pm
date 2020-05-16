@@ -44,6 +44,8 @@ sub targets
     my $game = $c->param('game');
     my $mecha = $c->param('mecha');
     my $filter = $c->param('filter');
+    my $min_distance = $c->param('min-distance');
+    my $max_distance = $c->param('max-distance');
 
     my @to_take = ();
     my @out = ();
@@ -92,10 +94,7 @@ sub targets
             for(@me)
             {
                 my $mp = target_from_mongo_to_json($game, $mecha, 'map', $_);
-                if($mp->{distance} < LANDING_RANGE)
-                {
-                    push @out, $mp;
-                }
+                push @out, $mp;
             }
         }
         elsif($_ eq 'sighted_by_me')
@@ -144,6 +143,14 @@ sub targets
                 }
             }
         }
+    }
+    if(defined $c->param('min-distance'))
+    {
+        @out = grep { $_->{distance} > $c->param('min-distance')} @out;
+    }
+    if(defined $c->param('max-distance'))
+    {
+        @out = grep { $_->{distance} < $c->param('max-distance')} @out;
     }
     @out = sort { $a->{world_id} cmp $b->{world_id} } @out;
     $c->render(json => { targets => \@out });
@@ -279,10 +286,14 @@ sub add_command
     {   
         $ok = sighted_by_faction($params->{game}, $params->{mecha}, $target_obj);
     }
-    elsif($configured_command->{filter} eq 'landing')
+    my $mp = target_from_mongo_to_json($params->{game}, $params->{mecha}, 'map', $target_obj);
+    if(exists $configured_command->{min_distance})
     {
-        my $mp = target_from_mongo_to_json($params->{game}, $params->{mecha}, 'map', $target_obj);
-        $ok = $mp->{distance} < LANDING_RANGE;
+        $ok = $ok && $mp->{distance} > $configured_command->{min_distance}
+    }
+    if(exists $configured_command->{max_distance})
+    {
+        $ok = $ok && $mp->{distance} < $configured_command->{max_distance}
     }
     if(! $ok)
     {
@@ -303,12 +314,6 @@ sub add_command
         $c->render(json => { result => 'error', description => 'Bad target provided: ' . $params->{secondaryparams}}, status => 400);
         return;
     }
-    
-    
-
-
-
-
 
     $c->app->log->debug("Adding command " . $params->{mecha} . '-' . $mecha->{cmd_index});
     $db->get_collection('commands')->insert_one({ timestamp => $timestamp,
@@ -341,6 +346,7 @@ sub read_command
     my $client = MongoDB->connect();
     my $db = $client->get_database('gunpla_' . $game);
     my ( $mecha ) = $db->get_collection('mechas')->find({ name => $mecha_name })->all();
+    my $mecha_data =  mecha_from_mongo_to_json($mecha);
     my $cmd_index = $mecha->{cmd_index};
     $cmd_index-- if $prev;
     $c->app->log->debug("Getting command " . $mecha->{name} . '-' . $cmd_index);
@@ -348,10 +354,24 @@ sub read_command
     my $ok = 1;
     if($available)
     {
+        my $target_obj = get_from_id($game, $command->{params});
         if($command->{params} =~ /^MEC/)
-        {
-            my $target_obj = get_from_id($game, $command->{params});
+        {   
             $ok = sighted_by_faction($game, $mecha_name, $target_obj);
+        }
+        my ( $configured_command ) = $db->get_collection('available_commands')->find({ code => $command->{command} })->all();
+        my $mp = target_from_mongo_to_json($game, $mecha_name, $target_obj->{source}, $target_obj);
+        if(exists $configured_command->{min_distance})
+        {
+            $ok = $ok && $mp->{distance} > $configured_command->{min_distance}
+        }
+        if(exists $configured_command->{max_distance})
+        {
+            $ok = $ok && $mp->{distance} < $configured_command->{max_distance}
+        }
+        if($command->{velocity})
+        {
+            $ok = $ok && $command->{velocity} <= $mecha_data->{available_max_velocity};
         }
     }
     if($ok)

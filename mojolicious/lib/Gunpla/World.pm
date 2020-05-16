@@ -157,7 +157,8 @@ sub build_commands
             filter => 'waypoints',
             params_label => 'Select a Waypoint',
             machinegun => 1,
-            velocity => 1
+            velocity => 1,
+            min_distance => 0,
         }, 1);
     $self->configure_command( {
             code => 'flymec',
@@ -173,7 +174,8 @@ sub build_commands
             filter => 'hotspots',
             params_label => 'Select a Hotspot',
             velocity => 1,
-            machinegun => 1
+            machinegun => 1,
+            min_distance => NEARBY,
         }, 1);
     $self->configure_command( {
             code => 'sword',
@@ -205,7 +207,9 @@ sub build_commands
             filter => 'landing',
             params_label => 'Select a Hotspot',
             machinegun => 0,
-            velocity => 0
+            velocity => 0,
+            min_distance => 0,
+            max_distance => LANDING_RANGE,
         }, 1);
     $self->configure_command( {
             code => 'last',
@@ -213,7 +217,8 @@ sub build_commands
             filter => 'last-sight',
             params_label => 'Select a Mecha',
             machinegun => 1,
-            velocity => 1
+            velocity => 1,
+            min_distance => 0,
         }, 1);
 
 }
