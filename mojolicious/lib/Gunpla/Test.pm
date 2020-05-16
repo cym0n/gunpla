@@ -18,11 +18,26 @@ sub test_bootstrap
     return $world;
 }
 
+sub reload
+{
+    my $world = shift;
+    my $name = $world->name;
+    my $dice = $world->dice_results;
+    $world =  Gunpla::World->new(name => $name, dice_results => $dice);
+    $world->load;
+    return $world;
+}
+
 
 sub emulate_commands
 {
     my $world = shift;
     my $commands = shift;
+    my $reload = shift;
+    if($reload)
+    {
+        $world = reload($world);
+    }
     for(keys %{$commands})
     {
         my $m = $world->get_mecha_by_name($_);
@@ -30,9 +45,11 @@ sub emulate_commands
         {
             diag("Orders for " . $m->name . ": ". $commands->{$m->name}->{command});
             $m->waiting(0);
+            $m->cmd_fetched(1);
             $world->add_command($m->name, $commands->{$m->name});
         }
     }
+    $world->fetch_commands_from_mongo();
     my $e = $world->action();
     $world->save;
     return $e;
