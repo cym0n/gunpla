@@ -330,12 +330,14 @@ sub add_command
                        } });
 }
 
+#This is really used only in prev mode. 
 sub read_command
 {
     my $c = shift;
     my $game = $c->param('game');
     my $mecha_name = $c->param('mecha');
     my $prev = $c->param('prev') || 0;
+    my $available = $c->param('available') || 0;
     my $client = MongoDB->connect();
     my $db = $client->get_database('gunpla_' . $game);
     my ( $mecha ) = $db->get_collection('mechas')->find({ name => $mecha_name })->all();
@@ -344,10 +346,13 @@ sub read_command
     $c->app->log->debug("Getting command " . $mecha->{name} . '-' . $cmd_index);
     my ( $command ) = $db->get_collection('commands')->find({ mecha => $mecha->{name}, cmd_index => $cmd_index })->all();
     my $ok = 1;
-    if($command->{params} =~ /^MEC/)
+    if($available)
     {
-        my $target_obj = get_from_id($game, $command->{params});
-        $ok = sighted_by_faction($game, $mecha_name, $target_obj);
+        if($command->{params} =~ /^MEC/)
+        {
+            my $target_obj = get_from_id($game, $command->{params});
+            $ok = sighted_by_faction($game, $mecha_name, $target_obj);
+        }
     }
     if($ok)
     {

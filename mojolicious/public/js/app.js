@@ -97,7 +97,7 @@ App = {
                     }});
             });
         });
-        fetch('/game/command?game='+App.game+'&mecha='+m.name+'&prev=1')
+        fetch('/game/command?game='+App.game+'&mecha='+m.name+'&prev=1&available=1')
         .then(function(response) { return response.json(); })
         .then(function(data) { 
             if(data.command.command)
