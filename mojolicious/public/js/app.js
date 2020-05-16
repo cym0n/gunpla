@@ -128,6 +128,7 @@ App = {
                         <input type="hidden" name="mechaname" value="${m.name}">
                         <input type="hidden" name="command" value="${data.command.command}">
                         <input type="hidden" name="params" value="${data.command.params}">
+                        <input type="hidden" name="velocity" value="${data.command.velocity}">
                         <input type="hidden" name="secondarycommand" value="${seccommand}">
                         <input type="hidden" name="secondaryparams" value="${secparams}">
                         <p><b>Previous command</b>:<br />${previous}</p>
@@ -353,6 +354,7 @@ App = {
     var mid = $( form.children('input[name="mechaname"]')).attr('value');
     var command = $( form.children('input[name="command"]')).attr('value');
     var params = $( form.children('input[name="params"]')).attr('value');
+    var velocity = $( form.children('input[name="velocity"]')).attr('value');
     var secondarycommand = $( form.children('input[name="secondarycommand"]')).attr('value');
     var secondaryparams = $( form.children('input[name="secondaryparams"]')).attr('value');
     console.log("Adding command "+command+" with params "+params+" to mecha "+mid);
@@ -364,6 +366,7 @@ App = {
             'secondarycommand': secondarycommand,
             'secondaryparams': secondaryparams,
             'mecha': mid,
+            'velocity': velocity,
             'game': App.game })
     })
     .then(function(response) { return response.json(); })
