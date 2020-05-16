@@ -166,7 +166,8 @@ sub build_commands
             filter => 'sighted-by-faction',
             params_label => 'Select a Mecha',
             velocity => 1,
-            machinegun => 1
+            machinegun => 1,
+            min_distance => NEARBY,
         }, 1);
     $self->configure_command( {
             code => 'flyhot',
@@ -183,7 +184,8 @@ sub build_commands
             filter => 'sighted-by-faction',
             params_label => 'Select a Mecha',
             machinegun => 0,
-            velocity => 0
+            velocity => 0,
+            energy_needed => SWORD_ENERGY_NEEDED
         }, 1);
     $self->configure_command( {
             code => 'away',
@@ -199,7 +201,8 @@ sub build_commands
             filter => 'sighted-by-faction',
             params_label => 'Select a Mecha',
             machinegun => 0,
-            velocity => 0
+            velocity => 0,
+            energy_needed => RIFLE_ENERGY_NEEDED
         }, 1);
     $self->configure_command( {
             code => 'land',

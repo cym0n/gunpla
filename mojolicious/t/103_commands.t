@@ -8,6 +8,8 @@ use Gunpla::World;
 use Gunpla::Test;
 
 my $world = Gunpla::Test::test_bootstrap('t103.csv');
+$world->armies->[1]->energy(25000);
+$world->save;
 my $t = Test::Mojo->new('GunplaServer');
 $t->app->config->{no_login} = 1;
 
@@ -89,10 +91,10 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
     ->json_is({ result => 'error',
                 description => 'Bad target provided: MEC-Gelgoog'});
 
-diag("KO - Adding command to Hyakushiki - Sword not compatible with machinegun");
+diag("KO - Adding command to Hyakushiki - Rifle not compatible with machinegun");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
                                                               mecha => 'Hyakushiki', 
-                                                              command => 'sword',
+                                                              command => 'rifle',
                                                               params => 'MEC-RX78',
                                                               secondarycommand => 'machinegun',
                                                               secondaryparams => 'MEC-RX78',
@@ -101,6 +103,16 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
     ->status_is(400)
     ->json_is({ result => 'error',
                 description => 'Bad command: machinegun not allowed'});
+
+diag("KO - Adding command to Hyakushiki - Not enough energy for sword");
+$t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
+                                                              mecha => 'Hyakushiki', 
+                                                              command => 'sword',
+                                                              params => 'MEC-RX78',
+ })
+    ->status_is(400)
+    ->json_is({ result => 'error',
+                description => 'bad command: more energy needed'});
 
 
 

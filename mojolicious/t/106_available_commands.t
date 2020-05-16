@@ -45,8 +45,9 @@ $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
                             'code' => 'flymec',
                             'machinegun' => 1,
                             'velocity' => 1,
-                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=sighted-by-faction',
-                            'params_label' => 'Select a Mecha'
+                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=sighted-by-faction&min-distance=1000',
+                            'params_label' => 'Select a Mecha',
+                            'min_distance' => 1000,
                           },
                           {
                             'params_label' => 'Select a Waypoint',
@@ -87,7 +88,8 @@ $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
                             'label' => 'RIFLE',
                             'filter' => 'sighted-by-faction',
                             'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=sighted-by-faction',
-                            'velocity' => 0
+                            'velocity' => 0,
+                            'energy_needed' => 20000
                           },
                           {
                             'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=sighted-by-faction',
@@ -96,7 +98,8 @@ $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
                             'machinegun' => 0,
                             'label' => 'SWORD ATTACK',
                             'filter' => 'sighted-by-faction',
-                            'params_label' => 'Select a Mecha'
+                            'params_label' => 'Select a Mecha',
+                            'energy_needed' => 30000
                           }
                         ]
            });

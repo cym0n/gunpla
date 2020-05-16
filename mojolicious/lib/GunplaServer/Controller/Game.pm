@@ -252,6 +252,14 @@ sub add_command
             return;
         }
     }
+    if($configured_command->{energy_needed})
+    {
+        if($mecha_data->{energy} < $configured_command->{energy_needed})
+        {
+            $c->render(json => { result => 'error', description => 'bad command: more energy needed'}, status => 400);
+            return;
+        }
+    }
 
     if(! $mecha->{waiting}) #Strong enough?
     {
@@ -363,16 +371,21 @@ sub read_command
         my $mp = target_from_mongo_to_json($game, $mecha_name, $target_obj->{source}, $target_obj);
         if(exists $configured_command->{min_distance})
         {
-            $ok = $ok && $mp->{distance} > $configured_command->{min_distance}
+            $ok = $ok && ($mp->{distance} > $configured_command->{min_distance})
         }
         if(exists $configured_command->{max_distance})
         {
-            $ok = $ok && $mp->{distance} < $configured_command->{max_distance}
+            $ok = $ok && ($mp->{distance} < $configured_command->{max_distance})
         }
         if($command->{velocity})
         {
-            $ok = $ok && $command->{velocity} <= $mecha_data->{available_max_velocity};
+            $ok = $ok && ($command->{velocity} <= $mecha_data->{available_max_velocity});
         }
+        if($configured_command->{energy_needed})
+        {
+            $ok = $ok && ($mecha_data->{energy} > $configured_command->{energy_needed});
+        }
+        
     }
     if($ok)
     {

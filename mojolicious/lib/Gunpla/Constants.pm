@@ -22,6 +22,7 @@ use constant RIFLE_SWORD_GAUGE_DAMAGE => 600;
 use constant RIFLE_WIN => 11;
 use constant RIFLE_LANDED_BONUS => 1;
 use constant RIFLE_ENERGY => 30000;
+use constant RIFLE_ENERGY_NEEDED => 20000;
 use constant SWORD_ATTACK_TIME_LIMIT => 4000;
 use constant SWORD_BOUNCE => 200;
 use constant SWORD_DAMAGE => 200;
@@ -31,6 +32,7 @@ use constant SWORD_GAUGE_VELOCITY_BONUS => 20;
 use constant SWORD_VELOCITY => 8;
 use constant SWORD_WIN => 12;
 use constant SWORD_ENERGY => 50000;
+use constant SWORD_ENERGY_NEEDED => 30000;
 use constant VELOCITY_LIMIT => 11;
 use constant LANDING_RANGE => 20000;
 use constant LANDING_VELOCITY => 3;
@@ -75,6 +77,7 @@ our @EXPORT_OK = (
     'RIFLE_WIN',
     'RIFLE_LANDED_BONUS',
     'RIFLE_ENERGY',
+    'RIFLE_ENERGY_NEEDED',
     'SWORD_ATTACK_TIME_LIMIT',
     'SWORD_BOUNCE',
     'SWORD_DAMAGE',
@@ -84,6 +87,7 @@ our @EXPORT_OK = (
     'SWORD_VELOCITY',
     'SWORD_WIN',
     'SWORD_ENERGY',
+    'SWORD_ENERGY_NEEDED',
     'VELOCITY_LIMIT',
     'LANDING_RANGE',
     'LANDING_VELOCITY',
