@@ -75,22 +75,7 @@ has dice_results => (
 #Dummy implementation of mecha characteristics
 has mecha_templates => (
     is => 'ro',
-    default => sub {
-        my $energy = 700000;
-        {
-            'Diver' => { sensor_range => 140000, life => 1000, max_velocity => 6, acceleration => 100000, max_energy => $energy, energy => $energy },
-            'Zaku'  => { sensor_range => 80000,  life => 1000, max_velocity => 6, acceleration => 100000, max_energy => $energy, energy => $energy },
-            'Gelgoog'  => { sensor_range => 130000,  life => 1000, max_velocity => 6, acceleration => 100000, max_energy => $energy, energy => $energy },
-            'Dom'  => { sensor_range => 110000,  life => 1000, max_velocity => 6, acceleration => 100000, max_energy => $energy, energy => $energy },
-            'Dummy'  => { sensor_range => 0,  life => 1000, max_velocity => 10, acceleration => 100, max_energy => $energy, energy => $energy },
-            'RX78' => { sensor_range => 140000, life => 1000, max_velocity => 10, acceleration => 100, max_energy => $energy, energy => $energy  },
-            'Deathscythe' => { sensor_range => 69000, life => 1000, max_velocity => 10, acceleration => 100, max_energy => $energy, energy => $energy  },
-            'Sandrock' => { sensor_range => 30000, life => 1000, max_velocity => 10, acceleration => 100, max_energy => $energy, energy => $energy  },
-            'Hyakushiki' => { sensor_range => 80000, life => 1000, max_velocity => 10, acceleration => 100, max_energy => $energy, energy => $energy  },
-            'Guncannon' => { sensor_range => 140000, life => 1000, max_velocity => 6, acceleration => 100, max_energy => $energy, energy => $energy },
-            'Psychogundam'  => { sensor_range => 80000,  life => 1000, max_velocity => 6, acceleration => 100, max_energy => $energy, energy => $energy },
-        }
-    }
+    default => sub { {} }
 );
 
 
@@ -247,6 +232,33 @@ sub init_test
         $self->init_scenario('duel.csv');
     } 
 }
+
+sub init_mecha_templates
+{
+    my $self = shift;
+    my $file = shift || 'standard.csv';
+    my $module_file_path = __FILE__;
+    my $root_path = abs_path($module_file_path);
+    $root_path =~ s/World\.pm//;
+    my $data_directory = $root_path . "../../scenarios/mechas";
+    open(my $fh, "< $data_directory/$file") || die "Impossible to open $data_directory/$file";
+    my $header = <$fh>;
+    for(<$fh>)
+    {
+        chomp;
+        my @values = split ";", $_;
+        $self->mecha_templates->{$values[0]} = {
+            life => $values[1],
+            sensor_range => $values[2],
+            acceleration => $values[3],
+            max_velocity => $values[4],
+            energy => $values[5],
+            max_energy => $values[6]
+        }
+    }
+}
+
+
 sub init_scenario
 {
     my $self = shift;
@@ -256,6 +268,7 @@ sub init_scenario
     $root_path =~ s/World\.pm//;
     my $data_directory = $root_path . "../../scenarios";
     $self->build_commands();
+    $self->init_mecha_templates();
     my %counters = ( AST => 0 );
     open(my $fh, "< $data_directory/$file") || die "Impossible to open $data_directory/$file";
     for(<$fh>)
