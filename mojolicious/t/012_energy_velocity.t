@@ -11,7 +11,7 @@ use Gunpla::Position;
 
 
 diag("Reaching parallel waypoints");
-my $world = Gunpla::Test::test_bootstrap('t012.csv');
+my $world = Gunpla::Test::test_bootstrap('race.csv');
 my $commands = { 'Guncannon' => { command =>'flywp', params => 'WP-paris', velocity => 6},
                  'Psychogundam' => { command =>'flywp', params => 'WP-rome', velocity => 5}};
 $world->armies->[0]->set_destination($world->waypoints->{'paris'});

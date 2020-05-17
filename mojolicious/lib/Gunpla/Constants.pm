@@ -40,6 +40,8 @@ use constant LANDING_DISTANCE => 10;
 use constant SIGHT_TOLERANCE => 10000;
 use constant SIGHT_LANDED_BONUS => 40000;
 use constant SIGHT_MINIMUM => 10000;
+use constant BOOST_GAUGE => 50000;
+use constant BOOST_VELOCITY => 9;
 use constant ELEMENT_TAGS => { 'asteroid' => 'AST',
                                'mecha'    => 'MEC',
                                'waypoint' => 'WP', 
@@ -57,6 +59,7 @@ use constant ENERGY_STANDARD_BONUS => 1;
 use constant ENERGY_HIGH_VELOCITY_MALUS => 1;
 use constant ENERGY_MAX_VELOCITY_MALUS => 2;
 use constant ENERGY_SWORD_VELOCITY_MALUS => 4;
+use constant ENERGY_BOOST_MALUS => 5;
 use constant ENERGY_AVAILABLE_FOR_HIGH_SPEED => 1000;
 
 our @EXPORT_OK = (
@@ -95,12 +98,15 @@ our @EXPORT_OK = (
     'SIGHT_TOLERANCE',
     'SIGHT_LANDED_BONUS',
     'SIGHT_MINIMUM',
+    'BOOST_GAUGE',
+    'BOOST_VELOCITY',
     'ELEMENT_TAGS',
     'FILTERS',
     'ENERGY_STANDARD_BONUS',
     'ENERGY_HIGH_VELOCITY_MALUS',
     'ENERGY_MAX_VELOCITY_MALUS',
     'ENERGY_SWORD_VELOCITY_MALUS',
+    'ENERGY_BOOST_MALUS',
     'ENERGY_AVAILABLE_FOR_HIGH_SPEED', 
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );

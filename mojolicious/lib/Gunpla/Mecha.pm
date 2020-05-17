@@ -100,6 +100,9 @@ has attack_gauge => (
 has action => (
     is => 'rw'
 );
+has action_gauge => (
+    is => 'rw',
+);
 
 
 #Characteristics
@@ -162,6 +165,16 @@ sub mod_attack_gauge
     $self->attack_gauge($new_value);
 }
 
+sub mod_action_gauge
+{
+    my $self = shift;
+    my $value = shift;
+    my $new_value = $self->action_gauge + $value;
+    $new_value = $new_value < 0 ? 0 : $new_value;
+    $self->action_gauge($new_value);
+}
+
+
 sub stop_landing
 {
     my $self = shift;
@@ -205,6 +218,10 @@ sub get_velocity
     {
         return SWORD_VELOCITY;
     } 
+    elsif($self->action && $self->action eq 'BOOST')
+    {
+        return BOOST_VELOCITY;
+    }
     else
     {
         $self->velocity();
@@ -334,18 +351,25 @@ sub energy_routine
     my $self = shift;
     my $energy_delta = ENERGY_STANDARD_BONUS;
 
-    my $high_velocity = $self->max_velocity - 1;
-    if($self->get_velocity == SWORD_VELOCITY)
+    if($self->attack && $self->attack eq 'SWORD')
     {
         $energy_delta -= ENERGY_SWORD_VELOCITY_MALUS;
-    }
-    elsif($self->get_velocity == $self->max_velocity)
+    } 
+    elsif($self->action && $self->action eq 'BOOST')
     {
-        $energy_delta -= ENERGY_MAX_VELOCITY_MALUS;
+        $energy_delta -= ENERGY_BOOST_MALUS;
     }
-    elsif($self->get_velocity == $high_velocity)
+    else
     {
-        $energy_delta -= ENERGY_HIGH_VELOCITY_MALUS;
+        my $high_velocity = $self->max_velocity - 1;
+        if($self->get_velocity == $self->max_velocity)
+        {
+            $energy_delta -= ENERGY_MAX_VELOCITY_MALUS;
+        }
+        elsif($self->get_velocity == $high_velocity)
+        {
+            $energy_delta -= ENERGY_HIGH_VELOCITY_MALUS;
+        }
     }
     $self->add_energy($energy_delta);
 }
@@ -485,6 +509,12 @@ sub command
             $self->attack_gauge(0);
         }
     }
+    elsif($command eq 'boost')
+    {
+        $self->stop_attack();    
+        $self->action("BOOST");
+        $self->action_gauge(BOOST_GAUGE);
+    }
     elsif($command eq 'last')
     {
     }
@@ -525,6 +555,7 @@ sub to_mongo
         life => $self->life,
         status => $self->status,
         action => $self->action,
+        action_gauge => $self->action_gauge,
         energy => $self->energy,
         max_energy => $self->max_energy,
     }

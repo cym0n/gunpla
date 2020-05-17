@@ -375,6 +375,10 @@ sub add_command
             {
                 $m->command('machinegun', $self->get_target_from_world_id($secondary_params), undef);
             }
+            elsif($secondary_command eq 'boost')
+            {
+                $m->command('boost', undef, undef);
+            }
         }
     };
     if($@)
@@ -488,6 +492,14 @@ sub action
                     else
                     {
                         $m->plan_and_move();
+                        if($m->action && $m->action eq 'BOOST')
+                        {
+                            $m->mod_action_gauge(-1);
+                            if($m->action_gauge == 0)
+                            {
+                                $self->event($m->name . " exhausted boost", [ $m->name ]);
+                            }
+                        }
                     }
                 }
             }

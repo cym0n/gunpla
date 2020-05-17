@@ -287,7 +287,12 @@ App = {
             form = form +
                 '<label class="radio-inline"> <input type="radio" name="velocity" id="velocity'+i+'" value="'+i+'" '+checked+'>'+i+'</label>';
         }
-        form = form + '</div></div>';
+        if(data.mecha.max_velocity == data.mecha.available_max_velocity)
+        {
+            form = form +
+                '<label class="radio-inline"> <input type="radio" name="velocity" id="velocityboost" value="boost">BOOST</label>';
+        }
+        form = form + '</div></div><div><input type="hidden" name="defvelocity" id="defvelocity" value="'+def+'"/></div>';
     $(form).insertAfter(div); });
   },
   machinegunForm : function(name, div) {
@@ -335,6 +340,12 @@ App = {
     if($( form.find('input[name="velocity"]')))
     {
         velocity = $( form.find('input[name="velocity"]:checked')).val();
+    }
+    if(velocity == 'boost')
+    {
+        secondarycommand = 'boost';
+        secondaryparams = null;
+        velocity = $( form.find('input[name="defvelocity"]')).val();
     }
     console.log("Adding command "+command+" with params "+params+" to mecha "+mid);
     fetch('/game/command', {
