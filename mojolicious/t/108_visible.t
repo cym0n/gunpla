@@ -24,7 +24,7 @@ $t->get_ok('/game/targets?game=autotest&mecha=RX78&filter=visible')
                     [
                         {
                            'world_id' => 'AST-0',
-                           'map_type' => 'asteroid',
+                           'map_type' => 'AST',
                            'x' => '49000',
                            'id' => 0,
                            'z' => '10000',
@@ -40,12 +40,12 @@ $t->get_ok('/game/targets?game=autotest&mecha=RX78&filter=visible')
                            'z' => 0,
                            'x' => -60000,
                            'world_id' => 'MEC-Hyakushiki',
-                           'map_type' => 'mecha'
+                           'map_type' => 'MEC'
                         },
                         
                          {
                            'x' => '60000',
-                           'map_type' => 'waypoint',
+                           'map_type' => 'WP',
                            'world_id' => 'WP-blue',
                            'label' => 'waypoint blue (60000, 0, 0)',
                            'y' => '0',
@@ -55,7 +55,7 @@ $t->get_ok('/game/targets?game=autotest&mecha=RX78&filter=visible')
                          },
                          {
                            'x' => '0',
-                           'map_type' => 'waypoint',
+                           'map_type' => 'WP',
                            'world_id' => 'WP-center',
                            'label' => 'waypoint center (0, 0, 0) d:60000',
                            'y' => '0',
@@ -65,7 +65,7 @@ $t->get_ok('/game/targets?game=autotest&mecha=RX78&filter=visible')
                          },
                          {
                            'world_id' => 'WP-red',
-                           'map_type' => 'waypoint',
+                           'map_type' => 'WP',
                            'x' => '-60000',
                            'id' => 'red',
                            'z' => '0',
@@ -87,7 +87,7 @@ $t->get_ok('/game/targets?game=autotest&mecha=Hyakushiki&filter=visible')
                     [
                          {
                            'world_id' => 'AST-0',
-                           'map_type' => 'asteroid',
+                           'map_type' => 'AST',
                            'x' => '49000',
                            'id' => 0,
                            'z' => '10000',
@@ -97,7 +97,7 @@ $t->get_ok('/game/targets?game=autotest&mecha=Hyakushiki&filter=visible')
                          },
                          {
                            'x' => '60000',
-                           'map_type' => 'waypoint',
+                           'map_type' => 'WP',
                            'world_id' => 'WP-blue',
                            'label' => 'waypoint blue (60000, 0, 0) d:120000',
                            'y' => '0',
@@ -107,7 +107,7 @@ $t->get_ok('/game/targets?game=autotest&mecha=Hyakushiki&filter=visible')
                          },
                          {
                            'x' => '0',
-                           'map_type' => 'waypoint',
+                           'map_type' => 'WP',
                            'world_id' => 'WP-center',
                            'label' => 'waypoint center (0, 0, 0) d:60000',
                            'y' => '0',
@@ -117,7 +117,7 @@ $t->get_ok('/game/targets?game=autotest&mecha=Hyakushiki&filter=visible')
                          },
                          {
                            'world_id' => 'WP-red',
-                           'map_type' => 'waypoint',
+                           'map_type' => 'WP',
                            'x' => '-60000',
                            'id' => 'red',
                            'z' => '0',

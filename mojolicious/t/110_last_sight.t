@@ -45,7 +45,7 @@ $t->get_ok('/game/targets?game=autotest&mecha=Hyakushiki&filter=last-sight')
                            'y' => 0,
                            'world_id' => '(87287, 0, 0)',
                            'label' => 'RX78 (87287, 0, 0) d:84090',
-                           'map_type' => 'position',
+                           'map_type' => 'POS',
                            'z' => 0,
                            'distance' => 84090,
                            'id' => 0

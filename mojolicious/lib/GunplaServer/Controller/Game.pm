@@ -50,7 +50,7 @@ sub targets
     my @to_take = ();
     my @out = ();
 
-    @to_take = keys %{FILTERS->{$filter}};
+    @to_take = @{FILTERS->{$filter}};
     if(! @to_take)
     {
         $c->render(json => { error => 'Bad filter provided' }, status => 400)
@@ -63,7 +63,7 @@ sub targets
     {
         if($_ eq 'waypoints')    
         {
-            my @wp = $db->get_collection('map')->find({ type => 'waypoint' } )->all();
+            my @wp = $db->get_collection('map')->find({ type => { '$in' => SUBFILTERS->{'waypoints'} } } )->all();
             for(@wp)
             {
                 my $w = target_from_mongo_to_json($game, $mecha, 'map', $_);
@@ -72,7 +72,7 @@ sub targets
         }
         elsif($_ eq 'hotspots')    
         {
-            my @wp = $db->get_collection('map')->find({ type => 'asteroid' } )->all();
+            my @wp = $db->get_collection('map')->find({ type =>{ '$in' => SUBFILTERS->{'hotspots'} } } )->all();
             for(@wp)
             {
                 my $w = target_from_mongo_to_json($game, $mecha, 'map', $_);
@@ -90,7 +90,7 @@ sub targets
         }
         elsif($_ eq 'landing')
         {
-            my @me = $db->get_collection('map')->find({ type => 'asteroid' })->all();
+            my @me = $db->get_collection('map')->find({ type => { '$in' => SUBFILTERS->{'landing'} } })->all();
             for(@me)
             {
                 my $mp = target_from_mongo_to_json($game, $mecha, 'map', $_);
@@ -267,11 +267,11 @@ sub add_command
         return;
     }
 
-    my @to_take = keys %{FILTERS->{$configured_command->{filter}}};
+    my @to_take = @{FILTERS->{$configured_command->{filter}}};
     my @allowed_targets = (); 
     for(@to_take)
     {
-        @allowed_targets = (@allowed_targets, @{FILTERS->{$configured_command->{filter}}->{$_}});
+        @allowed_targets = (@allowed_targets, @{SUBFILTERS->{$_}});
     }
     my ($target_type, $target_id) = split('-', $params->{params});
     if(! grep {$_ eq $target_type} @allowed_targets)

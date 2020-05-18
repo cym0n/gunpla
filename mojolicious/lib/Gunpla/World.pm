@@ -269,7 +269,8 @@ sub init_scenario
     my $data_directory = $root_path . "../../scenarios";
     $self->build_commands();
     $self->init_mecha_templates();
-    my %counters = ( AST => 0 );
+    my %counters = ( AST => 0,
+                     SAR => 0 );
     open(my $fh, "< $data_directory/$file") || die "Impossible to open $data_directory/$file";
     for(<$fh>)
     {
@@ -287,11 +288,12 @@ sub init_scenario
         {
             $self->add_mecha($values[1], $values[2]);
         }
-        elsif($values[0] eq 'AST')
+        elsif($values[0] eq 'AST' || $values[0] eq 'SAR')
         {
-            push @{$self->map_elements}, { id => $counters{'AST'}, type => 'asteroid', 
+            my $tag = $values[0];
+            push @{$self->map_elements}, { id => $counters{$tag}, type => $values[0],
                                            position =>  Gunpla::Position->new(x => $values[1], y => $values[2], z => $values[3]) };
-            $counters{'AST'} = $counters{'AST'} + 1;
+            $counters{$tag} = $counters{$tag} + 1;
         }
         elsif($values[0] eq 'PLY')
         {
@@ -329,17 +331,13 @@ sub get_target_from_world_id
     {
         return { name => $target_name, position => $self->waypoints->{$target_name}};
     }
-    elsif($target_type eq 'AST')
-    {
-        return $self->get_map_element('asteroid', $target_name);
-    }
     elsif($target_type eq 'MEC')
     {
         return $self->get_mecha_by_name($target_name);
     }
     else
     {
-        return undef;
+        return $self->get_map_element($target_type, $target_name);
     }
 }
 sub get_position_from_movement_target
@@ -483,11 +481,11 @@ sub action
                     }              
                     if($m->destination->equals($m->position))
                     {
-                        $self->event($m->name . " reached destination: " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
+                        $self->event($m->name . " reached destination: " . ELEMENT_TAGS->{$m->movement_target->{type}} . " " . $m->movement_target->{name}, [ $m->name ]);
                     }
                     elsif($m->movement_target->{nearby} && $m->position->distance($m->destination) < NEARBY)
                     {
-                        $self->event($m->name . " reached the nearby of " . $m->movement_target->{type} . " " . $m->movement_target->{name}, [ $m->name ]);
+                        $self->event($m->name . " reached the nearby of " . ELEMENT_TAGS->{$m->movement_target->{type}} . " " . $m->movement_target->{name}, [ $m->name ]);
                     }
                     else
                     {
@@ -712,7 +710,7 @@ sub manage_action
         $mecha->add_status('landed');
         $mecha->velocity(0);
         $mecha->position($mecha->destination);
-        $self->event($mecha->name . " landed on " . $mecha->movement_target->{type} . " " . $mecha->movement_target->{name} , [$mecha->name]);
+        $self->event($mecha->name . " landed on " . ELEMENT_TAGS->{$mecha->movement_target->{type}} . " " . $mecha->movement_target->{name} , [$mecha->name]);
     }
     
 }
@@ -835,7 +833,7 @@ sub save
         my $wp_mongo = {
             id => $wp,
             name => $wp,
-            type => 'waypoint',
+            type => 'WP',
             position => $self->waypoints->{$wp}->to_mongo(),
             spawn_point => $self->is_spawn_point($wp)
         };
@@ -887,7 +885,7 @@ sub load
     my @map_points = $db->get_collection('map')->find()->all();
     foreach my $mapp (@map_points)
     {
-        if($mapp->{type} eq 'waypoint')
+        if($mapp->{type} eq 'WP')
         {
             $self->waypoints->{$mapp->{name}} = Gunpla::Position->from_mongo($mapp->{position});
             if($mapp->{spawn_point})

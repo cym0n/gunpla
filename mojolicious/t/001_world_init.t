@@ -16,5 +16,7 @@ is(keys %{$world->waypoints}, 4);
 diag("Checking mechas created on init");
 is(@{$world->armies}, 2);
 
+diag("Checking map elements on init");
+is(@{$world->map_elements}, 1);
 
 done_testing;

@@ -42,19 +42,30 @@ use constant SIGHT_LANDED_BONUS => 40000;
 use constant SIGHT_MINIMUM => 10000;
 use constant BOOST_GAUGE => 50000;
 use constant BOOST_VELOCITY => 9;
-use constant ELEMENT_TAGS => { 'asteroid' => 'AST',
-                               'mecha'    => 'MEC',
-                               'waypoint' => 'WP', 
-                               'position' => 'POS' };
-use constant FILTERS => { 'waypoints' => { 'waypoints' => ['WP'] },
-                          'sighted-by-me' => { 'sighted_by_me' => ['MEC'] },
-                          'sighted-by-faction' =>  { 'sighted_by_faction' => ['MEC'] },
-                          'visible' => {  'sighted_by_faction' => ['MEC'],
-                                          'map_elements' => ['WP', 'AST'] },
-                          'hotspots' => { 'hotspots' => ['AST'] },
-                          'landing' => { 'landing' => ['AST'] },
-                          'last-sight' => { 'last_sight' => ['POS'] },
+use constant ELEMENT_TAGS => { 'AST' => 'asteroid', 
+                                'MEC' => 'mecha',
+                              'WP' => 'waypoint', 
+                              'POS' => 'position', 
+                              'SAR' => 'sensor array',
+                              'VOID' => 'void' };
+use constant FILTERS => { 'waypoints' => [ 'waypoints' ],
+                          'sighted-by-me' => [ 'sighted_by_me' ],
+                          'sighted-by-faction' =>  [ 'sighted_by_faction' ],
+                          'visible' => [ 'sighted_by_faction',
+                                         'map_elements' ],
+                          'hotspots' => [ 'hotspots' ],
+                          'landing' => [ 'landing' ],
+                          'last-sight' => [ 'last_sight' ],
                         };
+use constant SUBFILTERS => { 'waypoints' => ['WP'],
+                             'sighted_by_me' => ['MEC'],
+                             'sighted_by_faction' => ['MEC'],
+                             'map_elements' => ['WP', 'AST', 'SAR'],
+                             'hotspots' => ['AST', 'SAR'],
+                             'landing' => ['AST', 'SAR',],
+                             'last_sight' => ['POS'] };
+
+       
 use constant ENERGY_STANDARD_BONUS => 1;
 use constant ENERGY_HIGH_VELOCITY_MALUS => 1;
 use constant ENERGY_MAX_VELOCITY_MALUS => 2;
@@ -102,6 +113,7 @@ our @EXPORT_OK = (
     'BOOST_VELOCITY',
     'ELEMENT_TAGS',
     'FILTERS',
+    'SUBFILTERS',
     'ENERGY_STANDARD_BONUS',
     'ENERGY_HIGH_VELOCITY_MALUS',
     'ENERGY_MAX_VELOCITY_MALUS',

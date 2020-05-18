@@ -43,11 +43,6 @@ sub target_from_mongo_to_json
     my $source = shift;
     my $obj = shift;
 
-    if($source eq 'position')
-    {
-        $obj->{type} = 'position';
-    }
-
     my $distance = undef;
     my $obj_pos = Gunpla::Position->from_mongo($obj->{position});
     if($mecha)
@@ -66,30 +61,30 @@ sub target_from_mongo_to_json
 
     my $id = exists $obj->{name} ? $obj->{name} : $obj->{id};
     my $world_id;
-    my $type;
+    my $tag;
     if($source eq 'mechas')
     {
-        $type = 'mecha';
-        $world_id = ELEMENT_TAGS->{$type} . '-' . $id;
+        $tag = 'MEC';
+        $world_id = $tag . '-' . $id;
     }
     elsif($source eq 'map')
     {
-        $type = $obj->{type};
-        $world_id = ELEMENT_TAGS->{$type} . '-' . $id;
+        $tag = $obj->{type};
+        $world_id = $tag . '-' . $id;
     }
     elsif($source eq 'position')
     {
         $world_id = $obj_pos->as_string;
-        $type = 'position';
+        $tag = 'POS';
     }
-    my $label = $obj->{label} ? $obj->{label} : $type . " " . $id;
+    my $label = $obj->{label} ? $obj->{label} : ELEMENT_TAGS->{$tag} . " " . $id;
     $label .= " " . $obj_pos->as_string;
     $label .= " d:$distance" if($distance);
 
     return { id => $id,
              world_id => $world_id,
              label => $label,
-             map_type => $type,
+             map_type => $tag,
              x    => $obj->{position}->{x},
              y    => $obj->{position}->{y},
              z    => $obj->{position}->{z},
@@ -152,14 +147,9 @@ sub get_from_id
         ( $obj ) = $db->get_collection('mechas')->find({ name => $id })->all();
         $source = 'mechas';
     }
-    elsif($type eq 'WP')
+    else
     {
-        ( $obj ) = $db->get_collection('map')->find({ type => 'waypoint', id => $id })->all();
-        $source = 'map';
-    }
-    elsif($type eq 'AST')
-    {
-        ( $obj ) = $db->get_collection('map')->find({ type => 'asteroid', id => $id })->all();
+        ( $obj ) = $db->get_collection('map')->find({ type => $type, id => $id })->all();
         $source = 'map';
     }
     $obj->{source} = $source;

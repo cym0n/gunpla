@@ -406,7 +406,7 @@ sub command
         $self->stop_attack();    
         $self->stop_landing();    
         $self->set_destination($target->{position}->clone());
-        $self->movement_target({ type => 'waypoint', 'name' => $target->{name}, class => 'fixed'  });
+        $self->movement_target({ type => 'WP', 'name' => $target->{name}, class => 'fixed'  });
         $self->velocity_target($velocity);
     }
     elsif($command eq 'flyhot')
@@ -459,7 +459,7 @@ sub command
         $self->stop_attack();    
         my $destination = $self->position->away_from($position, GET_AWAY_DISTANCE);
         $self->set_destination($destination);
-        $self->movement_target({ type => 'void', name => 'space', class => 'fixed'  });
+        $self->movement_target({ type => 'VOID', name => 'space', class => 'fixed'  });
         $self->velocity_target($velocity);
     }
     elsif($command eq 'wait')
