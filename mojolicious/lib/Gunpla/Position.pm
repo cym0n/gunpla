@@ -25,7 +25,15 @@ sub clone
 sub as_string
 {
     my $self = shift;
-    return '(' . $self->x . ', ' . $self->y . ', ' . $self->z . ')';
+    my $naked = shift;
+    if($naked)
+    {
+        return $self->x . ',' . $self->y . ',' . $self->z;
+    }
+    else
+    {
+        return '(' . $self->x . ', ' . $self->y . ', ' . $self->z . ')';
+    }
 }
 sub anchor
 {

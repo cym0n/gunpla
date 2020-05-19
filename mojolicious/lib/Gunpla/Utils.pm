@@ -74,7 +74,7 @@ sub target_from_mongo_to_json
     }
     elsif($source eq 'position')
     {
-        $world_id = $obj_pos->as_string;
+        $world_id = $obj_pos->as_string(1);
         $tag = 'POS';
     }
     my $label = $obj->{label} ? $obj->{label} : ELEMENT_TAGS->{$tag} . " " . $id;

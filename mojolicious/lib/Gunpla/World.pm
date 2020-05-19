@@ -326,6 +326,11 @@ sub get_target_from_world_id
     my $self = shift;
     my $target_id = shift;
     return undef if ! $target_id;
+    if($target_id =~ /(\d+),(\d+),(\d+)/)
+    {
+        my $position = Gunpla::Position->new( x => $1, y => $2, z => $3);
+        return { name => 'space' , position => $position };
+    }
     my ($target_type, $target_name) = split('-', $target_id);
     if($target_type eq 'WP')
     {

@@ -517,6 +517,11 @@ sub command
     }
     elsif($command eq 'last')
     {
+        $self->stop_attack();    
+        $self->stop_landing();    
+        $self->set_destination($target->{position}->clone());
+        $self->movement_target({ type => 'VOID', 'name' => $target->{name}, class => 'fixed'  });
+        $self->velocity_target($velocity);
     }
     else
     {
