@@ -43,18 +43,37 @@ $t->get_ok('/game/targets?game=autotest&mecha=Hyakushiki&filter=last-sight')
                          {
                            'x' => 87287,
                            'y' => 0,
-                           'world_id' => '87287,0,0',
-                           'label' => 'RX78 (87287, 0, 0) d:84090',
-                           'map_type' => 'POS',
+                           'world_id' => 'MEC-RX78',
+                           'label' => 'mecha RX78 (87287, 0, 0) d:84090',
+                           'map_type' => 'MEC',
                            'z' => 0,
                            'distance' => 84090,
-                           'id' => 0
+                           'id' => 'RX78',
                          }
                        ]
         });
+Gunpla::Test::dump_api($t);
 $t->get_ok('/game/command?game=autotest&mecha=Hyakushiki&prev=1&available=1')
     ->status_is(200)->json_is({ command => {} });
-Gunpla::Test::dump_api($t);
+$t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
+                                                              mecha => 'Hyakushiki', 
+                                                              command => 'last',
+                                                              params => 'MEC-RX78',
+                                                              velocity => 9 })
+    ->status_is(200)
+    ->json_is({ result => 'OK',
+                'command' => {
+                    'params' =>  'MEC-RX78',
+                    'command' => 'last',
+                    'mecha' => 'Hyakushiki',
+                    'secondarycommand' => undef,
+                    'secondaryparams' => undef,
+                    'velocity' => 9,
+                } });
+is(Gunpla::Test::emulate_commands($world, {}, 1), 1);
+$world = Gunpla::Test::reload($world);
+is_deeply($world->get_events('Hyakushiki'), [ 'Hyakushiki reached destination: last position of mecha RX78' ]);
+
 Gunpla::Test::clean_db('autotest', 1);
 done_testing();
 

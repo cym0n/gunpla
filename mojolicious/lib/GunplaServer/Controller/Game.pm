@@ -139,7 +139,7 @@ sub targets
                 my ( $target_mecha ) = $db->get_collection('mechas')->find({ name => $target->{name} })->all();
                 if($target_mecha && ! sighted_by_faction($game, $mecha, $target_mecha))
                 {
-                    push @out, target_from_mongo_to_json($game, $mecha, 'position', { id => 0, label => $target_mecha->{name}, position => $the_mecha->{destination} });
+                    push @out, target_from_mongo_to_json($game, $mecha, 'mechas', { name => $target->{name}, position => $the_mecha->{destination} });
                 }
             }
         }
@@ -294,7 +294,11 @@ sub add_command
     {   
         $ok = sighted_by_faction($params->{game}, $params->{mecha}, $target_obj);
     }
-    my $mp = target_from_mongo_to_json($params->{game}, $params->{mecha}, 'map', $target_obj);
+    elsif($configured_command->{filter} eq 'last')
+    {
+        $ok = $mecha->{movement_target}->{name} eq $target_id || $mecha->{attack_target}->{name} eq $target_id;
+    }
+    my $mp = target_from_mongo_to_json($params->{game}, $params->{mecha}, $target_obj->{source}, $target_obj);
     if(exists $configured_command->{min_distance})
     {
         $ok = $ok && $mp->{distance} > $configured_command->{min_distance}

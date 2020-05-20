@@ -715,6 +715,10 @@ sub manage_action
         $mecha->add_status('landed');
         $mecha->velocity(0);
         $mecha->position($mecha->destination);
+        if($mecha->movement_target->{type} eq 'SAR')
+        {
+            $mecha->add_status('sensor-array-linked');
+        }
         $self->event($mecha->name . " landed on " . ELEMENT_TAGS->{$mecha->movement_target->{type}} . " " . $mecha->movement_target->{name} , [$mecha->name]);
     }
     
@@ -950,6 +954,7 @@ sub calculate_sighting_matrix
                 my $threshold = $m->sensor_range;
                 if($threshold > 0) #Blind mechas remain blind
                 {
+                    $threshold += SIGHT_SENSOR_ARRAY_BONUS if $m->is_status('sensory-array-linked');
                     $threshold -= SIGHT_LANDED_BONUS if $other->is_status('landed');
                     $threshold = SIGHT_MINIMUM if $threshold < SIGHT_MINIMUM;
                 }

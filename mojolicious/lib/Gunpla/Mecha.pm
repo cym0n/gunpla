@@ -153,6 +153,10 @@ sub delete_status
     my $self = shift;
     my $status  = shift;
     my @new = grep { $_ ne $status} @{$self->status};
+    if($status eq 'landed')
+    {
+        $self->delete_status('sensor-array-linked') if $self->is_status('sensor-array-linked');
+    }
     $self->status(\@new);
 }
 
@@ -517,10 +521,22 @@ sub command
     }
     elsif($command eq 'last')
     {
+        #The target arriving here is the actual position of the mecha. We want the last position when on sight
+        my $true_target;
+        my $true_destination;
+        if(%{$self->attack_target} && $self->attack_target->{type} ne 'none' && $self->attack_target->{name} eq $target->{name})
+        {
+            $true_target = $self->attack_target;
+        }
+        elsif(%{$self->movement_target} && $self->movement_target->{name} eq $target->{name})
+        {
+            $true_target = $self->movement_target;
+        }
+        $true_destination = $self->destination;
         $self->stop_attack();    
         $self->stop_landing();    
-        $self->set_destination($target->{position}->clone());
-        $self->movement_target({ type => 'VOID', 'name' => $target->{name}, class => 'fixed'  });
+        $self->set_destination($true_destination->clone());
+        $self->movement_target({ type => 'LMEC', 'name' => $target->{name}, class => 'fixed'  });
         $self->velocity_target($velocity);
     }
     else

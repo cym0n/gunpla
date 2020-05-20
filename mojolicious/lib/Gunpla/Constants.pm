@@ -39,6 +39,7 @@ use constant LANDING_VELOCITY => 3;
 use constant LANDING_DISTANCE => 10;
 use constant SIGHT_TOLERANCE => 10000;
 use constant SIGHT_LANDED_BONUS => 40000;
+use constant SIGHT_SENSOR_ARRAY_BONUS => 100000;
 use constant SIGHT_MINIMUM => 10000;
 use constant BOOST_GAUGE => 50000;
 use constant BOOST_VELOCITY => 9;
@@ -47,7 +48,8 @@ use constant ELEMENT_TAGS => { 'AST' => 'asteroid',
                               'WP' => 'waypoint', 
                               'POS' => 'position', 
                               'SAR' => 'sensor array',
-                              'VOID' => 'void' };
+                              'VOID' => 'void',
+                              'LMEC' => 'last position of mecha' };
 use constant FILTERS => { 'waypoints' => [ 'waypoints' ],
                           'sighted-by-me' => [ 'sighted_by_me' ],
                           'sighted-by-faction' =>  [ 'sighted_by_faction' ],
@@ -63,7 +65,7 @@ use constant SUBFILTERS => { 'waypoints' => ['WP'],
                              'map_elements' => ['WP', 'AST', 'SAR'],
                              'hotspots' => ['AST', 'SAR'],
                              'landing' => ['AST', 'SAR',],
-                             'last_sight' => ['POS'] };
+                             'last_sight' => ['MEC'] };
 
        
 use constant ENERGY_STANDARD_BONUS => 1;
@@ -108,6 +110,7 @@ our @EXPORT_OK = (
     'LANDING_DISTANCE',
     'SIGHT_TOLERANCE',
     'SIGHT_LANDED_BONUS',
+    'SIGHT_SENSOR_ARRAY_BONUS',
     'SIGHT_MINIMUM',
     'BOOST_GAUGE',
     'BOOST_VELOCITY',
