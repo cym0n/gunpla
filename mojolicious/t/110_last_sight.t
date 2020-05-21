@@ -73,6 +73,9 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
 is(Gunpla::Test::emulate_commands($world, {}, 1), 1);
 $world = Gunpla::Test::reload($world);
 is_deeply($world->get_events('Hyakushiki'), [ 'Hyakushiki reached destination: last position of mecha RX78' ]);
+is($world->armies->[1]->position->x, 87287);
+is($world->armies->[1]->position->y, 0);
+is($world->armies->[1]->position->z, 0);
 
 Gunpla::Test::clean_db('autotest', 1);
 done_testing();
