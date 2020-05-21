@@ -524,13 +524,13 @@ sub command
         #The target arriving here is the actual position of the mecha. We want the last position when on sight
         my $true_target;
         my $true_destination;
-        if(%{$self->attack_target} && $self->attack_target->{type} ne 'none' && $self->attack_target->{name} eq $target->{name})
+        if((! $self->movement_target || ! $self->movement_target->{type} eq 'none') && $self->attack_target && $self->attack_target->{type} eq 'mecha') 
         {
-            $true_target = $self->attack_target;
+            $true_target =  $self->attack_target;
         }
-        elsif(%{$self->movement_target} && $self->movement_target->{name} eq $target->{name})
+        elsif($self->movement_target && $self->movement_target->{type} eq 'mecha') 
         {
-            $true_target = $self->movement_target;
+            $true_target =  $self->movement_target
         }
         $true_destination = $self->destination;
         $self->stop_attack();    
