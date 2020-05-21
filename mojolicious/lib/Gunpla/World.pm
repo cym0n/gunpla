@@ -208,7 +208,16 @@ sub build_commands
             velocity => 1,
             min_distance => 0,
         }, 1);
-
+    $self->configure_command( {
+            code => 'guard',
+            label => 'GUARD',
+            filter => undef,
+            values => {'20000' => '20000', '50000' => '50000', '70000' => '70000'},
+            params_label => 'Select time interval',
+            machinegun => 0,
+            velocity => 0,
+            min_distance => 0,
+        }, 1);
 }
 
 
@@ -371,7 +380,18 @@ sub add_command
     my $velocity = $command_mongo->{velocity};
     my $m = $self->get_mecha_by_name($mecha);
     eval {
-        $m->command($command, $self->get_target_from_world_id($params), $velocity);
+        if($self->available_commands->{$command_mongo->{command}}->{filter})
+        {
+            $m->command($command, $self->get_target_from_world_id($params), $velocity);
+        }
+        elsif($self->available_commands->{$command_mongo->{command}}->{values})
+        {
+            $m->command($command, $params, $velocity);
+        }
+        else
+        {
+            $m->command($command, undef, $velocity);
+        }
         if($secondary_command)
         {
             if($secondary_command eq 'machinegun')
@@ -510,6 +530,17 @@ sub action
             {
                 #We record the position of the target to track him (this is only on RIFLE)
                 $m->destination($self->get_position_from_movement_target($m->attack_target));
+            }
+            if($m->action)
+            {
+                if($m->action eq 'GUARD')
+                {
+                    $m->mod_action_gauge(-1);
+                    if($m->action_gauge == 0)
+                    {
+                        $self->event($m->name . " ended the guard", [ $m->name ]);
+                    }
+                }
             }
             if($m->attack)
             {

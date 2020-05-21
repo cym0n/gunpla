@@ -539,6 +539,14 @@ sub command
         $self->movement_target({ type => 'LMEC', 'name' => $target->{name}, class => 'fixed'  });
         $self->velocity_target($velocity);
     }
+    elsif($command eq 'guard')
+    {
+        $self->stop_movement();
+        $self->stop_attack();    
+        $self->stop_action();    
+        $self->action("GUARD");
+        $self->action_gauge($target);
+    }
     else
     {
         die "Unrecognized command $command";    

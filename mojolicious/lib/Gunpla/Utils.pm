@@ -28,10 +28,17 @@ sub command_from_mongo_to_json
     my $min_distance = $command->{min_distance};
     my $max_distance = $command->{max_distance};
     delete $command->{_id};
-    my $callback = '/game/targets?' . join('&', "game=$game", "mecha=$mecha", "filter=$filter");
-    $callback .= "&min-distance=$min_distance" if defined $min_distance;
-    $callback .= "&max-distance=$max_distance" if defined $max_distance;
-    $command->{params_callback} = $callback;
+    if($filter)
+    {
+        my $callback = '/game/targets?' . join('&', "game=$game", "mecha=$mecha", "filter=$filter");
+        $callback .= "&min-distance=$min_distance" if defined $min_distance;
+        $callback .= "&max-distance=$max_distance" if defined $max_distance;
+        $command->{params_callback} = $callback;
+    }
+    else
+    {
+        $command->{params_callback} = undef
+    }
     return $command;
 }
 

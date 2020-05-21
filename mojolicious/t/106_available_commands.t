@@ -59,7 +59,21 @@ $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
                             'min_distance' => 0,
                             'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=waypoints&min-distance=0',
                           },
-
+                          {
+                            'machinegun' => 0,
+                            'params_callback' => undef,
+                            'params_label' => 'Select time interval',
+                            'label' => 'GUARD',
+                            'code' => 'guard',
+                            'filter' => undef,
+                            'values' => {
+                                          '50000' => '50000',
+                                          '20000' => '20000',
+                                          '70000' => '70000'
+                                        },
+                            'velocity' => 0,
+                            'min_distance' => 0
+                          },
                           {
                             'params_label' => 'Select a Hotspot',
                             'filter' => 'landing',

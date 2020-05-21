@@ -267,64 +267,79 @@ sub add_command
         return;
     }
 
-    my @to_take = @{FILTERS->{$configured_command->{filter}}};
-    my @allowed_targets = (); 
-    for(@to_take)
+    if($configured_command->{filter})
     {
-        @allowed_targets = (@allowed_targets, @{SUBFILTERS->{$_}});
-    }
-    my ($target_type, $target_id) = split('-', $params->{params});
-    if(! grep {$_ eq $target_type} @allowed_targets)
-    {
-        $c->render(json => { result => 'error', description => 'bad target provided: ' . $params->{params}}, status => 400);
-        return;
-    }
-    my $target_obj = get_from_id($params->{game}, $params->{params});
+        my @to_take = @{FILTERS->{$configured_command->{filter}}};
+        my @allowed_targets = (); 
+        for(@to_take)
+        {
+            @allowed_targets = (@allowed_targets, @{SUBFILTERS->{$_}});
+        }
+        my ($target_type, $target_id) = split('-', $params->{params});
+        if(! grep {$_ eq $target_type} @allowed_targets)
+        {
+            $c->render(json => { result => 'error', description => 'bad target provided: ' . $params->{params}}, status => 400);
+            return;
+        }
+        my $target_obj = get_from_id($params->{game}, $params->{params});
 
-    my $ok = 1;
-    if($configured_command->{filter} eq 'sighted-by-me')
-    {
-        $ok = sighted_by_me($params->{game}, $params->{mecha}, $target_obj);
+        my $ok = 1;
+        if($configured_command->{filter} eq 'sighted-by-me')
+        {
+            $ok = sighted_by_me($params->{game}, $params->{mecha}, $target_obj);
+        }
+        elsif($configured_command->{filter} eq 'sighted-by-faction')
+        {
+            $ok = sighted_by_faction($params->{game}, $params->{mecha}, $target_obj);
+        }
+        elsif($configured_command->{filter} eq 'visible' && $target_type eq 'MEC')
+        {   
+            $ok = sighted_by_faction($params->{game}, $params->{mecha}, $target_obj);
+        }
+        elsif($configured_command->{filter} eq 'last')
+        {
+            $ok = $mecha->{movement_target}->{name} eq $target_id || $mecha->{attack_target}->{name} eq $target_id;
+        }
+        my $mp = target_from_mongo_to_json($params->{game}, $params->{mecha}, $target_obj->{source}, $target_obj);
+        if(exists $configured_command->{min_distance})
+        {
+            $ok = $ok && $mp->{distance} > $configured_command->{min_distance}
+        }
+        if(exists $configured_command->{max_distance})
+        {
+            $ok = $ok && $mp->{distance} < $configured_command->{max_distance}
+        }
+        if(! $ok)
+        {
+            $c->render(json => { result => 'error', description => 'Bad target provided: ' . $params->{params}}, status => 400);
+            return;
+        }
     }
-    elsif($configured_command->{filter} eq 'sighted-by-faction')
+    elsif($configured_command->{values})
     {
-        $ok = sighted_by_faction($params->{game}, $params->{mecha}, $target_obj);
+        if(! exists $configured_command->{values}->{$params->{params}})
+        {
+            $c->render(json => { result => 'error', description => 'Bad target provided: ' . $params->{params}}, status => 400);
+            return;
+        }
     }
-    elsif($configured_command->{filter} eq 'visible' && $target_type eq 'MEC')
-    {   
-        $ok = sighted_by_faction($params->{game}, $params->{mecha}, $target_obj);
-    }
-    elsif($configured_command->{filter} eq 'last')
+    if($params->{secondarycommand})
     {
-        $ok = $mecha->{movement_target}->{name} eq $target_id || $mecha->{attack_target}->{name} eq $target_id;
-    }
-    my $mp = target_from_mongo_to_json($params->{game}, $params->{mecha}, $target_obj->{source}, $target_obj);
-    if(exists $configured_command->{min_distance})
-    {
-        $ok = $ok && $mp->{distance} > $configured_command->{min_distance}
-    }
-    if(exists $configured_command->{max_distance})
-    {
-        $ok = $ok && $mp->{distance} < $configured_command->{max_distance}
-    }
-    if(! $ok)
-    {
-        $c->render(json => { result => 'error', description => 'Bad target provided: ' . $params->{params}}, status => 400);
-        return;
-    }
-    if($params->{secondarycommand} && $params->{secondarycommand} eq 'machinegun' && ! $configured_command->{'machinegun'})
-    {
-        $c->render(json => { result => 'error', description => 'Bad command: machinegun not allowed' }, status => 400);
-        return;
-    }
-    if($params->{secondarycommand} && $params->{secondarycommand} eq 'machinegun')
-    {
-        $ok = $params->{secondaryparams} =~ /^MEC/ && sighted_by_faction($params->{game}, $params->{mecha}, get_from_id($params->{game}, $params->{secondaryparams}));
-    }
-    if(! $ok)
-    {
-        $c->render(json => { result => 'error', description => 'Bad target provided: ' . $params->{secondaryparams}}, status => 400);
-        return;
+        my $ok = 1;
+        if($params->{secondarycommand} eq 'machinegun' && ! $configured_command->{'machinegun'})
+        {
+            $c->render(json => { result => 'error', description => 'Bad command: machinegun not allowed' }, status => 400);
+            return;
+        }
+        if($params->{secondarycommand} eq 'machinegun')
+        {
+            $ok = $params->{secondaryparams} =~ /^MEC/ && sighted_by_faction($params->{game}, $params->{mecha}, get_from_id($params->{game}, $params->{secondaryparams}));
+        }
+        if(! $ok)
+        {
+            $c->render(json => { result => 'error', description => 'Bad target provided: ' . $params->{secondaryparams}}, status => 400);
+            return;
+        }
     }
 
     $c->app->log->debug("Adding command " . $params->{mecha} . '-' . $mecha->{cmd_index});

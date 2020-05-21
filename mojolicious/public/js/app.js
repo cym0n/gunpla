@@ -92,12 +92,19 @@ App = {
                 if(! c.energy_needed ||
                      m.energy > c.energy_needed)
                 {
-                    fetch(c.params_callback).then(function(response) { return response.json(); })
-                    .then(function(data) {
-                        if(data.targets.length > 0)
-                        {
-                            $( "#maincommands_"+m.name).append('<option value="'+c.code+'">'+c.label+'</option>');
-                        }});
+                    if(c.params_callback)
+                    {
+                        fetch(c.params_callback).then(function(response) { return response.json(); })
+                        .then(function(data) {
+                            if(data.targets.length > 0)
+                            {
+                                $( "#maincommands_"+m.name).append('<option value="'+c.code+'">'+c.label+'</option>');
+                            }});
+                    }
+                    else
+                    {
+                        $( "#maincommands_"+m.name).append('<option value="'+c.code+'">'+c.label+'</option>');
+                    }
                 }
             });
         });
@@ -244,14 +251,24 @@ App = {
     .then(function(response) { return response.json(); })
     .then(function(data) {
         machinegun = data.command.machinegun;
-        paramDiv.append('<lable for="params_'+name+'>'+data.command.params_label+'</label>');
+        paramDiv.append('<lable for="params_'+name+'">'+data.command.params_label+'</label>');
         paramDiv.append('<div class="form-group"><select class="form-control" name="params_'+name+'" id="params_'+name+'"></select></div>');
-        fetch(data.command.params_callback).then(function(response) { return response.json(); })
-        .then(function(data) {
-            data.targets.forEach(function(d, index, array) {
-                $( "#params_"+name).append('<option value="'+d.world_id+'">'+d.label+'</option>');
+        if(data.command.params_callback)
+        {
+            fetch(data.command.params_callback).then(function(response) { return response.json(); })
+            .then(function(data) {
+                data.targets.forEach(function(d, index, array) {
+                    $( "#params_"+name).append('<option value="'+d.world_id+'">'+d.label+'</option>');
+                });
             });
-        });
+        }
+        if(data.command.values)
+        {
+            for(var label in data.command.values)
+            {
+                $( "#params_"+name).append('<option value="'+data.command.values[label]+'">'+label+'</option>');
+            }
+        }
         if(data.command.machinegun == 1)
         { 
             App.machinegunForm(name, paramDiv);
