@@ -985,7 +985,7 @@ sub calculate_sighting_matrix
                 my $threshold = $m->sensor_range;
                 if($threshold > 0) #Blind mechas remain blind
                 {
-                    $threshold += SIGHT_SENSOR_ARRAY_BONUS if $m->is_status('sensory-array-linked');
+                    $threshold += SIGHT_SENSOR_ARRAY_BONUS if $m->is_status('sensor-array-linked');
                     $threshold -= SIGHT_LANDED_BONUS if $other->is_status('landed');
                     $threshold = SIGHT_MINIMUM if $threshold < SIGHT_MINIMUM;
                 }
