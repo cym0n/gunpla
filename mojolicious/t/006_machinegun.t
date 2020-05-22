@@ -11,30 +11,19 @@ use Gunpla::Position;
 
 my $world = Gunpla::Test::test_bootstrap('dummy.csv', [20, 3, 20]);
 
-my $commands = { 'RX78' => { command => 'flywp', params => 'WP-center', secondarycommand => 'machinegun', secondaryparams => 'MEC-Dummy', velocity => 10},
-                 'Dummy' => { command => 'wait' } };
+my $commands = { 'RX78' => { command => 'flywp', params => 'WP-center', secondarycommand => 'machinegun', secondaryparams => 'MEC-Dummy', velocity => 10} };
 
-is(Gunpla::Test::emulate_commands($world, $commands), 2);
-
-diag("=== First shot");
-diag("Checking event generation");
-is_deeply($world->get_events('Dummy'), [  'RX78 hits with machine gun Dummy' ]);
-
-diag("Checking mechas stats");
-is($world->armies->[0]->position->x, 1000);
-is($world->armies->[0]->velocity, 10);
-is($world->armies->[0]->attack_limit, 2);
-is($world->armies->[0]->attack_gauge, 0);
-is($world->armies->[1]->life, 980);
-
+#First shot: blocking just for Dummy, but it's an automated mecha -> events reset
+#Events after it:
+#  RX78:  RX78 missed Dummy with machine gun (not blocking)
+#  Dummy: RX78 missed Dummy with machine gun (not blocking)
+#  RX78:  RX78 hits with machine gun Dummy   (not blocking)
+#  Dummy: RX78 hits with machine gun Dummy   (blocking)
+#  RX78:  RX78 ended machine gun shots       (blocking)
+diag("RX78 fires machinegun on Dummy");
 is(Gunpla::Test::emulate_commands($world, $commands), 5);
-
-diag("=== Second shot misses, no events");
-diag("=== Third shot - action ended");
-diag("Checking event generation");
-is_deeply($world->get_events('Dummy'), [  'RX78 hits with machine gun Dummy' ]);
 is_deeply($world->get_events('RX78'), [  'RX78 ended machine gun shots' ]);
-
+is_deeply($world->get_events('Dummy'), [  'RX78 hits with machine gun Dummy' ]);
 diag("Checking mechas stats");
 is($world->armies->[0]->velocity, 10);
 is($world->armies->[0]->position->x, 600);
