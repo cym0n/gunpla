@@ -123,6 +123,8 @@ has status => (
     default => sub { [] }
 );
 
+with 'Gunpla::Mecha::Role::IA';
+
 sub is_status
 {
     my $self = shift;

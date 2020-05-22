@@ -87,15 +87,30 @@ sub add_mecha
     my $self = shift;
     my $name = shift;
     my $faction = shift;
+    my $ia = shift;
+    my $ia_configuration = shift;
     #TODO: check if mecha already exists
     my $template = $self->mecha_templates->{$name};
     die "NO TEMPLATE for $name" if ! $template;
     $template->{name} = $name;
     $template->{faction} = $faction;
+    if($ia)
+    {
+        my $counter = @{$self->armies};
+        eval("require $ia");
+        my %ia_init = ();
+        if($ia_configuration)
+        {
+        }
+        $ia_init{mecha_index} = $counter;
+        $template->{brain_module} = $ia->new(%ia_init);
+        $template->{ia} = 1;
+    }
     my $mecha = Gunpla::Mecha->new($template);
     
     $mecha->position($self->waypoints->{$self->spawn_points->{$faction}}->clone());
     $mecha->set_destination($mecha->position->clone());
+
     push @{$self->armies}, $mecha;
 }
 sub add_map_element
@@ -295,7 +310,7 @@ sub init_scenario
         }
         elsif($values[0] eq 'MEC')
         {
-            $self->add_mecha($values[1], $values[2]);
+            $self->add_mecha($values[1], $values[2], $values[3], $values[4]);
         }
         elsif($values[0] eq 'AST' || $values[0] eq 'SAR')
         {
@@ -312,6 +327,7 @@ sub init_scenario
     $self->no_events(1);
     $self->calculate_sighting_matrix();
     $self->no_events(0);
+    $self->ia();
 }
 
 sub get_map_element
@@ -406,6 +422,7 @@ sub add_command
     };
     if($@)
     {
+        say STDERR "ERROR: $@";
         $m->waiting(1);
         $self->cmd_index_up();
     }
@@ -603,8 +620,30 @@ sub action
         }
     }
     $self->cmd_index_up();
+    $self->ia(1);
     return $self->generated_events();
 }
+
+sub ia
+{
+    my $self = shift;
+    my $run = shift;
+    foreach my $m(@{$self->armies})
+    {
+        if($m->waiting)
+        {
+            if($m->ia)
+            {
+                my $command = $m->decide();        
+                $m->waiting(0);
+                $self->add_command($m->name, $command);
+                $m->cmd_fetched(1) if ! $m->waiting;
+            }
+        }
+    }
+    $self->action() if $self->all_ready() && $run;
+}
+
 
 sub cmd_index_up
 {

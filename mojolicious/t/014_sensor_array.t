@@ -11,8 +11,7 @@ use Gunpla::Position;
 
 
 my $world = Gunpla::Test::test_bootstrap('t014.csv');
-my $commands1 = { 'Dummy' => { command =>'wait' },
-                 'RX78' => { command =>'land', params => 'SAR-0'}};
+my $commands1 = { 'RX78' => { command =>'land',  params => 'SAR-0' }};
 my $commands2 = { 'RX78' => { command =>'guard', params => '20000' }};
 diag("RX78 lands on the sensor array and sights Dummy");
 is(Gunpla::Test::emulate_commands($world, $commands1), 2);
