@@ -14,7 +14,6 @@ use Gunpla::Position;
 my $world = Gunpla::Test::test_bootstrap('dummy.csv');
 my $t = Test::Mojo->new('GunplaServer');
 $t->app->config->{no_login} = 1;
-my $commands = { 'Dummy' => { command => 'wait'} };
 
 diag("RX78 Guards - KO - wrong clocks");
 $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest',
@@ -41,7 +40,7 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
                     'velocity' => undef,
                 } });
 Gunpla::Test::dump_api($t);
-is(Gunpla::Test::emulate_commands($world, $commands, 1), 1);
+is(Gunpla::Test::emulate_commands($world, {}, 1), 1);
 $world = Gunpla::Test::reload($world);
 is_deeply($world->get_events('RX78'), [ 'RX78 ended the guard' ]);
 is($world->timestamp, 20000);

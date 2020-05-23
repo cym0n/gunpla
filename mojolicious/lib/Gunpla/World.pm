@@ -633,7 +633,7 @@ sub action
         }
     }
     $self->cmd_index_up();
-    $self->ia(1);
+    $self->ia(1) unless $steps && $counter == $steps;
     return $self->generated_events();
 }
 
