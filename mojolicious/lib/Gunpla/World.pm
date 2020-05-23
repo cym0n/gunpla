@@ -90,12 +90,19 @@ sub add_mecha
     my $faction = shift;
     my $ia = shift;
     my $ia_configuration = shift;
-    #TODO: check if mecha already exists
-    my $template = $self->mecha_templates->{$name};
+    my $template;
+    if($name =~ /^(.*?)\-(\d+)$/)
+    {
+        $template = $self->mecha_templates->{$1};
+    }
+    else
+    {
+        $template = $self->mecha_templates->{$name};
+    }
     die "NO TEMPLATE for $name" if ! $template;
     $template->{name} = $name;
     $template->{faction} = $faction;
-
+    die "Mecha with name $name already present" if($self->get_mecha_by_name($name));
     my $mecha = Gunpla::Mecha->new($template);
     
     $mecha->position($self->waypoints->{$self->spawn_points->{$faction}}->clone());
@@ -105,15 +112,6 @@ sub add_mecha
     return $mecha;
 }
 
-
-
-sub add_map_element
-{
-    my $self = shift;
-    my $type = shift;
-    my $position = shift;
-    
-}
 
 
 sub get_mecha_by_name
@@ -647,10 +645,13 @@ sub ia
         {
             if($m->ia)
             {
-                my $command = $m->decide();        
-                $m->waiting(0);
-                $self->add_command($m->name, $command);
-                $m->cmd_fetched(1) if ! $m->waiting;
+                my $command = $m->decide($self);        
+                if($command)
+                {
+                    $m->waiting(0);
+                    $self->add_command($m->name, $command);
+                    $m->cmd_fetched(1) if ! $m->waiting;
+                }
             }
         }
     }
@@ -873,17 +874,33 @@ sub get_events
     my $self = shift;
     my $mecha = shift;
     my $cmd_index = shift;
-
-    my $mecha_obj = $self->get_mecha_by_name($mecha);
-    $cmd_index = $mecha_obj->cmd_index if ! $cmd_index;
-    my $mongo = MongoDB->connect(); 
-    my $db = $mongo->get_database('gunpla_' . $self->name);
-    my @events = $db->get_collection('events')->find({ mecha => $mecha_obj->name, cmd_index => $cmd_index, blocking => 1})->all();
     my @out = ();
-    for(@events)
+    if($mecha)
     {
-        push @out, $_->{message},
-    } 
+        my $mecha_obj = $self->get_mecha_by_name($mecha);
+        $cmd_index = $mecha_obj->cmd_index if ! $cmd_index;
+        my $mongo = MongoDB->connect(); 
+        my $db = $mongo->get_database('gunpla_' . $self->name);
+        my @events = $db->get_collection('events')->find({ mecha => $mecha_obj->name, cmd_index => $cmd_index, blocking => 1})->all();
+        for(@events)
+        {
+            push @out, $_->{message},
+        } 
+    }
+    else
+    {
+        foreach my $mecha_obj (@{$self->armies})
+        {
+            $cmd_index = $mecha_obj->cmd_index if ! $cmd_index;
+            my $mongo = MongoDB->connect(); 
+            my $db = $mongo->get_database('gunpla_' . $self->name);
+            my @events = $db->get_collection('events')->find({ mecha => $mecha_obj->name, cmd_index => $cmd_index, blocking => 1})->all();
+            for(@events)
+            {
+                push @out, $_->{message},
+            } 
+        }
+    }
     return \@out;
 }
 

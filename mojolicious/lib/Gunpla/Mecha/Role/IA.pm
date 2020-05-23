@@ -39,8 +39,9 @@ sub install_ia
 sub decide
 {
     my $self = shift;
+    my $world = shift;
     my $events = undef;#TODO fetch events
-    my $command = $self->brain_module->elaborate($self, $events);
+    my $command = $self->brain_module->elaborate($self->name, $world);
     return $command;
 }
 
