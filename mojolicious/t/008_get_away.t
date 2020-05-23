@@ -9,9 +9,8 @@ use Gunpla::World;
 use Gunpla::Test;
 use Gunpla::Position;
 
-my $world = Gunpla::Test::test_bootstrap('t008.csv', [20, 3, 20]);
-my $commands = { 'RX78' => { command =>'away', params => 'WP-center', velocity => 10},
-                 'Dummy' => { command => 'wait' } };
+my $world = Gunpla::Test::test_bootstrap('t008.csv');
+my $commands = { 'RX78' => { command =>'away', params => 'WP-center', velocity => 10} };
 
 is(Gunpla::Test::emulate_commands($world, $commands), 1);
 

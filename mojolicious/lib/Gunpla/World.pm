@@ -6,6 +6,7 @@ use Moo;
 use DateTime;
 use MongoDB;
 use Cwd 'abs_path';
+use JSON::XS;
 use Gunpla::Constants ':all';
 use Gunpla::Position;
 use Gunpla::Mecha;
@@ -94,25 +95,18 @@ sub add_mecha
     die "NO TEMPLATE for $name" if ! $template;
     $template->{name} = $name;
     $template->{faction} = $faction;
-    if($ia)
-    {
-        my $counter = @{$self->armies};
-        eval("require $ia");
-        my %ia_init = ();
-        if($ia_configuration)
-        {
-        }
-        $ia_init{mecha_index} = $counter;
-        $template->{brain_module} = $ia->new(%ia_init);
-        $template->{ia} = 1;
-    }
+
     my $mecha = Gunpla::Mecha->new($template);
     
     $mecha->position($self->waypoints->{$self->spawn_points->{$faction}}->clone());
     $mecha->set_destination($mecha->position->clone());
 
     push @{$self->armies}, $mecha;
+    return $mecha;
 }
+
+
+
 sub add_map_element
 {
     my $self = shift;
@@ -293,8 +287,10 @@ sub init_scenario
     my $data_directory = $root_path . "../../scenarios";
     $self->build_commands();
     $self->init_mecha_templates();
-    my %counters = ( AST => 0,
-                     SAR => 0 );
+    my %counters = ( "MEC" => 0,
+                     "MEC-IA" => 0,
+                     "AST" => 0,
+                     "SAR" => 0 );
     open(my $fh, "< $data_directory/$file") || die "Impossible to open $data_directory/$file";
     for(<$fh>)
     {
@@ -310,7 +306,24 @@ sub init_scenario
         }
         elsif($values[0] eq 'MEC')
         {
-            $self->add_mecha($values[1], $values[2], $values[3], $values[4]);
+            my $m = $self->add_mecha($values[1], $values[2]);#, $values[3], $values[4]);
+            if($values[3])
+            {
+                my $ia_conf = undef;
+                if($values[4])
+                {
+                    my $ia_conf_text = do {
+                        open(my $json_fh, "<:encoding(UTF-8)", $data_directory . '/ia/' . $values[4])
+                            or die("Can't open $values[4]: $!\n");
+                        local $/;
+                        <$json_fh>
+                    };
+                    $ia_conf = JSON::XS->new->utf8->decode($ia_conf_text);
+                }
+                $m->install_ia($counters{'MEC-IA'}, $values[3], $ia_conf);
+                $counters{'MEC-IA'} = $counters{'MEC-IA'} + 1;
+            }
+            $counters{'MEC'} = $counters{'MEC'} + 1;
         }
         elsif($values[0] eq 'AST' || $values[0] eq 'SAR')
         {

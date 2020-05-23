@@ -11,8 +11,7 @@ use Gunpla::Position;
 
 my $world = Gunpla::Test::test_bootstrap('dummy.csv', [20, 0]);
 $world->armies->[0]->position->x(1000);
-my $commands = { 'RX78' => { command => 'sword', params => 'MEC-Dummy'},
-                 'Dummy' => { command => 'wait' } };
+my $commands = { 'RX78' => { command => 'sword', params => 'MEC-Dummy'} };
 
 is(Gunpla::Test::emulate_commands($world, $commands), 2);
 

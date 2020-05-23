@@ -1,0 +1,7 @@
+{
+    "command": {
+        "command": "flywp",
+        "params" : "WP-blue",
+        "velocity": 6
+    }
+}

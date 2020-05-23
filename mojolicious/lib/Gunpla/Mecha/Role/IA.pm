@@ -5,14 +5,36 @@ use v5.10;
 use Moo::Role;
 
 has ia => (
-    is => 'ro',
+    is => 'rw',
     default => 0
 );
 
 has brain_module => (
-    is => 'ro',
+    is => 'rw',
     default => undef
 );
+
+sub install_ia
+{
+    my $self = shift;
+    my $index = shift;
+    my $module = shift;
+    my $conf = shift;
+    if($conf)
+    {
+        $conf->{mecha_index} = $index;
+    }
+    else
+    {
+        $conf = { mecha_index => $index };
+    }
+    eval("require $module");
+    die $@ if $@;
+    my $brain = $module->new(%{$conf});
+    $self->brain_module($brain);
+    $self->ia(1);
+}
+
 
 sub decide
 {
