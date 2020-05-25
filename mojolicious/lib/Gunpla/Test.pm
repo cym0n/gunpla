@@ -2,7 +2,6 @@ package Gunpla::Test;
 
 use MongoDB;
 use Data::Dumper;
-use Test::More;
 use Gunpla::World;
 
 sub test_bootstrap
@@ -12,7 +11,7 @@ sub test_bootstrap
     my $name = shift || 'autotest';
     clean_db($name);
     my $world = Gunpla::World->new(name => $name, dice_results => $dice);
-    diag("Scenario: $scenario");
+    say STDERR "--- Scenario: $scenario";
     $world->init_scenario($scenario);
     $world->save();
     return $world;
@@ -43,7 +42,7 @@ sub emulate_commands
         my $m = $world->get_mecha_by_name($_);
         if($m->waiting)
         {
-            diag("Orders for " . $m->name . ": ". $commands->{$m->name}->{command});
+            say STDERR "--- Orders for " . $m->name . ": ". $commands->{$m->name}->{command};
             $m->waiting(0);
             $m->cmd_fetched(1);
             $world->add_command($m->name, $commands->{$m->name});
@@ -61,7 +60,7 @@ sub clean_db
     my $last = shift;
     if($last && $ENV{PRESERVE_MONGO})
     {
-        diag("Test data about game $world preserved");
+        say STDERR "--- Test data about game $world preserved";
         return;
     }
     my $mongo = MongoDB->connect(); 
@@ -69,7 +68,7 @@ sub clean_db
     $masterdb->get_collection('games')->delete_one( { name => $world });
     my $db = $mongo->get_database('gunpla_' . $world);
     $db->drop();
-    diag("Mongo data about game $world cleaned up!");
+    say STDERR "--- Mongo data about game $world cleaned up!";
 }
 
 sub dump_api

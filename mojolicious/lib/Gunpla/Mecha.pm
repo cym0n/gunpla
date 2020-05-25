@@ -428,7 +428,7 @@ sub command
         $self->stop_attack();    
         $self->stop_landing();    
         $self->set_destination($target->position->clone());
-        $self->movement_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic', nearby => 1  });
+        $self->movement_target({ type => 'MEC', 'name' => $target->name, class => 'dynamic', nearby => 1  });
         $self->velocity_target($velocity);
     }
     elsif($command eq 'sword')

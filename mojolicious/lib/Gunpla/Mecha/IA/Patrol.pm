@@ -20,6 +20,46 @@ sub elaborate
     my $self = shift;
     my $mecha = shift;
     my $world = shift;
+    my $mecha_obj = $world->get_mecha_by_name($mecha);
+    foreach my $t (keys %{$world->sighting_matrix->{__factions}->{$mecha_obj->faction}})
+    {
+        my $already_on_target = 0;
+        foreach my $m (@{$world->armies})
+        {
+            if($m->faction eq $mecha_obj->faction)
+            {
+                if($m->brain_module->aim eq 'MEC-' . $t)
+                {
+                    $already_on_target++;
+                }
+            }
+        }
+        if($already_on_target < 2)
+        {
+            my $mecha_target = $world->get_mecha_by_name($t);
+            $self->aim('MEC-' . $t);
+            if($mecha_target->position->distance($mecha_obj->position) < 2000)
+            {
+                return { 
+                    command => 'sword',
+                    params => 'MEC-' . $t,
+                    secondarycommand => undef,
+                    secondaryparams => undef,
+                    velocity => undef
+                }
+            }
+            else
+            {
+                return { 
+                    command => 'flymec',
+                    params => 'MEC-' . $t,
+                    secondarycommand => 'machinegun',
+                    secondaryparams => 'MEC-' . $t,
+                    velocity => 6
+                }
+            }
+        }
+    }
     if($self->event_is($world, $mecha, undef))
     {
         $self->aim($self->my_wp);

@@ -394,7 +394,7 @@ sub get_position_from_movement_target
 {
     my $self = shift;
     my $movement_target = shift;
-    if($movement_target->{type} eq 'mecha')
+    if($movement_target->{type} eq 'MEC')
     {
         my $m = $self->get_mecha_by_name($movement_target->{name});
         return $m->position->clone();
@@ -659,6 +659,7 @@ sub ia
                 {
                     $m->waiting(0);
                     $self->add_command($m->name, $command);
+                    $self->event("IA command issued: " . $self->command_string($command), { $m->name => 0 });
                     $m->cmd_fetched(1) if ! $m->waiting;
                 }
             }
@@ -667,6 +668,31 @@ sub ia
     $self->action() if $self->all_ready() && $run;
 }
 
+sub command_string
+{
+    my $self = shift;
+    my $command = shift;
+    my $out = $command->{command};
+    if($command->{params})
+    {
+        $out .= " " . $command->{params};
+    }
+    if($command->{velocity})
+    {
+        $out .= " [" . $command->{velocity} . "]";
+    }
+    if($command->{secondarycommand})
+    {
+        $out .= " " . $command->{secondarycommand};
+    }
+    if($command->{secondaryparams})
+    {
+        $out .= " " . $command->{secondaryparams};
+    }
+    return $out;
+
+
+}
 
 sub cmd_index_up
 {
@@ -793,6 +819,7 @@ sub manage_attack
         {
             $self->event($attacker->name . " missed " . $defender->name . " with rifle", [$attacker->name]);
         }
+        $attacker->attack_limit(0); #Avoid a new rifle order is misinterpreted as resume
         $attacker->add_energy(-1 * RIFLE_ENERGY);
     }
 }
