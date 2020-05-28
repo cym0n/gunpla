@@ -122,6 +122,9 @@ has status => (
     is => 'rw',
     default => sub { [] }
 );
+has log_file => (
+    is => 'rw',
+);
 
 with 'Gunpla::Mecha::Role::IA';
 
@@ -440,6 +443,7 @@ sub command
         }
         else
         {
+            my $actual_velocity = $self->get_velocity();
             $self->stop_movement();
             $self->stop_attack();    
             $self->attack('SWORD');
@@ -447,7 +451,9 @@ sub command
             $self->movement_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
             $self->attack_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
             $self->attack_limit(SWORD_ATTACK_TIME_LIMIT);
-            $self->attack_gauge(SWORD_GAUGE_VELOCITY_BONUS * $self->velocity);
+            $self->log("Attack gauge start is " . SWORD_GAUGE_VELOCITY_BONUS . " * " . $actual_velocity);
+            $self->attack_gauge(SWORD_GAUGE_VELOCITY_BONUS * $actual_velocity);
+            $self->stop_action(); #Here to transmit BOOST to GAUGE_VELOCITY_BONUS
         }
     }
     elsif($command eq 'away')
@@ -589,6 +595,7 @@ sub to_mongo
         action_gauge => $self->action_gauge,
         energy => $self->energy,
         max_energy => $self->max_energy,
+        log_file => $self->log_file,
     }
 }
 
@@ -612,13 +619,13 @@ sub from_mongo
 sub log
 {
     my $self = shift;
+    return if ! $self->log_file;
     my $message = shift;
-    open(my $fh, '>> log');
+    $message = "[M:" . $self->name . "] ". $message;
+    open(my $fh, '>> ' . $self->log_file);
     print {$fh} $message . "\n";
     close($fh);
 }
-
-
 
 
 1;
