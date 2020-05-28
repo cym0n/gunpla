@@ -69,9 +69,9 @@ has dice_results => (
     default => sub { [] }
 );
 
-
-
-
+has log_file => (
+    is => 'rw',
+);
 
 #Dummy implementation of mecha characteristics
 has mecha_templates => (
@@ -102,6 +102,7 @@ sub add_mecha
     die "NO TEMPLATE for $name" if ! $template;
     $template->{name} = $name;
     $template->{faction} = $faction;
+    $template->{log_file} = $self->log_file;
     die "Mecha with name $name already present" if($self->get_mecha_by_name($name));
     my $mecha = Gunpla::Mecha->new($template);
     
@@ -419,6 +420,10 @@ sub add_command
         if($self->available_commands->{$command_mongo->{command}}->{filter})
         {
             $m->command($command, $self->get_target_from_world_id($params), $velocity);
+            if($command eq 'sword')
+            {
+                $self->log($m->name. " starting attack gauge: " . $m->attack_gauge);
+            }
         }
         elsif($self->available_commands->{$command_mongo->{command}}->{values})
         {
@@ -723,6 +728,7 @@ sub manage_attack
         my $clash = 1;
         if($defender->attack && $defender->attack eq 'SWORD' && $defender->attack_target->{name} eq $attacker->name)
         {
+            $self->log($attacker->name . " gauge: ". $attacker->attack_gauge . " VS " . $defender->name . " gauge: ". $defender->attack_gauge);
             if($defender->attack_gauge > $attacker->attack_gauge || $defender->energy < SWORD_ENERGY)
             {
                 my $switch = $attacker;
@@ -731,7 +737,7 @@ sub manage_attack
             }
             elsif($defender->attack_gauge == $attacker->attack_gauge)
             {
-                $self->event($attacker->name . " and " . $defender->name . " attacks nullified");
+                $self->event($attacker->name . " and " . $defender->name . " attacks nullified",  [ $attacker->name, $defender->name ] );
                 $clash = 0;
                 $attacker->stop_attack();
                 $attacker->stop_movement();
@@ -864,6 +870,7 @@ sub event
     my $message = shift;
     my $involved_input = shift;
     return if $self->no_events;
+    $self->log($message);
 
     my $involved = {};
     if(ref $involved_input eq 'ARRAY')
@@ -901,7 +908,7 @@ sub event
             $m->waiting(1);
             $m->cmd_fetched(0);
         }
-        $self->generated_events($self->generated_events + 1);
+        $self->generated_events($self->generated_events + 1) if $message !~ /^IA command issued/;
     }
 }
 
@@ -998,6 +1005,7 @@ sub save
     $sighting_matrix->{status_element} = 'sighting_matrix';
     $db->get_collection('status')->insert_one($sighting_matrix);
     $db->get_collection('status')->insert_one({status_element => 'timestamp', timestamp => $self->timestamp});
+    $db->get_collection('status')->insert_one({status_element => 'log_file', log_file => $self->log_file});
     for(keys %{$self->control})
     {
         $db->get_collection('control')->insert_one({ mecha => $_, player => $self->control->{$_} });
@@ -1049,6 +1057,8 @@ sub load
     $self->sighting_matrix($sighting_matrix);
     my ( $timestamp ) = $db->get_collection('status')->find({ status_element => 'timestamp' })->all();
     $self->timestamp($timestamp->{timestamp});
+    my ( $log_file ) = $db->get_collection('status')->find({ status_element => 'log_file' })->all();
+    $self->log_file($log_file->{log_file});
     
     my @commands = $db->get_collection('available_commands')->find()->all();
     for(@commands)
@@ -1139,6 +1149,17 @@ sub calculate_sighting_matrix
         }
     }
 }
+
+sub log
+{
+    my $self = shift;
+    return if ! $self->log_file;
+    my $message = shift;
+    open(my $fh, '>> ' . $self->log_file);
+    print {$fh} $message . "\n";
+    close($fh);
+}
+
 
 1;
 

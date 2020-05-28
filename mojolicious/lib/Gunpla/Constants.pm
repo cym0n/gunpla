@@ -7,7 +7,8 @@ use base 'Exporter';
 
 use constant GET_AWAY_DISTANCE => 30000;
 use constant MACHINEGUN_DAMAGE => 20;
-use constant MACHINEGUN_GAUGE => 400;
+#MACHINGUN_GAUGE: 400 is too low. It means that you can shot all your shots also if an enemy with boost run to you at velocity 6
+use constant MACHINEGUN_GAUGE => 800;
 use constant MACHINEGUN_RANGE => 1500;
 use constant MACHINEGUN_SHOTS => 3;
 use constant MACHINEGUN_SWORD_GAUGE_DAMAGE => 300; 

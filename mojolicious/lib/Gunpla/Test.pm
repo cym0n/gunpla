@@ -10,7 +10,7 @@ sub test_bootstrap
     my $dice = shift || [];
     my $name = shift || 'autotest';
     clean_db($name);
-    my $world = Gunpla::World->new(name => $name, dice_results => $dice);
+    my $world = Gunpla::World->new(name => $name, dice_results => $dice, log_file => 'autotest.log');
     say STDERR "--- Scenario: $scenario";
     $world->init_scenario($scenario);
     $world->save();
