@@ -125,12 +125,12 @@ sub targets
         {
             my ( $the_mecha ) = $db->get_collection('mechas')->find({ name => $mecha })->all();
             my $target = undef;
-        
-            if((! $the_mecha->{movement_target} || ! $the_mecha->{movement_target}->{type} eq 'none') && $the_mecha->{attack_target} && $the_mecha->{attack_target}->{type} eq 'mecha') 
+
+            if((! $the_mecha->{movement_target} || $the_mecha->{movement_target}->{type} eq 'none') && $the_mecha->{attack_target} && $the_mecha->{attack_target}->{type} eq 'MEC') 
             {
                 $target =  $the_mecha->{attack_target}
             }
-            elsif($the_mecha->{movement_target} && $the_mecha->{movement_target}->{type} eq 'mecha') 
+            elsif($the_mecha->{movement_target} && $the_mecha->{movement_target}->{type} eq 'MEC') 
             {
                 $target =  $the_mecha->{movement_target}
             }

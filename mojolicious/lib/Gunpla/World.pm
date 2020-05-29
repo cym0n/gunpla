@@ -10,6 +10,7 @@ use JSON::XS;
 use Gunpla::Constants ':all';
 use Gunpla::Position;
 use Gunpla::Mecha;
+use Data::Dumper;
 
 
 has name => (
@@ -375,7 +376,7 @@ sub get_target_from_world_id
         $target_type = $1;
         $target_name = $2;
     }
-    return undef if ((! $target_type) || (! $target_name));
+    return undef if ((! defined $target_type) || (! defined $target_name));
     #my ($target_type, $target_name) = split('-', $target_id);
 
     if($target_type eq 'WP')
@@ -416,6 +417,7 @@ sub add_command
     my $secondary_params = $command_mongo->{secondaryparams};
     my $velocity = $command_mongo->{velocity};
     my $m = $self->get_mecha_by_name($mecha);
+    $self->log("ADD COMMAND to $mecha: " . $self->command_string($command_mongo));
     eval {
         if($self->available_commands->{$command_mongo->{command}}->{filter})
         {
@@ -660,11 +662,11 @@ sub ia
             if($m->ia)
             {
                 my $command = $m->decide($self);        
+                $command->{IA} = 1;
                 if($command)
                 {
                     $m->waiting(0);
                     $self->add_command($m->name, $command);
-                    $self->event("IA command issued: " . $self->command_string($command), { $m->name => 0 });
                     $m->cmd_fetched(1) if ! $m->waiting;
                 }
             }
@@ -684,7 +686,7 @@ sub command_string
     }
     if($command->{velocity})
     {
-        $out .= " [" . $command->{velocity} . "]";
+        $out .= " [v" . $command->{velocity} . "]";
     }
     if($command->{secondarycommand})
     {
@@ -693,6 +695,10 @@ sub command_string
     if($command->{secondaryparams})
     {
         $out .= " " . $command->{secondaryparams};
+    }
+    if($command->{IA})
+    {
+        $out .= " <<IA>>";
     }
     return $out;
 
