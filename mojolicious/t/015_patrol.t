@@ -9,6 +9,8 @@ use Gunpla::World;
 use Gunpla::Test;
 use Gunpla::Position;
 
+#THE STORY: Wing approaches the surveillance perimeter and encounter Leo-3. Leo-3 fly toward him with machingun. Wing first shoots with the RIFLE then turn on the BOOST to short the distance with the enemy and slash with the blade. Having the boost as bonus he wins the sword fight. One more hit finishes Leo-3
+
 my $world = Gunpla::Test::test_bootstrap('arena-0.csv', [ 15, 10, 15, 15, 0 ]);
 is(@{$world->armies}, 5, "Checking mechas created on init");
 is(Gunpla::Test::emulate_commands($world, 
