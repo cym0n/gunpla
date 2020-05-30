@@ -417,39 +417,46 @@ sub add_command
     my $secondary_params = $command_mongo->{secondaryparams};
     my $velocity = $command_mongo->{velocity};
     my $m = $self->get_mecha_by_name($mecha);
-    $self->log("ADD COMMAND to $mecha: " . $self->command_string($command_mongo));
     eval {
-        if($self->available_commands->{$command_mongo->{command}}->{filter})
+        if($m->inertia == 0)
         {
-            $m->command($command, $self->get_target_from_world_id($params), $velocity);
-            if($command eq 'sword')
-            {
-                $self->log($m->name. " starting attack gauge: " . $m->attack_gauge);
-            }
-        }
-        elsif($self->available_commands->{$command_mongo->{command}}->{values})
-        {
-            $m->command($command, $params, $velocity);
+             $self->log("ADD COMMAND to $mecha: " . $self->command_string($command_mongo));
+             if($self->available_commands->{$command_mongo->{command}}->{filter})
+             {
+                 $m->command($command, $self->get_target_from_world_id($params), $velocity);
+                 if($command eq 'sword')
+                 {
+                     $self->log($m->name. " starting attack gauge: " . $m->attack_gauge);
+                 }
+             }
+             elsif($self->available_commands->{$command_mongo->{command}}->{values})
+             {
+                 $m->command($command, $params, $velocity);
+             }
+             else
+             {
+                 $m->command($command, undef, $velocity);
+             }
+             if($secondary_command)
+             {
+                 if($secondary_command eq 'machinegun')
+                 {
+                     $m->command('machinegun', $self->get_target_from_world_id($secondary_params), undef);
+                 }
+                 elsif($secondary_command eq 'boost')
+                 {
+                     $m->command('boost', undef, undef);
+                 }
+             }
         }
         else
         {
-            $m->command($command, undef, $velocity);
-        }
-        if($secondary_command)
-        {
-            if($secondary_command eq 'machinegun')
-            {
-                $m->command('machinegun', $self->get_target_from_world_id($secondary_params), undef);
-            }
-            elsif($secondary_command eq 'boost')
-            {
-                $m->command('boost', undef, undef);
-            }
+            $m->suspended_command($command_mongo);
         }
     };
     if($@)
     {
-        say STDERR "ERROR: $@";
+        $self->log("ERROR: $@");
         $m->waiting(1);
         $self->cmd_index_up();
     }
@@ -509,124 +516,137 @@ sub action
         for(@{$self->armies})
         {
             my $m = $_;
-            if($m->movement_target)
+            $m->mod_inertia(-1);
+            if($m->inertia == 0 && $m->suspended_command)
             {
-                if($m->attack && $m->attack eq 'SWORD')
+                $self->add_command($m->name, $m->suspended_command);
+                $m->suspended_command(undef);
+            }
+            if($m->is_status('stuck'))
+            {
+                $m->drift_and_move($self->dice(0, 2));
+            }
+            else
+            {
+                if($m->movement_target)
                 {
-                    my $target = $self->get_mecha_by_name($m->movement_target->{name});
-                    $m->set_destination($target->position->clone);
-                    $m->mod_attack_gauge(1);
-                    if($m->position->distance($target->position) > SWORD_DISTANCE)
+                    if($m->attack && $m->attack eq 'SWORD')
                     {
-                        $m->plan_and_move();
-                        $m->attack_limit($m->attack_limit -1);
-                        if($m->attack_limit == 0)
+                        my $target = $self->get_mecha_by_name($m->movement_target->{name});
+                        $m->set_destination($target->position->clone);
+                        $m->mod_attack_gauge(1);
+                        if($m->position->distance($target->position) > SWORD_DISTANCE)
                         {
-                            $m->stop_attack();
-                            $self->event($m->name . " exhausted attack charge", [$m->name]);
-                        }
-                    }
-                    else
-                    {
-                        $self->manage_attack('SWORD', $m);
-                    }
-                }
-                elsif($m->action && $m->action eq 'LAND')
-                {
-                    if($m->position->distance($m->destination) > LANDING_DISTANCE)
-                    {
-                        $m->plan_and_move();
-                    }
-                    else
-                    {
-                        $self->manage_action('LAND', $m);
-                    }
-                }
-                else
-                {
-                    if($m->movement_target->{class} eq 'dynamic')
-                    {
-                        $m->destination($self->get_position_from_movement_target($m->movement_target));
-                    }              
-                    if($m->destination->equals($m->position))
-                    {
-                        $self->event($m->name . " reached destination: " . ELEMENT_TAGS->{$m->movement_target->{type}} . " " . $m->movement_target->{name}, [ $m->name ]);
-                    }
-                    elsif($m->movement_target->{nearby} && $m->position->distance($m->destination) < NEARBY)
-                    {
-                        $self->event($m->name . " reached the nearby of " . ELEMENT_TAGS->{$m->movement_target->{type}} . " " . $m->movement_target->{name}, [ $m->name ]);
-                    }
-                    else
-                    {
-                        $m->plan_and_move();
-                        if($m->action && $m->action eq 'BOOST')
-                        {
-                            $m->mod_action_gauge(-1);
-                            if($m->action_gauge == 0)
+                            $m->plan_and_move();
+                            $m->attack_limit($m->attack_limit -1);
+                            if($m->attack_limit == 0)
                             {
-                                $self->event($m->name . " exhausted boost", [ $m->name ]);
+                                $m->stop_attack();
+                                $self->event($m->name . " exhausted attack charge", [$m->name], [$m->name]);
                             }
-                        }
-                    }
-                }
-            }
-            elsif($m->attack_target->{class} && $m->attack_target->{class} eq 'dynamic')
-            {
-                #We record the position of the target to track him (this is only on RIFLE)
-                $m->destination($self->get_position_from_movement_target($m->attack_target));
-            }
-            if($m->action)
-            {
-                if($m->action eq 'GUARD')
-                {
-                    $m->mod_action_gauge(-1);
-                    if($m->action_gauge == 0)
-                    {
-                        $self->event($m->name . " ended the guard", [ $m->name ]);
-                    }
-                }
-            }
-            if($m->attack)
-            {
-                if($m->attack eq 'MACHINEGUN')
-                {
-                    $m->mod_attack_gauge(1);
-                    if($m->attack_gauge >= MACHINEGUN_GAUGE)
-                    {
-                        my $target = $self->get_mecha_by_name($m->attack_target->{name});
-                        if($m->position->distance($target->position) <= MACHINEGUN_RANGE)
-                        {
-                            $self->manage_attack('MACHINEGUN', $m);
-                        }
-                    }
-                }
-                elsif($m->attack eq 'RIFLE')
-                {
-                    my $target = $self->get_mecha_by_name($m->attack_target->{name});
-                    if($m->position->distance($target->position) < RIFLE_MIN_DISTANCE)
-                    {
-                        $self->event($m->name . ": rifle target " . $target->name . " too close", [ $m->name ]);
-                    }
-                    else
-                    {
-                        if($m->attack_gauge < RIFLE_GAUGE)
-                        {
-                            $m->mod_attack_gauge(1);
                         }
                         else
                         {
-                            if($m->position->distance($target->position) > RIFLE_MAX_DISTANCE)
+                            $self->manage_attack('SWORD', $m);
+                        }
+                    }
+                    elsif($m->action && $m->action eq 'LAND')
+                    {
+                        if($m->position->distance($m->destination) > LANDING_DISTANCE)
+                        {
+                            $m->plan_and_move();
+                        }
+                        else
+                        {
+                            $self->manage_action('LAND', $m);
+                        }
+                    }
+                    else
+                    {
+                        if($m->movement_target->{class} eq 'dynamic')
+                        {
+                            $m->destination($self->get_position_from_movement_target($m->movement_target));
+                        }              
+                        if($m->destination->equals($m->position))
+                        {
+                            $self->event($m->name . " reached destination: " . ELEMENT_TAGS->{$m->movement_target->{type}} . " " . $m->movement_target->{name}, [ $m->name ], [ $m->name ]);
+                        }
+                        elsif($m->movement_target->{nearby} && $m->position->distance($m->destination) < NEARBY)
+                        {
+                            $self->event($m->name . " reached the nearby of " . ELEMENT_TAGS->{$m->movement_target->{type}} . " " . $m->movement_target->{name}, [ $m->name ], [ $m->name ]);
+                        }
+                        else
+                        {
+                            $m->plan_and_move();
+                            if($m->action && $m->action eq 'BOOST')
                             {
-                                $m->attack_limit($m->attack_limit -1);
-                                if($m->attack_limit == 0)
+                                $m->mod_action_gauge(-1);
+                                if($m->action_gauge == 0)
                                 {
-                                    $m->stop_attack();
-                                    $self->event($m->name . " time for rifle shot exhausted", [$m->name]);
+                                    $self->event($m->name . " exhausted boost", [ $m->name ]);
                                 }
+                            }
+                        }
+                    }
+                }
+                elsif($m->attack_target->{class} && $m->attack_target->{class} eq 'dynamic')
+                {
+                    #We record the position of the target to track him (this is only on RIFLE)
+                    $m->destination($self->get_position_from_movement_target($m->attack_target));
+                }
+                if($m->action)
+                {
+                    if($m->action eq 'GUARD')
+                    {
+                        $m->mod_action_gauge(-1);
+                        if($m->action_gauge == 0)
+                        {
+                            $self->event($m->name . " ended the guard", [ $m->name ], [ $m->name ]);
+                        }
+                    }
+                }
+                if($m->attack)
+                {
+                    if($m->attack eq 'MACHINEGUN')
+                    {
+                        $m->mod_attack_gauge(1);
+                        if($m->attack_gauge >= MACHINEGUN_GAUGE)
+                        {
+                            my $target = $self->get_mecha_by_name($m->attack_target->{name});
+                            if($m->position->distance($target->position) <= MACHINEGUN_RANGE)
+                            {
+                                $self->manage_attack('MACHINEGUN', $m);
+                            }
+                        }
+                    }
+                    elsif($m->attack eq 'RIFLE')
+                    {
+                        my $target = $self->get_mecha_by_name($m->attack_target->{name});
+                        if($m->position->distance($target->position) < RIFLE_MIN_DISTANCE)
+                        {
+                            $self->event($m->name . ": rifle target " . $target->name . " too close", [ $m->name ], [ $m->name ]);
+                        }
+                        else
+                        {
+                            if($m->attack_gauge < RIFLE_GAUGE)
+                            {
+                                $m->mod_attack_gauge(1);
                             }
                             else
                             {
-                                $self->manage_attack('RIFLE', $m);
+                                if($m->position->distance($target->position) > RIFLE_MAX_DISTANCE)
+                                {
+                                    $m->attack_limit($m->attack_limit -1);
+                                    if($m->attack_limit == 0)
+                                    {
+                                        $m->stop_attack();
+                                        $self->event($m->name . " time for rifle shot exhausted", [$m->name], [ $m->name ]);
+                                    }
+                                }
+                                else
+                                {
+                                    $self->manage_attack('RIFLE', $m);
+                                }
                             }
                         }
                     }
@@ -713,6 +733,7 @@ sub cmd_index_up
         if($m->waiting)
         {
             $m->cmd_index($m->cmd_index+1);
+            $self->log($m->name . " cmd index up to " . $m->cmd_index);
         }
     }
 }
@@ -727,7 +748,7 @@ sub manage_attack
     {
         if($attacker->energy < SWORD_ENERGY)
         {
-            $self->event($attacker->name . ": not enough energy for sword", [$attacker->name]);
+            $self->event($attacker->name . ": not enough energy for sword", [$attacker->name], [ $attacker->name ]);
             return;
         }
         #If both are attacking with sword the one with more impact gauge wins
@@ -743,7 +764,7 @@ sub manage_attack
             }
             elsif($defender->attack_gauge == $attacker->attack_gauge)
             {
-                $self->event($attacker->name . " and " . $defender->name . " attacks nullified",  [ $attacker->name, $defender->name ] );
+                $self->event($attacker->name . " and " . $defender->name . " attacks nullified",  [ $attacker->name, $defender->name ],  [ $attacker->name, $defender->name ] );
                 $clash = 0;
                 $attacker->stop_attack();
                 $attacker->stop_movement();
@@ -762,13 +783,13 @@ sub manage_attack
             my $roll = $self->dice(1, 20);
             if($roll + $gauge_bonus >= SWORD_WIN)
             {
-                $self->event($attacker->name . " slash with sword mecha " .  $defender->name, [ $attacker->name, $defender->name ]);
+                $self->event($attacker->name . " slash with sword mecha " .  $defender->name, [ $attacker->name, $defender->name ],  [ $attacker->name, $defender->name ]);
                 my $damage = SWORD_DAMAGE + ($gauge_bonus * SWORD_DAMAGE_BONUS_FACTOR);
                 $defender->life($defender->life - $damage);
             }
             else
             {
-                $self->event($defender->name . " dodged " .  $attacker->name, [ $attacker->name, $defender->name ]);
+                $self->event($defender->name . " dodged " .  $attacker->name, [ $attacker->name, $defender->name ], [ $attacker->name]);
             }
         }
         my @dirs = qw(x y z);
@@ -811,7 +832,7 @@ sub manage_attack
     {
         if($attacker->energy < RIFLE_ENERGY)
         {
-            $self->event($attacker->name . ": not enough energy for rifle", [$attacker->name]);
+            $self->event($attacker->name . ": not enough energy for rifle", [$attacker->name], [$attacker->name]);
             return;
         }
         my $distance = $attacker->position->distance($defender->position);
@@ -825,11 +846,11 @@ sub manage_attack
             {
                 $defender->mod_attack_gauge(-1 * RIFLE_SWORD_GAUGE_DAMAGE);
             }
-            $self->event($attacker->name . " hits with rifle " .  $defender->name, [ $attacker->name, $defender->name ]);
+            $self->event($attacker->name . " hits with rifle " .  $defender->name, [ $attacker->name, $defender->name ], [$attacker->name]);
         }
         else
         {
-            $self->event($attacker->name . " missed " . $defender->name . " with rifle", [$attacker->name]);
+            $self->event($attacker->name . " missed " . $defender->name . " with rifle", [$attacker->name], [$attacker->name]);
         }
         $attacker->attack_limit(0); #Avoid a new rifle order is misinterpreted as resume
         $attacker->add_energy(-1 * RIFLE_ENERGY);
@@ -851,7 +872,7 @@ sub manage_action
         {
             $mecha->add_status('sensor-array-linked');
         }
-        $self->event($mecha->name . " landed on " . ELEMENT_TAGS->{$mecha->movement_target->{type}} . " " . $mecha->movement_target->{name} , [$mecha->name]);
+        $self->event($mecha->name . " landed on " . ELEMENT_TAGS->{$mecha->movement_target->{type}} . " " . $mecha->movement_target->{name} , [$mecha->name], [$mecha->name]);
     }
     
 }
@@ -875,6 +896,7 @@ sub event
     my $self = shift;
     my $message = shift;
     my $involved_input = shift;
+    my $stuck_input = shift;
     return if $self->no_events;
     $self->log($message);
 
@@ -915,6 +937,11 @@ sub event
             $m->cmd_fetched(0);
         }
         $self->generated_events($self->generated_events + 1) if $message !~ /^IA command issued/;
+    }
+    for(@{$stuck_input})
+    {
+        my $m = $self->get_mecha_by_name($_);
+        $m->add_status('stuck');
     }
 }
 
@@ -1133,7 +1160,6 @@ sub calculate_sighting_matrix
                         $self->sighting_matrix->{$m->name}->{$other->name} -= 1;
                         if($self->sighting_matrix->{$m->name}->{$other->name} == 0)
                         {
-                            $self->event($m->name . " lost contact with " . $other->name, [ $m->name ]);
                             if($self->sighting_matrix->{__factions}->{$m->faction}->{$other->name})
                             {
                                 $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} = $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} - 1;
@@ -1141,6 +1167,45 @@ sub calculate_sighting_matrix
                                 {
                                     say "WARNING: " . $m->faction . " -> " . $other->name . " below 0";
                                     $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} = 0;
+                                }
+                                if($self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} == 0)
+                                {
+                                    my $check_faction = $m->faction;
+                                    my $check_name = $other->name;
+                                    my $involved = {};
+                                    my $stuck = [];
+                                    foreach my $sighting (@{$self->armies})
+                                    {
+                                        if($sighting->faction eq $check_faction)
+                                        {
+                                            if($sighting->relevant_target('MEC', $check_name))
+                                            {
+                                                if($sighting->attack eq 'MACHINEGUN')
+                                                {
+                                                    $sighting->stop_attack();
+                                                    if($sighting->relevant_target('MEC', $check_name))
+                                                    {
+                                                        $involved->{$sighting->name} = 1;
+                                                        push @{$stuck}, $sighting->name;
+                                                    }
+                                                    else
+                                                    {
+                                                        $involved->{$sighting->name} = 0;
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    $involved->{$sighting->name} = 1;
+                                                    push @{$stuck}, $sighting->name;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                $involved->{$sighting->name} = 0;
+                                            }
+                                        }
+                                    }                            
+                                    $self->event($m->name . " lost contact with " . $other->name, $involved, $stuck);
                                 }
                             }
                             else

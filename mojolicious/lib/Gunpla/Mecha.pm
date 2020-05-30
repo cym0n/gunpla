@@ -28,6 +28,13 @@ has cmd_index => (
     is => 'rw',
     default => 0
 );
+has inertia => (
+    is => 'rw',
+    default => 0
+);
+has suspended_command => (
+    is => 'rw',
+);
 
 #Navigation
 has movement_target => (
@@ -181,6 +188,15 @@ sub mod_action_gauge
     my $new_value = $self->action_gauge + $value;
     $new_value = $new_value < 0 ? 0 : $new_value;
     $self->action_gauge($new_value);
+}
+
+sub mod_inertia
+{
+    my $self = shift;
+    my $value = shift;
+    my $new_value = $self->inertia + $value;
+    $new_value = $new_value < 0 ? 0 : $new_value;
+    $self->inertia($new_value);
 }
 
 
@@ -355,6 +371,33 @@ sub plan_and_move
     }
 }
 
+sub set_drift
+{
+    my $self = shift;
+    my $rand = shift;
+    my @dirs = qw (x y z);
+    my $direction = $dirs[$rand];
+    return if($self->get_velocity() == 0);
+    return if($self->velocity_vectory->$direction == 0);
+    my $course = { axis => $direction,
+                   direction => $self->velocity_vectory->$direction > 0 ? 1 : -1,
+                   steps => 1 };
+    $self->course($course);
+}
+
+sub drift_and_move
+{
+    my $self = shift;
+    my $rand = shift;
+    if(! $self->move())
+    {
+        $self->set_drift($rand);
+        $self->move();
+    }
+}
+
+
+
 sub energy_routine
 {
     my $self = shift;
@@ -448,8 +491,8 @@ sub command
             $self->stop_attack();    
             $self->attack('SWORD');
             $self->set_destination($target->position->clone());
-            $self->movement_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
-            $self->attack_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
+            $self->movement_target({ type => 'MEC', 'name' => $target->name, class => 'dynamic'  });
+            $self->attack_target({ type => 'MEC', 'name' => $target->name, class => 'dynamic'  });
             $self->attack_limit(SWORD_ATTACK_TIME_LIMIT);
             $self->log("Attack gauge start is " . SWORD_GAUGE_VELOCITY_BONUS . " * " . $actual_velocity);
             $self->attack_gauge(SWORD_GAUGE_VELOCITY_BONUS * $actual_velocity);
@@ -493,7 +536,7 @@ sub command
             $self->stop_movement();
             $self->attack_limit(RIFLE_ATTACK_TIME_LIMIT);
             $self->attack('RIFLE');
-            $self->attack_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
+            $self->attack_target({ type => 'MEC', 'name' => $target->name, class => 'dynamic'  });
             $self->attack_gauge(0);
         }
     }
@@ -517,7 +560,7 @@ sub command
             $self->stop_attack();    
             $self->attack_limit(MACHINEGUN_SHOTS);
             $self->attack('MACHINEGUN');
-            $self->attack_target({ type => 'mecha', 'name' => $target->name, class => 'dynamic'  });
+            $self->attack_target({ type => 'MEC', 'name' => $target->name, class => 'dynamic'  });
             $self->attack_gauge(0);
         }
     }
@@ -559,6 +602,7 @@ sub command
     {
         die "Unrecognized command $command";    
     }
+    $self->delete_status('stuck');
 }
 
 
@@ -583,6 +627,8 @@ sub to_mongo
         velocity_target => $self->velocity_target,
         cmd_index => $self->cmd_index,
         cmd_fetched => $self->cmd_fetched,
+        inertia => $self->inertia,
+        suspended_command => $self->suspended_command,
         sensor_range => $self->sensor_range,
         life => $self->life,
         attack => $self->attack,
@@ -625,6 +671,25 @@ sub log
     open(my $fh, '>> ' . $self->log_file);
     print {$fh} $message . "\n";
     close($fh);
+}
+
+sub relevant_target
+{
+    my $self = shift;
+    my $type = shift;
+    my $name = shift;
+    $self->log("Checking if $type $name is relevant " . Dumper($self->movement_target) . " " . Dumper($self->attack_target));
+    if(($self->movement_target->{type} eq $type && $self->movement_target->{name} eq $name) ||
+       ($self->attack_target->{type}   eq $type && $self->attack_target->{name}   eq $name))
+    {
+        $self->log("IT IS");
+        return 1;
+    }
+    else
+    {
+        $self->log("IT IS NOT");
+        return 0;
+    }
 }
 
 

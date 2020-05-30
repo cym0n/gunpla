@@ -16,7 +16,7 @@ my $commands2 = { 'RX78' => { command =>'guard', params => '20000' }};
 diag("RX78 lands on the sensor array and sights Dummy");
 is(Gunpla::Test::emulate_commands($world, $commands1), 2);
 is_deeply($world->get_events('RX78'), [ 'RX78 landed on sensor array 0', 'RX78 sighted Dummy' ]);
-is_deeply($world->armies->[0]->status, [ 'landed', 'sensor-array-linked' ]);
+is_deeply($world->armies->[0]->status, [ 'landed', 'sensor-array-linked', 'stuck' ]);
 
 Gunpla::Test::clean_db('autotest', 1);
 done_testing();
