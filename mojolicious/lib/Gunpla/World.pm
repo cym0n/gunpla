@@ -63,6 +63,10 @@ has control => (
     is => 'rw',
     default => sub { {} }
 );
+has inertia => (
+    is => 'rw',
+    default => 1
+);
 
 #Only for test purpose
 has dice_results => (
@@ -418,7 +422,7 @@ sub add_command
     my $velocity = $command_mongo->{velocity};
     my $m = $self->get_mecha_by_name($mecha);
     eval {
-        if($m->inertia == 0)
+        if($m->inertia == 0 || ! $self->inertia)
         {
              $self->log("ADD COMMAND to $mecha: " . $self->command_string($command_mongo));
              if($self->available_commands->{$command_mongo->{command}}->{filter})

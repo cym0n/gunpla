@@ -23,7 +23,8 @@ sub reload
     my $world = shift;
     my $name = $world->name;
     my $dice = $world->dice_results;
-    $world =  Gunpla::World->new(name => $name, dice_results => $dice, log_file => "$name.log");
+    my $inertia = $world->inertia;
+    $world =  Gunpla::World->new(name => $name, dice_results => $dice, log_file => "$name.log", inertia => $inertia);
     $world->load;
     return $world;
 }
