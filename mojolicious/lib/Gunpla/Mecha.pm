@@ -378,9 +378,9 @@ sub set_drift
     my @dirs = qw (x y z);
     my $direction = $dirs[$rand];
     return if($self->get_velocity() == 0);
-    return if($self->velocity_vectory->$direction == 0);
+    return if($self->velocity_vector->$direction == 0);
     my $course = { axis => $direction,
-                   direction => $self->velocity_vectory->$direction > 0 ? 1 : -1,
+                   direction => $self->velocity_vector->$direction > 0 ? 1 : -1,
                    steps => 1 };
     $self->course($course);
 }
@@ -456,7 +456,7 @@ sub command
     if($command eq 'flywp')
     {
         $self->stop_attack();    
-        $self->stop_landing();    
+        $self->stop_action();    
         $self->set_destination($target->{position}->clone());
         $self->movement_target({ type => 'WP', 'name' => $target->{name}, class => 'fixed'  });
         $self->velocity_target($velocity);
@@ -464,7 +464,7 @@ sub command
     elsif($command eq 'flyhot')
     {
         $self->stop_attack();    
-        $self->stop_landing();    
+        $self->stop_action();    
         $self->set_destination($target->{position}->clone());
         $self->movement_target({ type => $target->{type}, 'name' => $target->{id}, class => 'fixed', nearby => 1  });
         $self->velocity_target($velocity);
@@ -472,14 +472,14 @@ sub command
     elsif($command eq 'flymec')
     {
         $self->stop_attack();    
-        $self->stop_landing();    
+        $self->stop_action();    
         $self->set_destination($target->position->clone());
         $self->movement_target({ type => 'MEC', 'name' => $target->name, class => 'dynamic', nearby => 1  });
         $self->velocity_target($velocity);
     }
     elsif($command eq 'sword')
     {
-        $self->stop_landing();    
+        $self->stop_action();    
         if($self->attack && $self->attack eq 'SWORD' && $self->attack_limit > 0 && $self->attack_target->{name} eq $target->name)
         {
             #Resume. We do nothing, leaving sword going on
@@ -510,7 +510,7 @@ sub command
         {
             $position = $target->position;
         }
-        $self->stop_landing();    
+        $self->stop_action();    
         $self->stop_attack();    
         my $destination = $self->position->away_from($position, GET_AWAY_DISTANCE);
         $self->set_destination($destination);
@@ -531,7 +531,7 @@ sub command
         }
         else
         {
-            $self->stop_landing();    
+            $self->stop_action();    
             $self->stop_attack();    
             $self->stop_movement();
             $self->attack_limit(RIFLE_ATTACK_TIME_LIMIT);
@@ -543,6 +543,7 @@ sub command
     elsif($command eq 'land')
     {
         $self->stop_attack();    
+        $self->stop_action();    
         $self->action("LAND");
         $self->set_destination($target->{position}->clone());
         $self->velocity_target(LANDING_VELOCITY);
@@ -567,6 +568,7 @@ sub command
     elsif($command eq 'boost')
     {
         $self->stop_attack();    
+        $self->stop_action();    
         $self->action("BOOST");
         $self->action_gauge(BOOST_GAUGE);
     }
@@ -585,7 +587,7 @@ sub command
         }
         $true_destination = $self->destination;
         $self->stop_attack();    
-        $self->stop_landing();    
+        $self->stop_action();    
         $self->set_destination($true_destination->clone());
         $self->movement_target({ type => 'LMEC', 'name' => $target->{name}, class => 'fixed'  });
         $self->velocity_target($velocity);

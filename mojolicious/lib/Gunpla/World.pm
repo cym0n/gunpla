@@ -451,6 +451,7 @@ sub add_command
         }
         else
         {
+            $self->log("SUSPENDED COMMAND for $mecha: " . $self->command_string($command_mongo));
             $m->suspended_command($command_mongo);
         }
     };
@@ -733,7 +734,6 @@ sub cmd_index_up
         if($m->waiting)
         {
             $m->cmd_index($m->cmd_index+1);
-            $self->log($m->name . " cmd index up to " . $m->cmd_index);
         }
     }
 }
@@ -1227,7 +1227,7 @@ sub log
     return if ! $self->log_file;
     my $message = shift;
     open(my $fh, '>> ' . $self->log_file);
-    print {$fh} $message . "\n";
+    print {$fh} "[G:" . $self->name . "] [T" . $self->timestamp . "] " .$message . "\n";
     close($fh);
 }
 

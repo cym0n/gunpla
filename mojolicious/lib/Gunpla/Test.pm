@@ -11,7 +11,8 @@ sub test_bootstrap
     my $name = shift || 'autotest';
     clean_db($name);
     my $world = Gunpla::World->new(name => $name, dice_results => $dice, log_file => "$name.log");
-    say STDERR "--- Scenario: $scenario";
+    $world->log("--- BOOSTRAP --- Scenario: $scenario");
+    $world->log("  Tampered dice values") if @{$dice};
     $world->init_scenario($scenario);
     $world->save();
     return $world;
@@ -22,7 +23,7 @@ sub reload
     my $world = shift;
     my $name = $world->name;
     my $dice = $world->dice_results;
-    $world =  Gunpla::World->new(name => $name, dice_results => $dice);
+    $world =  Gunpla::World->new(name => $name, dice_results => $dice, log_file => "$name.log");
     $world->load;
     return $world;
 }
