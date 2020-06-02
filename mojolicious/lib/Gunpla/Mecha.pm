@@ -479,7 +479,6 @@ sub command
     }
     elsif($command eq 'sword')
     {
-        $self->stop_action();    
         if($self->attack && $self->attack eq 'SWORD' && $self->attack_limit > 0 && $self->attack_target->{name} eq $target->name)
         {
             #Resume. We do nothing, leaving sword going on

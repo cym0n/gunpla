@@ -24,7 +24,8 @@ sub reload
     my $name = $world->name;
     my $dice = $world->dice_results;
     my $inertia = $world->inertia;
-    $world =  Gunpla::World->new(name => $name, dice_results => $dice, log_file => "$name.log", inertia => $inertia);
+    my $log_tracing = $world->log_tracing;
+    $world =  Gunpla::World->new(name => $name, dice_results => $dice, log_file => "$name.log", inertia => $inertia, log_tracing => $log_tracing);
     $world->load;
     return $world;
 }
@@ -80,5 +81,16 @@ sub dump_api
     open(my $log, "> $file");
     print {$log} Dumper($test->tx->res->json) . "\n";
     close($log);
+}
+
+sub build_drift_dice
+{
+    my $direction = shift;
+    my $quantity = shift;
+    my @out;
+    for(my $i = 0; $i < $quantity; $i++)
+    {
+        push @out, $direction;
+    }
 }
 1;

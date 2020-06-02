@@ -77,15 +77,16 @@ has dice_results => (
 has log_file => (
     is => 'rw',
 );
+has log_tracing => (
+    is => 'rw',
+    default => sub { [] }
+);
 
 #Dummy implementation of mecha characteristics
 has mecha_templates => (
     is => 'ro',
     default => sub { {} }
 );
-
-
-
 
 
 sub add_mecha
@@ -529,7 +530,7 @@ sub action
             }
             if($m->is_status('stuck'))
             {
-                $m->drift_and_move($self->dice(0, 2));
+                $m->drift_and_move($self->dice(0, 2, "drift direction"));
             }
             else
             {
@@ -645,6 +646,7 @@ sub action
                                     if($m->attack_limit == 0)
                                     {
                                         $m->stop_attack();
+                                        $m->mod_inertia(INERTIA_RIFLE_TOO_CLOSE);
                                         $self->event($m->name . " time for rifle shot exhausted", [$m->name], [ $m->name ]);
                                     }
                                 }
@@ -771,11 +773,15 @@ sub manage_attack
                 $self->event($attacker->name . " and " . $defender->name . " attacks nullified",  [ $attacker->name, $defender->name ],  [ $attacker->name, $defender->name ] );
                 $clash = 0;
                 $attacker->stop_attack();
+                $attacker->stop_action();
                 $attacker->stop_movement();
                 $attacker->add_energy(-1 * SWORD_ENERGY);
+                $attacker->mod_inertia(INERTIA_SWORD_NULLIFIED);
+                $defender->stop_action();
                 $defender->stop_attack();
                 $defender->stop_movement();
-                $attacker->add_energy(-1 * SWORD_ENERGY);
+                $defender->add_energy(-1 * SWORD_ENERGY);
+                $defender->mod_inertia(INERTIA_SWORD_NULLIFIED);
             }
         }
         if($clash)
@@ -784,25 +790,29 @@ sub manage_attack
                                         $attacker->attack_gauge < 2000 ? 1 :
                                             $attacker->attack_gauge < 4000 ? 2 :
                                                 $attacker->attack_gauge < 5600 ? 3 : 4;
-            my $roll = $self->dice(1, 20);
+            my $roll = $self->dice(1, 20, "sword clash");
             if($roll + $gauge_bonus >= SWORD_WIN)
             {
-                $self->event($attacker->name . " slash with sword mecha " .  $defender->name, [ $attacker->name, $defender->name ],  [ $attacker->name, $defender->name ]);
                 my $damage = SWORD_DAMAGE + ($gauge_bonus * SWORD_DAMAGE_BONUS_FACTOR);
                 $defender->life($defender->life - $damage);
+                $defender->mod_inertia(INERTIA_SWORD_SLASH);
+                $self->event($attacker->name . " slash with sword mecha " .  $defender->name, [ $attacker->name, $defender->name ],  [ $attacker->name, $defender->name ]);
             }
             else
             {
+                $attacker->mod_inertia(INERTIA_SWORD_DODGE);
                 $self->event($defender->name . " dodged " .  $attacker->name, [ $attacker->name, $defender->name ], [ $attacker->name]);
             }
         }
         my @dirs = qw(x y z);
-        my $bounce_direction = $dirs[$self->dice(0, 2)];
+        my $bounce_direction = $dirs[$self->dice(0, 2, "sword bounce direction")];
         $attacker->position->$bounce_direction($attacker->position->$bounce_direction - SWORD_BOUNCE);
         $attacker->stop_attack();
+        $attacker->stop_action();
         $attacker->stop_movement();
         $defender->position->$bounce_direction($defender->position->$bounce_direction + SWORD_BOUNCE);
         $defender->stop_attack();
+        $attacker->stop_action();
         $defender->stop_movement();
         $attacker->add_energy(-1 * SWORD_ENERGY);
     }
@@ -811,7 +821,7 @@ sub manage_attack
         $attacker->attack_gauge(0);
         my $distance = $attacker->position->distance($defender->position);
         my $distance_bonus = 3 - ceil((3 * $distance) / MACHINEGUN_RANGE);
-        my $roll = $self->dice(1, 20);
+        my $roll = $self->dice(1, 20, "machingun hit");
         if($roll + $distance_bonus >= MACHINEGUN_WIN)
         {
             $defender->life($defender->life - MACHINEGUN_DAMAGE);   
@@ -841,7 +851,7 @@ sub manage_attack
         }
         my $distance = $attacker->position->distance($defender->position);
         my $distance_bonus = 3 - ceil((3 * $distance) / RIFLE_MAX_DISTANCE);
-        my $roll = $self->dice(1, 20);
+        my $roll = $self->dice(1, 20, "rifle hit");
         $roll += RIFLE_LANDED_BONUS if($attacker->is_status('landed'));
         if($roll + $distance_bonus >= RIFLE_WIN)
         {
@@ -850,6 +860,7 @@ sub manage_attack
             {
                 $defender->mod_attack_gauge(-1 * RIFLE_SWORD_GAUGE_DAMAGE);
             }
+            $defender->mod_inertia(INERTIA_RIFLE_SHOT);
             $self->event($attacker->name . " hits with rifle " .  $defender->name, [ $attacker->name, $defender->name ], [$attacker->name]);
         }
         else
@@ -886,9 +897,12 @@ sub dice
     my $self = shift;
     my $min = shift;
     my $max = shift;
+    my $reason = shift;
     if(@{$self->dice_results})
     {
-        return shift @{$self->dice_results};
+        my $v = shift @{$self->dice_results};
+        $self->log("Loaded dice: $v for $reason");
+        return $v;
     }
     my $random_range = $max - $min + 1;
     my $out = int(rand($random_range)) + $min;
@@ -903,6 +917,7 @@ sub event
     my $stuck_input = shift;
     return if $self->no_events;
     $self->log($message);
+    $self->log_tracer();
 
     my $involved = {};
     if(ref $involved_input eq 'ARRAY')
@@ -1145,6 +1160,10 @@ sub calculate_sighting_matrix
                 {
                     if($self->sighting_matrix->{$m->name}->{$other->name} == 0)
                     {
+                        if($self->sighting_matrix->{__factions}->{$other->faction}->{$m->name})
+                        {
+                            $m->mod_inertia(INERTIA_SECOND_SIGHT);
+                        }
                         $self->event($m->name . " sighted " . $other->name, [ $m->name ]);
                         if($self->sighting_matrix->{__factions}->{$m->faction}->{$other->name})
                         {
@@ -1201,7 +1220,7 @@ sub calculate_sighting_matrix
                                                 {
                                                     $involved->{$sighting->name} = 1;
                                                     push @{$stuck}, $sighting->name;
-                                                }
+                                                    }
                                             }
                                             else
                                             {
@@ -1235,6 +1254,15 @@ sub log
     close($fh);
 }
 
+sub log_tracer
+{
+    my $self = shift;
+    foreach my $mname (@{$self->log_tracing})
+    {
+        my $m = $self->get_mecha_by_name($mname);
+        $self->log("### " . $m->name . " " . $m->position->as_string . " " . $m->inertia . " " . $m->energy . " " . $m->life);
+    }
+}
 
 1;
 
