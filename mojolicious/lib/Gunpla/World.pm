@@ -10,6 +10,7 @@ use JSON::XS;
 use Gunpla::Constants ':all';
 use Gunpla::Position;
 use Gunpla::Mecha;
+use Gunpla::Sight;
 use Data::Dumper;
 
 
@@ -23,7 +24,7 @@ has waypoints => (
 );
 
 has armies => (
-    is => 'ro',
+    is => 'rw',
     default => sub { [] }
 );
 has map_elements => (
@@ -37,7 +38,6 @@ has spawn_points => (
 );
 has sighting_matrix => (
     is => 'rw',
-    default => sub { {} }
 );
 has generated_events => (
     is => 'rw',
@@ -66,6 +66,10 @@ has control => (
 has inertia => (
     is => 'rw',
     default => 1
+);
+has cemetery => (
+    is => 'rw',
+    default => sub { [] }
 );
 
 #Only for test purpose
@@ -342,10 +346,12 @@ sub init_scenario
             $self->control->{$values[1]} = $values[2];
         }
     }
-    $self->no_events(1);
-    $self->calculate_sighting_matrix();
-    $self->no_events(0);
+    my $sight = Gunpla::Sight->new();
+    $sight->init($self->armies);
+    $self->sighting_matrix($sight);
+    $self->sighting_matrix->calculate(undef, $self->armies); #Trashing away events
     $self->ia();
+    $self->log_sighting_matrix();
 }
 
 sub get_map_element
@@ -664,7 +670,8 @@ sub action
             {
                 $self->event($m->name . " exhausted energy", [$m->name]);
             }
-            $self->calculate_sighting_matrix($m->name);
+            my @out_events = $self->sighting_matrix->calculate($m->name, $self->armies);
+            $self->process_sight_events(@out_events);
         }
         $counter++;
         $self->timestamp($self->timestamp+1);
@@ -677,6 +684,66 @@ sub action
     $self->ia(1) unless $steps && $counter == $steps;
     return $self->generated_events();
 }
+
+sub process_sight_events
+{
+    my $self = shift;
+    my @events = @_;
+    foreach my $e (@events)
+    {
+        if($e->[2] == 1)
+        {
+            $self->event($e->[0] . " sighted " . $e->[1], [ $e->[0] ]);
+        }
+        elsif($e->[2] == -1)
+        {
+            my $m = $self->get_mecha_by_name($e->[0]);
+            my $other = $self->get_mecha_by_name($e->[1]);
+            my $check_faction = $m->faction;
+            my $check_name = $other->name;
+            if(! $self->sighting_matrix->see_faction($check_faction, $check_name))
+            {
+                my $involved = {};
+                my $stuck = [];
+                foreach my $sighting (@{$self->armies})
+                {
+                    if($sighting->faction eq $check_faction)
+                    {
+                        if($sighting->relevant_target('MEC', $check_name))
+                        {
+                            if($sighting->attack eq 'MACHINEGUN')
+                            {
+                                $sighting->stop_attack();
+                                if($sighting->relevant_target('MEC', $check_name))
+                                {
+                                    $involved->{$sighting->name} = 1;
+                                    push @{$stuck}, $sighting->name;
+                                }
+                                else
+                                {
+                                    $involved->{$sighting->name} = 0;
+                                }
+                            }
+                            else
+                            {
+                                $involved->{$sighting->name} = 1;
+                                push @{$stuck}, $sighting->name;
+                            }
+                        }
+                        else
+                        {
+                            $involved->{$sighting->name} = 0;
+                        }
+                    }
+                }                            
+                $self->event($m->name . " lost contact with " . $other->name, $involved, $stuck);
+            }
+        }
+    }
+
+}
+
+
 
 sub ia
 {
@@ -810,11 +877,12 @@ sub manage_attack
         $attacker->stop_attack();
         $attacker->stop_action();
         $attacker->stop_movement();
+        $attacker->add_energy(-1 * SWORD_ENERGY);
         $defender->position->$bounce_direction($defender->position->$bounce_direction + SWORD_BOUNCE);
         $defender->stop_attack();
-        $attacker->stop_action();
+        $defender->stop_action();
         $defender->stop_movement();
-        $attacker->add_energy(-1 * SWORD_ENERGY);
+        $self->collect_dead();
     }
     elsif($attack eq 'MACHINEGUN')
     {
@@ -841,6 +909,7 @@ sub manage_attack
             $self->event($attacker->name . " ended machine gun shots", [ $attacker->name ]);
             $attacker->stop_attack();
         }
+        $self->collect_dead();
     }
     elsif($attack eq 'RIFLE')
     {
@@ -869,6 +938,7 @@ sub manage_attack
         }
         $attacker->attack_limit(0); #Avoid a new rifle order is misinterpreted as resume
         $attacker->add_energy(-1 * RIFLE_ENERGY);
+        $self->collect_dead();
     }
 }
 
@@ -892,6 +962,26 @@ sub manage_action
     
 }
 
+sub collect_dead
+{
+    my $self = shift;
+    my @new_alive = ();
+    foreach my $m (@{$self->armies})
+    {
+        if($m->life <= 0)
+        {
+            push @{$self->cemetery}, $m;
+            $self->log($m->name . " removed from game");
+        }
+        else
+        {
+            push @new_alive, $m;
+        }
+    }
+    $self->armies(\@new_alive);
+}
+
+
 sub dice
 {
     my $self = shift;
@@ -901,7 +991,7 @@ sub dice
     if(@{$self->dice_results})
     {
         my $v = shift @{$self->dice_results};
-        $self->log("Loaded dice: $v for $reason");
+        $self->log("Loaded dice: $v for $reason") if $reason ne "drift direction";
         return $v;
     }
     my $random_range = $max - $min + 1;
@@ -918,6 +1008,7 @@ sub event
     return if $self->no_events;
     $self->log($message);
     $self->log_tracer();
+    $self->log_sighting_matrix();
 
     my $involved = {};
     if(ref $involved_input eq 'ARRAY')
@@ -1032,6 +1123,10 @@ sub save
     {
         $db->get_collection('mechas')->insert_one($m->to_mongo);
     }
+    foreach my $m (@{$self->cemetery})
+    {
+        $db->get_collection('mechas')->insert_one($m->to_mongo);
+    }
     foreach my $wp (keys %{$self->waypoints})
     {
         my $wp_mongo = {
@@ -1053,7 +1148,7 @@ sub save
         $db->get_collection('map')->insert_one($hotspot);
     }
 
-    my $sighting_matrix = $self->sighting_matrix;
+    my $sighting_matrix = $self->sighting_matrix->to_mongo();;
     $sighting_matrix->{status_element} = 'sighting_matrix';
     $db->get_collection('status')->insert_one($sighting_matrix);
     $db->get_collection('status')->insert_one({status_element => 'timestamp', timestamp => $self->timestamp});
@@ -1083,9 +1178,16 @@ sub load
     my $mongo = MongoDB->connect();
     my $db = $mongo->get_database('gunpla_' . $self->name);
     my @mecha = $db->get_collection('mechas')->find()->all();
-    for(@mecha)
+    foreach my $m (@mecha)
     {
-        push @{$self->armies}, Gunpla::Mecha->from_mongo($_);
+        if($m->{life} > 0)
+        {
+            push @{$self->armies}, Gunpla::Mecha->from_mongo($m);
+        }
+        else
+        {
+            push @{$self->cemetery}, Gunpla::Mecha->from_mongo($m);
+        }
     }
     my @map_points = $db->get_collection('map')->find()->all();
     foreach my $mapp (@map_points)
@@ -1106,7 +1208,11 @@ sub load
     }
     my ( $sighting_matrix ) = $db->get_collection('status')->find({ status_element => 'sighting_matrix' })->all();
     delete $sighting_matrix->{status_element};
-    $self->sighting_matrix($sighting_matrix);
+    my $sight = Gunpla::Sight->new();
+    $self->log("Loading sight: " . Dumper($sighting_matrix));
+    $sight->load($sighting_matrix);
+    $self->sighting_matrix($sight);
+    $self->log_sighting_matrix();
     my ( $timestamp ) = $db->get_collection('status')->find({ status_element => 'timestamp' })->all();
     $self->timestamp($timestamp->{timestamp});
     my ( $log_file ) = $db->get_collection('status')->find({ status_element => 'log_file' })->all();
@@ -1124,124 +1230,27 @@ sub load
     }
 }
 
-
-sub calculate_sighting_matrix
+sub remove_from_sighing_matrix
 {
     my $self = shift;
     my $mecha_name = shift;
-    my $silent = shift;
-    my @do = ();
-    if($mecha_name)
+    my $m = $self->get_mecha_by_name($mecha_name);
+    foreach my $other (@{$self->armies})
     {
-        @do = ( $self->get_mecha_by_name($mecha_name) );
-    }
-    else
-    {
-        @do = @{$self->armies};
-    }
-    foreach my $m (@do)
-    {
-        foreach my $other (@{$self->armies})      
+        if($m->faction ne $other->faction)
         {
-            if($m->faction ne $other->faction) #Mechas of the same faction are always visible each other 
+            if($self->sighting_matrix->{$m->name}->{$other->name} > 0)
             {
-                if(! exists $self->sighting_matrix->{$m->name}->{$other->name})
+                $self->sighting_matrix->{$m->name}->{$other->name} = 0;
+                if($self->sighting_matrix->{__factions}->{$m->faction}->{$other->name})
                 {
-                    $self->sighting_matrix->{$m->name}->{$other->name} = 0;
-                }
-                my $threshold = $m->sensor_range;
-                if($threshold > 0) #Blind mechas remain blind
-                {
-                    $threshold += SIGHT_SENSOR_ARRAY_BONUS if $m->is_status('sensor-array-linked');
-                    $threshold -= SIGHT_LANDED_BONUS if $other->is_status('landed');
-                    $threshold = SIGHT_MINIMUM if $threshold < SIGHT_MINIMUM;
-                }
-                if($m->position->distance($other->position) < $threshold)
-                {
-                    if($self->sighting_matrix->{$m->name}->{$other->name} == 0)
-                    {
-                        if($self->sighting_matrix->{__factions}->{$other->faction}->{$m->name})
-                        {
-                            $m->mod_inertia(INERTIA_SECOND_SIGHT);
-                        }
-                        $self->event($m->name . " sighted " . $other->name, [ $m->name ]);
-                        if($self->sighting_matrix->{__factions}->{$m->faction}->{$other->name})
-                        {
-                            $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} = $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} + 1;
-                        }
-                        else
-                        {
-                            $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} = 1;
-                        }
-                    }
-                    $self->sighting_matrix->{$m->name}->{$other->name} = SIGHT_TOLERANCE;
-                }
-                else
-                {
-                    if($self->sighting_matrix->{$m->name}->{$other->name} > 0)
-                    {
-                        $self->sighting_matrix->{$m->name}->{$other->name} -= 1;
-                        if($self->sighting_matrix->{$m->name}->{$other->name} == 0)
-                        {
-                            if($self->sighting_matrix->{__factions}->{$m->faction}->{$other->name})
-                            {
-                                $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} = $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} - 1;
-                                if($self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} < 0)
-                                {
-                                    say "WARNING: " . $m->faction . " -> " . $other->name . " below 0";
-                                    $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} = 0;
-                                }
-                                if($self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} == 0)
-                                {
-                                    my $check_faction = $m->faction;
-                                    my $check_name = $other->name;
-                                    my $involved = {};
-                                    my $stuck = [];
-                                    foreach my $sighting (@{$self->armies})
-                                    {
-                                        if($sighting->faction eq $check_faction)
-                                        {
-                                            if($sighting->relevant_target('MEC', $check_name))
-                                            {
-                                                if($sighting->attack eq 'MACHINEGUN')
-                                                {
-                                                    $sighting->stop_attack();
-                                                    if($sighting->relevant_target('MEC', $check_name))
-                                                    {
-                                                        $involved->{$sighting->name} = 1;
-                                                        push @{$stuck}, $sighting->name;
-                                                    }
-                                                    else
-                                                    {
-                                                        $involved->{$sighting->name} = 0;
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    $involved->{$sighting->name} = 1;
-                                                    push @{$stuck}, $sighting->name;
-                                                    }
-                                            }
-                                            else
-                                            {
-                                                $involved->{$sighting->name} = 0;
-                                            }
-                                        }
-                                    }                            
-                                    $self->event($m->name . " lost contact with " . $other->name, $involved, $stuck);
-                                }
-                            }
-                            else
-                            {
-                                say "WARNING: " . $m->faction . " -> " . $other->name . " sighting matrix wasn't present";
-                                $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} = 0;
-                            }
-                        }
-                    }
+                    $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} -= 1;
+                    $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} = 0 if $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} < 0;
                 }
             }
         }
     }
+    delete $self->sigting_matrix->{$m->name};
 }
 
 sub log
@@ -1262,6 +1271,14 @@ sub log_tracer
         my $m = $self->get_mecha_by_name($mname);
         $self->log("### " . $m->name . " " . $m->position->as_string . " " . $m->inertia . " " . $m->energy . " " . $m->life);
     }
+}
+
+sub log_sighting_matrix
+{
+    my $self = shift;
+    $self->log("### SIGHTING MATRIX");
+    $self->log("MECHAS: " . Dumper($self->sighting_matrix->matrix));
+    $self->log("FACTIONS: " .Dumper($self->sighting_matrix->factions));
 }
 
 1;

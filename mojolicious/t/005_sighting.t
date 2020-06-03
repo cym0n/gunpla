@@ -15,7 +15,7 @@ is(Gunpla::Test::emulate_commands($world,
 1);
 
 diag("Checking game status after the event");
-is($world->sighting_matrix->{'RX78'}->{'Hyakushiki'}, 10000);
+is($world->sighting_matrix->matrix->{'RX78'}->{'Hyakushiki'}, 10000);
 is($world->armies->[0]->waiting, 1);
 is($world->armies->[0]->cmd_index, 1);
 is($world->armies->[0]->position->x, 68758);
@@ -35,7 +35,7 @@ is(Gunpla::Test::emulate_commands($world,
 is_deeply($world->get_events('RX78'), [ 'RX78 lost contact with Hyakushiki' ], "Checking event generation");
 
 diag("Checking game status after the event");
-is($world->sighting_matrix->{'RX78'}->{'Hyakushiki'}, 0, "RX78 Sighting matrix");
+is($world->sighting_matrix->matrix->{'RX78'}->{'Hyakushiki'}, 0, "RX78 Sighting matrix");
 is($world->armies->[0]->waiting, 1, "RX79 Waiting");
 is($world->armies->[0]->cmd_index, 2, "RX78 CMD index");
 is($world->armies->[0]->position->x, 67836, "RX78 X position");

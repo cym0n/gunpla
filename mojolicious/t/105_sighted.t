@@ -13,9 +13,9 @@ use Gunpla::Position;
 
 my $world = Gunpla::Test::test_bootstrap('t105.csv');
 $world->get_mecha_by_name("Hyakushiki")->position(Gunpla::Position->new(x => 50000, y => 0, z => 0));
-$world->calculate_sighting_matrix("RX78"); #Sensor range: 140000
-$world->calculate_sighting_matrix("Hyakushiki"); #Sensor range: 80000
-$world->calculate_sighting_matrix("Dom"); #Sensor range: 130000
+$world->sighting_matrix->calculate("RX78" , $world->armies); #Sensor range: 140000
+$world->sighting_matrix->calculate("Hyakushiki" , $world->armies); #Sensor range: 80000
+$world->sighting_matrix->calculate("Dom" , $world->armies); #Sensor range: 130000
 $world->save();
 my $t = Test::Mojo->new('GunplaServer');
 $t->app->config->{no_login} = 1;
