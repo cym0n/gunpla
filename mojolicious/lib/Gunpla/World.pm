@@ -351,7 +351,6 @@ sub init_scenario
     $self->sighting_matrix($sight);
     $self->sighting_matrix->calculate(undef, $self->armies); #Trashing away events
     $self->ia();
-    $self->log_sighting_matrix();
 }
 
 sub get_map_element
@@ -528,6 +527,7 @@ sub action
         for(@{$self->armies})
         {
             my $m = $_;
+            next if ! $self->get_mecha_by_name($m->name); #check needed for dead mechas
             $m->mod_inertia(-1);
             if($m->inertia == 0 && $m->suspended_command)
             {
@@ -540,7 +540,7 @@ sub action
             }
             else
             {
-                if($m->movement_target)
+                if(%{$m->movement_target})
                 {
                     if($m->attack && $m->attack eq 'SWORD')
                     {
@@ -699,6 +699,7 @@ sub process_sight_events
         {
             my $m = $self->get_mecha_by_name($e->[0]);
             my $other = $self->get_mecha_by_name($e->[1]);
+            next if ! $m || ! $other;
             my $check_faction = $m->faction;
             my $check_name = $other->name;
             if(! $self->sighting_matrix->see_faction($check_faction, $check_name))
@@ -970,6 +971,7 @@ sub collect_dead
     {
         if($m->life <= 0)
         {
+            $self->sighting_matrix->remove_from_matrix($m, $self->armies);
             push @{$self->cemetery}, $m;
             $self->log($m->name . " removed from game");
         }
@@ -979,6 +981,9 @@ sub collect_dead
         }
     }
     $self->armies(\@new_alive);
+    my @out_events = $self->sighting_matrix->calculate(undef, $self->armies);
+    $self->process_sight_events(@out_events);
+    $self->log_sighting_matrix();
 }
 
 
@@ -1212,7 +1217,6 @@ sub load
     $self->log("Loading sight: " . Dumper($sighting_matrix));
     $sight->load($sighting_matrix);
     $self->sighting_matrix($sight);
-    $self->log_sighting_matrix();
     my ( $timestamp ) = $db->get_collection('status')->find({ status_element => 'timestamp' })->all();
     $self->timestamp($timestamp->{timestamp});
     my ( $log_file ) = $db->get_collection('status')->find({ status_element => 'log_file' })->all();
@@ -1277,8 +1281,7 @@ sub log_sighting_matrix
 {
     my $self = shift;
     $self->log("### SIGHTING MATRIX");
-    $self->log("MECHAS: " . Dumper($self->sighting_matrix->matrix));
-    $self->log("FACTIONS: " .Dumper($self->sighting_matrix->factions));
+    $self->log("\n" . $self->sighting_matrix->to_string());
 }
 
 1;

@@ -39,7 +39,7 @@ has suspended_command => (
 #Navigation
 has movement_target => (
     is => 'rw',
-    default => undef,
+    default => sub { { } },
 );
 has position => (
     is => 'rw',
@@ -215,7 +215,7 @@ sub stop_action
 sub stop_movement
 {
     my $self = shift;
-    $self->movement_target(undef);
+    $self->movement_target({});
     $self->course->{steps} = 0;
     $self->course->{direction} = 0;
     $self->course->{axis} = '';
@@ -679,16 +679,13 @@ sub relevant_target
     my $self = shift;
     my $type = shift;
     my $name = shift;
-    $self->log("Checking if $type $name is relevant " . Dumper($self->movement_target) . " " . Dumper($self->attack_target));
-    if(($self->movement_target->{type} eq $type && $self->movement_target->{name} eq $name) ||
-       ($self->attack_target->{type}   eq $type && $self->attack_target->{name}   eq $name))
+    if(($self->movement_target && $self->movement_target->{type} && $self->movement_target->{type} eq $type &&  $self->movement_target->{name} && $self->movement_target->{name} eq $name) ||
+       ($self->attack_target   && $self->attack_target->{type}   && $self->attack_target->{type}   eq $type && $self->attack_target->{name}    && $self->attack_target->{name}   eq $name))
     {
-        $self->log("IT IS");
         return 1;
     }
     else
     {
-        $self->log("IT IS NOT");
         return 0;
     }
 }
