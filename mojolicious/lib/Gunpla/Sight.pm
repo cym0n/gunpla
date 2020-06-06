@@ -5,9 +5,6 @@ use Moo;
 use Gunpla::Constants ":all";
 use Data::Dumper;
 
-has world => (
-    is => 'rw',
-);
 has matrix => (
     is => 'rw',
     default => sub { {} },
@@ -33,6 +30,15 @@ sub init
             }
         }
     }
+}
+
+sub reset
+{
+    my $self = shift;
+    my $armies = shift;
+    $self->init($armies);
+    $self->calculate(undef, $armies);
+
 }
 
 sub mod_faction
@@ -118,49 +124,38 @@ sub calculate
                     {
                         $self->mod_faction($m->faction, $other->name, -1);
                         push @out_events, [ $m->name, $other->name, -1];
-                            #if($self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} == 0)
-                            #{
-                            #    my $check_faction = $m->faction;
-                            #    my $check_name = $other->name;
-                            #    my $involved = {};
-                            #    my $stuck = [];
-                            #    foreach my $sighting (@{$self->armies})
-                            #    {
-                            #        if($sighting->faction eq $check_faction)
-                            #        {
-                            #            if($sighting->relevant_target('MEC', $check_name))
-                            #            {
-                            #                if($sighting->attack eq 'MACHINEGUN')
-                            #                {
-                            #                    $sighting->stop_attack();
-                            #                    if($sighting->relevant_target('MEC', $check_name))
-                            #                    {
-                            #                        $involved->{$sighting->name} = 1;
-                            #                        push @{$stuck}, $sighting->name;
-                            #                    }
-                            #                    else
-                            #                    {
-                            #                        $involved->{$sighting->name} = 0;
-                            #                    }
-                            #                }
-                            #                else
-                            #                {
-                            #                    $involved->{$sighting->name} = 1;
-                            #                    push @{$stuck}, $sighting->name;
-                            #                    }
-                            #            }
-                            #            else
-                            #            {
-                            #                $involved->{$sighting->name} = 0;
-                            #            }
-                            #        }
-                            #    }                            
-                            #    $self->event($m->name . " lost contact with " . $other->name, $involved, $stuck);
-                           #}
-                   }
+                    }
                 }
             }
         }
+    }
+    return @out_events;
+}
+
+sub remove_from_matrix
+{
+    my $self = shift;
+    my $mecha = shift;
+    my $armies = shift;
+    my @out_events = ();
+    foreach my $t (@{$armies})
+    {
+        if($mecha->faction ne $t->faction)
+        {
+            if($self->matrix->{$mecha->name}->{$t->name} > 0)
+            {
+                $self->matrix->{$mecha->name}->{$t->name} = 0;
+                $self->mod_faction($mecha->faction, $t->name, -1);
+            }
+            $self->matrix->{$t->name}->{$mecha->name} = 0;
+        }
+    }
+    foreach my $f (keys %{$self->factions})
+    {
+        if($f ne $mecha->faction)
+        {
+            $self->factions->{$f}->{$mecha->name} = 0;
+        }    
     }
     return @out_events;
 }
@@ -192,9 +187,30 @@ sub load
 sub to_mongo
 {
     my $self = shift;
-    my $out = $self->matrix;
-    $out->{__factions} = $self->factions;
+    my $out = { %{$self->matrix} };
+    $out->{__factions} = { %{$self->factions} };
     return $out;
 }
+
+sub to_string
+{
+    my $self = shift;
+    my $out = "MECHAS:\n";
+    foreach my $see (keys %{$self->matrix})
+    {
+        $out .= "    $see -> [";
+        my @i_see = grep { $self->matrix->{$see}->{$_} > 0 } keys %{$self->matrix->{$see}};
+        $out .= join(",", @i_see) . "]\n";
+    }
+       $out .= "FACTIONS:\n";
+    foreach my $see (keys %{$self->factions})
+    {
+        $out .= "    $see -> [";
+        my @i_see = grep { $self->factions->{$see}->{$_} > 0 } keys %{$self->factions->{$see}};
+        $out .= join(",", @i_see) . "]\n";
+    }
+    return $out;
+}
+
 
 1;
