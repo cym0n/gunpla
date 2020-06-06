@@ -712,7 +712,7 @@ sub process_sight_events
                     {
                         if($sighting->relevant_target('MEC', $check_name))
                         {
-                            if($sighting->attack eq 'MACHINEGUN')
+                            if($sighting->attack && $sighting->attack eq 'MACHINEGUN')
                             {
                                 $sighting->stop_attack();
                                 if($sighting->relevant_target('MEC', $check_name))
@@ -1213,6 +1213,7 @@ sub load
     }
     my ( $sighting_matrix ) = $db->get_collection('status')->find({ status_element => 'sighting_matrix' })->all();
     delete $sighting_matrix->{status_element};
+    delete $sighting_matrix->{_id};
     my $sight = Gunpla::Sight->new();
     $self->log("Loading sight: " . Dumper($sighting_matrix));
     $sight->load($sighting_matrix);
