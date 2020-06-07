@@ -8,6 +8,7 @@ use MongoDB;
 use Cwd 'abs_path';
 use JSON::XS;
 use Gunpla::Constants ':all';
+use Gunpla::Utils qw(get_game_events);
 use Gunpla::Position;
 use Gunpla::Mecha;
 use Gunpla::Sight;
@@ -84,6 +85,10 @@ has log_file => (
 has log_tracing => (
     is => 'rw',
     default => sub { [] }
+);
+has log_stderr => (
+    is => 'rw',
+    default => 0
 );
 
 #Dummy implementation of mecha characteristics
@@ -329,7 +334,7 @@ sub init_scenario
                     };
                     $ia_conf = JSON::XS->new->utf8->decode($ia_conf_text);
                 }
-                $m->install_ia($counters{'MEC-IA'}, $values[3], $ia_conf);
+                $m->install_ia($self->name, $counters{'MEC-IA'}, $values[3], $ia_conf);
                 $counters{'MEC-IA'} = $counters{'MEC-IA'} + 1;
             }
             $counters{'MEC'} = $counters{'MEC'} + 1;
@@ -756,7 +761,7 @@ sub ia
         {
             if($m->ia)
             {
-                my $command = $m->decide($self);        
+                my $command = $m->decide();        
                 $command->{IA} = 1;
                 if($command)
                 {
@@ -1065,34 +1070,7 @@ sub get_events
     my $self = shift;
     my $mecha = shift;
     my $cmd_index = shift;
-    my @out = ();
-    if($mecha)
-    {
-        my $mecha_obj = $self->get_mecha_by_name($mecha);
-        $cmd_index = $mecha_obj->cmd_index if ! $cmd_index;
-        my $mongo = MongoDB->connect(); 
-        my $db = $mongo->get_database('gunpla_' . $self->name);
-        my @events = $db->get_collection('events')->find({ mecha => $mecha_obj->name, cmd_index => $cmd_index, blocking => 1})->all();
-        for(@events)
-        {
-            push @out, $_->{message},
-        } 
-    }
-    else
-    {
-        foreach my $mecha_obj (@{$self->armies})
-        {
-            $cmd_index = $mecha_obj->cmd_index if ! $cmd_index;
-            my $mongo = MongoDB->connect(); 
-            my $db = $mongo->get_database('gunpla_' . $self->name);
-            my @events = $db->get_collection('events')->find({ mecha => $mecha_obj->name, cmd_index => $cmd_index, blocking => 1})->all();
-            for(@events)
-            {
-                push @out, $_->{message},
-            } 
-        }
-    }
-    return \@out;
+    return get_game_events($self->name, $mecha, $cmd_index);
 }
 
 sub is_spawn_point
@@ -1235,37 +1213,16 @@ sub load
     }
 }
 
-sub remove_from_sighing_matrix
-{
-    my $self = shift;
-    my $mecha_name = shift;
-    my $m = $self->get_mecha_by_name($mecha_name);
-    foreach my $other (@{$self->armies})
-    {
-        if($m->faction ne $other->faction)
-        {
-            if($self->sighting_matrix->{$m->name}->{$other->name} > 0)
-            {
-                $self->sighting_matrix->{$m->name}->{$other->name} = 0;
-                if($self->sighting_matrix->{__factions}->{$m->faction}->{$other->name})
-                {
-                    $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} -= 1;
-                    $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} = 0 if $self->sighting_matrix->{__factions}->{$m->faction}->{$other->name} < 0;
-                }
-            }
-        }
-    }
-    delete $self->sigting_matrix->{$m->name};
-}
-
 sub log
 {
     my $self = shift;
     return if ! $self->log_file;
     my $message = shift;
     open(my $fh, '>> ' . $self->log_file);
-    print {$fh} "[G:" . $self->name . "] [T" . $self->timestamp . "] " .$message . "\n";
+    my $final_message = "[G:" . $self->name . "] [T" . $self->timestamp . "] " .$message . "\n";
+    print {$fh} $final_message;
     close($fh);
+    say STDERR $final_message if $self->log_stderr;
 }
 
 sub log_tracer

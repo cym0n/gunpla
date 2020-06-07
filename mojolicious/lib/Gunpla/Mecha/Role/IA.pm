@@ -17,6 +17,7 @@ has brain_module => (
 sub install_ia
 {
     my $self = shift;
+    my $game = shift;
     my $index = shift;
     my $module = shift;
     my $conf = shift;
@@ -28,6 +29,8 @@ sub install_ia
     {
         $conf = { mecha_index => $index };
     }
+    $conf->{game} = $game;
+    $conf->{mecha} = $self->name;
     eval("require $module");
     die $@ if $@;
     my $brain = $module->new(%{$conf});
@@ -39,9 +42,7 @@ sub install_ia
 sub decide
 {
     my $self = shift;
-    my $world = shift;
-    my $events = undef;#TODO fetch events
-    my $command = $self->brain_module->elaborate($self->name, $world);
+    my $command = $self->brain_module->elaborate();
     return $command;
 }
 

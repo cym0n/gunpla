@@ -2,10 +2,20 @@ package Gunpla::Mecha::IA;
 
 use v5.10;
 use Moo;
+use Gunpla::Utils qw(get_game_events);
 
 has mecha_index => (
     is => 'ro'
 );
+
+has mecha => (
+    is => 'ro',
+);
+
+has game => (
+    is => 'ro',
+);
+
 
 has highlighted_events => (
     is => 'rw',
@@ -27,11 +37,9 @@ sub elaborate
 sub event_is
 {
     my $self = shift;
-    my $world = shift;
-    my $mecha = shift;
     my $event = shift;
 
-    my $events = $world->get_events($mecha);
+    my $events = get_game_events($self->game, $self->mecha);
     if(! @{$events})
     {
         $self->highlighted_events([]);

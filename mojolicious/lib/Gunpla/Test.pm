@@ -25,7 +25,8 @@ sub reload
     my $dice = $world->dice_results;
     my $inertia = $world->inertia;
     my $log_tracing = $world->log_tracing;
-    $world =  Gunpla::World->new(name => $name, dice_results => $dice, log_file => "$name.log", inertia => $inertia, log_tracing => $log_tracing);
+    my $log_stderr = $world->log_stderr;
+    $world =  Gunpla::World->new(name => $name, dice_results => $dice, log_file => "$name.log", inertia => $inertia, log_tracing => $log_tracing, log_stderr => $log_stderr);
     $world->load;
     return $world;
 }

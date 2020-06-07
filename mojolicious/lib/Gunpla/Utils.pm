@@ -1,7 +1,7 @@
 package Gunpla::Utils;
 
 use base 'Exporter';
-our @EXPORT_OK = qw( controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction command_from_mongo_to_json get_from_id);
+our @EXPORT_OK = qw( controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction command_from_mongo_to_json get_from_id get_game_events);
 
 use Data::Dumper;
 use MongoDB;
@@ -161,4 +161,38 @@ sub get_from_id
     }
     $obj->{source} = $source;
     return $obj;
+}
+
+sub get_game_events
+{
+    my $game = shift;
+    my $mecha = shift;
+    my $cmd_index = shift;
+    my $mongo = MongoDB->connect(); 
+    my $db = $mongo->get_database('gunpla_' . $game);
+    my @out = ();
+    if($mecha)
+    {
+        my ( $mecha_obj ) = $db->get_collection('mechas')->find({ name => $mecha })->all();
+        $cmd_index = $mecha_obj->{cmd_index} if ! $cmd_index;
+        my @events = $db->get_collection('events')->find({ mecha => $mecha, cmd_index => $cmd_index, blocking => 1})->all();
+        for(@events)
+        {
+            push @out, $_->{message},
+        } 
+    }
+    else
+    {
+        my @all = $db->get_collection('mechas')->find()->all();
+        foreach my $mecha_obj (@all)
+        {
+            $cmd_index = $mecha_obj->{cmd_index} if ! $cmd_index;
+            my @events = $db->get_collection('events')->find({ mecha => $mecha_obj->{name}, cmd_index => $cmd_index, blocking => 1})->all();
+            for(@events)
+            {
+                push @out, $_->{message},
+            } 
+        }
+    }
+    return \@out;
 }
