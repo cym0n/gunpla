@@ -643,6 +643,7 @@ sub to_mongo
         energy => $self->energy,
         max_energy => $self->max_energy,
         log_file => $self->log_file,
+        IA => $self->ia_to_mongo(),
     }
 }
 
@@ -653,6 +654,7 @@ sub from_mongo
     my $position = $data->{position};
     my $destination = $data->{destination};
     my $velocity_vector = $data->{velocity_vector};
+    my $IA = $data->{IA};
     delete $data->{position};
     delete $data->{destination};
     delete $data->{velocity_vector};
@@ -660,6 +662,10 @@ sub from_mongo
     $m->position(Gunpla::Position->from_mongo($position));
     $m->destination(Gunpla::Position->from_mongo($destination));
     $m->velocity_vector(Gunpla::Position->from_mongo($velocity_vector));
+    if($IA)
+    {
+        $m->ia_from_mongo($IA);
+    }
     return $m;  
 }
 

@@ -16,4 +16,16 @@ sub elaborate
     return $self->command;
 }
 
+sub to_mongo
+{
+    my $self = shift;
+    return { 
+        package => __PACKAGE__,
+        mecha_index => $self->mecha_index,
+        mecha => $self->mecha,
+        game => $self->game,
+        command => $self->command,
+    };
+}
+
 1;

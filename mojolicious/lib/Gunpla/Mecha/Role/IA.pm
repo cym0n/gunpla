@@ -38,6 +38,19 @@ sub install_ia
     $self->ia(1);
 }
 
+sub ia_from_mongo
+{
+    my $self = shift;
+    my $conf = shift;
+    my $package = $conf->{package};
+    delete $conf->{package};
+    eval("require $package");
+    die $@ if $@;
+    my $brain = $package->new(%{$conf});
+    $self->brain_module($brain);
+    $self->ia(1);
+}
+
 
 sub decide
 {
@@ -46,5 +59,17 @@ sub decide
     return $command;
 }
 
+sub ia_to_mongo
+{
+    my $self = shift;
+    if($self->ia)
+    {
+        return $self->brain_module->to_mongo();
+    }
+    else
+    {
+        return undef;
+    }
+}
 
 1;

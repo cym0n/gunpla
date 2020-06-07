@@ -62,4 +62,14 @@ sub event_is
     }
 }
 
+sub to_mongo
+{
+    my $self = shift;
+    return { 
+        package => __PACKAGE__,
+        mecha_index => $self->mecha_index,
+        mecha => $self->mecha,
+        game => $self->game,
+    };
+}
 1;
