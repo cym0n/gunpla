@@ -2,6 +2,7 @@ package Gunpla::Mecha::IA::Patrol;
 
 use v5.10;
 use Moo;
+use Gunpla::Utils qw(sighted_by_faction target_from_mongo_to_json);
 use Data::Dumper;
 
 extends 'Gunpla::Mecha::IA';
@@ -15,52 +16,69 @@ has aim => (
     is => 'rw'
 );
 
+sub already_on_target
+{
+    my $self = shift;
+    my $target = shift;
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $self->game);
+    my @mec = $db->get_collection('mechas')->find({ faction => $self->faction})->all();
+    my $counter = 0;
+    for(@mec)
+    {
+        $counter++ if($_->{name} ne $self->mecha && $_->{IA}->{aim} && $_->{IA}->{aim} eq $target);
+    }
+    return $counter;
+}
+
 sub elaborate
 {
     my $self = shift;
-    my $mecha = shift;
-    my $world = shift;
-    my $mecha_obj = $world->get_mecha_by_name($mecha);
-    foreach my $t (keys %{$world->sighting_matrix->{__factions}->{$mecha_obj->faction}})
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $self->game);
+
+    my @mec = $db->get_collection('mechas')->find()->all();
+    my @targets;
+    for(@mec)
     {
-        my $already_on_target = 0;
-        foreach my $m (@{$world->armies})
+        if(sighted_by_faction($self->game, $self->mecha, $_))
         {
-            if($m->faction eq $mecha_obj->faction)
-            {
-                if($m->brain_module->aim eq 'MEC-' . $t)
-                {
-                    $already_on_target++;
-                }
-            }
+            my $m = target_from_mongo_to_json($self->game, $self->mecha, 'mechas', $_);
+            push @targets, $m;
         }
-        if($already_on_target < 2)
+    }
+    if(@targets)
+    {
+        foreach my $t (@targets)
         {
-            my $mecha_target = $world->get_mecha_by_name($t);
-            $self->aim('MEC-' . $t);
-            if($mecha_target->position->distance($mecha_obj->position) < 2000)
+            my $already = $self->already_on_target('MEC-' . $t->{name});
+            if($already < 2)
             {
-                return { 
-                    command => 'sword',
-                    params => 'MEC-' . $t,
-                    secondarycommand => undef,
-                    secondaryparams => undef,
-                    velocity => undef
+                $self->aim('MEC-' . $t->{name});
+                if($t->{distance} < 2000)
+                {
+                    return { 
+                        command => 'sword',
+                        params => 'MEC-' . $t,
+                        secondarycommand => undef,
+                        secondaryparams => undef,
+                        velocity => undef
+                    }
                 }
-            }
-            else
-            {
-                return { 
-                    command => 'flymec',
-                    params => 'MEC-' . $t,
-                    secondarycommand => 'machinegun',
-                    secondaryparams => 'MEC-' . $t,
-                    velocity => 6
+                else
+                {
+                    return { 
+                        command => 'flymec',
+                        params => 'MEC-' . $t,
+                        secondarycommand => 'machinegun',
+                        secondaryparams => 'MEC-' . $t,
+                        velocity => 6
+                    }
                 }
             }
         }
     }
-    if($self->event_is($world, $mecha, undef))
+    if($self->event_is(undef))
     {
         $self->aim($self->my_wp);
         return { 
@@ -71,7 +89,7 @@ sub elaborate
             velocity => 6
         }
     }
-    elsif($self->event_is($world, $mecha, 'exhausted energy'))
+    elsif($self->event_is('exhausted energy'))
     {
         return { 
             command => 'flywp',
@@ -81,7 +99,7 @@ sub elaborate
             velocity => 4
         }
     }
-    elsif($self->event_is($world, $mecha, 'reached destination'))
+    elsif($self->event_is('reached destination'))
     {
         my $target = $self->next_wp;
         $self->aim($target);
@@ -95,7 +113,15 @@ sub elaborate
     }
     else
     {
-        return undef;
+        my $target = $self->next_wp;
+        $self->aim($target);
+        return { 
+            command => 'flywp',
+            params => $target,
+            secondarycommand => undef,
+            secondaryparams => undef,
+            velocity => 4
+        }
     }
 }
 
@@ -127,5 +153,19 @@ sub next_wp
     }
 
 
+}
+
+sub to_mongo
+{
+    my $self = shift;
+    return { 
+        package => __PACKAGE__,
+        mecha_index => $self->mecha_index,
+        mecha => $self->mecha,
+        faction => $self->faction,
+        game => $self->game,
+        waypoints => $self->waypoints,
+        aim => $self->aim,
+    };
 }
 1;

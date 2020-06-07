@@ -31,6 +31,7 @@ sub install_ia
     }
     $conf->{game} = $game;
     $conf->{mecha} = $self->name;
+    $conf->{faction} = $self->faction;
     eval("require $module");
     die $@ if $@;
     my $brain = $module->new(%{$conf});

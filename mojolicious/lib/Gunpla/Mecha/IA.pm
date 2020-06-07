@@ -12,6 +12,11 @@ has mecha => (
     is => 'ro',
 );
 
+has faction => (
+    is => 'ro',
+);
+
+
 has game => (
     is => 'ro',
 );
@@ -69,6 +74,7 @@ sub to_mongo
         package => __PACKAGE__,
         mecha_index => $self->mecha_index,
         mecha => $self->mecha,
+        faction => $self->faction,
         game => $self->game,
     };
 }
