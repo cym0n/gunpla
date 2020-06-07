@@ -13,7 +13,8 @@ has command => (
 sub elaborate
 {
     my $self = shift;
-    return $self->command;
+    my %c = %{$self->command} ; 
+    return \%c;
 }
 
 sub to_mongo
