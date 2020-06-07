@@ -51,15 +51,15 @@ sub elaborate
     {
         foreach my $t (@targets)
         {
-            my $already = $self->already_on_target('MEC-' . $t->{name});
+            my $already = $self->already_on_target($t->{world_id});
             if($already < 2)
             {
-                $self->aim('MEC-' . $t->{name});
+                $self->aim($t->{world_id});
                 if($t->{distance} < 2000)
                 {
                     return { 
                         command => 'sword',
-                        params => 'MEC-' . $t,
+                        params => $t->{world_id},
                         secondarycommand => undef,
                         secondaryparams => undef,
                         velocity => undef
@@ -69,9 +69,9 @@ sub elaborate
                 {
                     return { 
                         command => 'flymec',
-                        params => 'MEC-' . $t,
+                        params => $t->{world_id},
                         secondarycommand => 'machinegun',
-                        secondaryparams => 'MEC-' . $t,
+                        secondaryparams => $t->{world_id},
                         velocity => 6
                     }
                 }

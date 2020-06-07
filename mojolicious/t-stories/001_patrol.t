@@ -14,9 +14,10 @@ use Gunpla::Position;
 
 my $world = Gunpla::Test::test_bootstrap('arena-0.csv', [ 15, 10, 15, 15, 0 ]);
 $world->log_tracing([ 'Wing', 'Leo-3']);
+$world->log_stderr(1);
 is(@{$world->armies}, 5, "Checking mechas created on init");
 is(Gunpla::Test::emulate_commands($world, 
-    { 'Wing' => { command =>'flywp', params => 'WP-blue', velocity => 4 }}
+    { 'Wing' => { command =>'flywp', params => 'WP-blue', velocity => 4 } }
 ), 1, 'The bots try to reach the edges of the "patrolling diamond" while the Wing heads for blue waypoint');
 is_deeply($world->get_events("Wing"), ["Wing sighted Leo-3"], 'Wing, having wider sensor range, detects the bot assigned to the farest waypoint: barcelona');
 my $adversary_index = 2;

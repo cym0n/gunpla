@@ -755,6 +755,7 @@ sub ia
 {
     my $self = shift;
     my $run = shift;
+    $self->save();
     foreach my $m(@{$self->armies})
     {
         if($m->waiting)
