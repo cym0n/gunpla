@@ -762,9 +762,9 @@ sub ia
             if($m->ia)
             {
                 my $command = $m->decide();        
-                $command->{IA} = 1;
                 if($command)
                 {
+                    $command->{IA} = 1;
                     $m->waiting(0);
                     $self->add_command($m->name, $command);
                     $m->cmd_fetched(1) if ! $m->waiting;
@@ -815,6 +815,7 @@ sub cmd_index_up
             $m->cmd_index($m->cmd_index+1);
         }
     }
+    $self->save_mecha_status();
 }
 
 sub manage_attack
@@ -988,7 +989,6 @@ sub collect_dead
     $self->armies(\@new_alive);
     my @out_events = $self->sighting_matrix->calculate(undef, $self->armies);
     $self->process_sight_events(@out_events);
-    $self->log_sighting_matrix();
 }
 
 
@@ -1018,7 +1018,6 @@ sub event
     return if $self->no_events;
     $self->log($message);
     $self->log_tracer();
-    $self->log_sighting_matrix();
 
     my $involved = {};
     if(ref $involved_input eq 'ARRAY')
@@ -1222,7 +1221,7 @@ sub log
     my $final_message = "[G:" . $self->name . "] [T" . $self->timestamp . "] " .$message . "\n";
     print {$fh} $final_message;
     close($fh);
-    say STDERR $final_message if $self->log_stderr;
+    print STDERR $final_message if $self->log_stderr;
 }
 
 sub log_tracer

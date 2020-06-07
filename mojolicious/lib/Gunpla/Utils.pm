@@ -178,7 +178,7 @@ sub get_game_events
         my @events = $db->get_collection('events')->find({ mecha => $mecha, cmd_index => $cmd_index, blocking => 1})->all();
         for(@events)
         {
-            push @out, $_->{message},
+            push @out, $_->{message};
         } 
     }
     else
