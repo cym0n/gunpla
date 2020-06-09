@@ -12,9 +12,9 @@ use Gunpla::Position;
 #THE STORY: Wing approaches the surveillance perimeter and encounter Leo-3. Leo-3 fly toward him with machingun. Wing first shoots with the RIFLE then turn on the BOOST to short the distance with the enemy and slash with the blade. Having the boost as bonus he wins the sword fight. One more hit finishes Leo-3
 #    Inertia doesn't really affect Leo-3 because the original command: fly to WP-barcelona keeps him on track
 
-my $world = Gunpla::Test::test_bootstrap('arena-0.csv', [ 15, 10, 15, 15, 0 ]);
+my @dice = (15, 10, 15, 15, 1, Gunpla::Test::build_drift_dice(0, 699), 20);
+my $world = Gunpla::Test::test_bootstrap('arena-0.csv', \@dice);
 $world->log_tracing([ 'Wing', 'Leo-3']);
-$world->log_stderr(1);
 is(@{$world->armies}, 5, "Checking mechas created on init");
 is(Gunpla::Test::emulate_commands($world, 
     { 'Wing' => { command =>'flywp', params => 'WP-blue', velocity => 4 } }
@@ -45,6 +45,12 @@ is_deeply($world->get_events('Wing'), ["Wing slash with sword mecha Leo-3"], "Wi
 is(Gunpla::Test::emulate_commands($world, 
     { 'Wing' => { command =>'sword', params => 'MEC-Leo-3' }}
 ), 2, "Second sword hit");
+is($world->cemetery->[0]->name, "Leo-3", "Leo-3 is dead");
+$world->log_tracing([ 'Wing', 'Leo-1', 'Leo-2', 'Leo-4' ]);
+is(Gunpla::Test::emulate_commands($world, 
+    { 'Wing' => { command =>'flywp', params => 'WP-blue', velocity => 4 } }
+), 1, 'Wing heading his target after Leo-3 defeat');
+is_deeply($world->get_events('Wing'), ["Wing reached destination: waypoint blue"], "Wing at waypoint blue: VICTORY CONDITION");
 
 Gunpla::Test::clean_db('autotest', 1);
 done_testing();
