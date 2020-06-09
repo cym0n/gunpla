@@ -468,6 +468,10 @@ sub add_command
         {
             $self->log("SUSPENDED COMMAND for $mecha: " . $self->command_string($command_mongo));
             $m->suspended_command($command_mongo);
+            if($m->is_status('stuck'))
+            {
+                $self->log("$mecha is stuck");
+            }
         }
     };
     if($@)
