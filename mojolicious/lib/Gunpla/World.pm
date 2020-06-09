@@ -686,7 +686,7 @@ sub action
         $self->timestamp($self->timestamp+1);
         if($self->save_every && $counter % $self->save_every == 0)
         {
-            $self->save_mecha_status();
+            $self->save_light();
         }
     }
     $self->cmd_index_up();
@@ -759,7 +759,7 @@ sub ia
 {
     my $self = shift;
     my $run = shift;
-    $self->save();
+    $self->save_light();
     foreach my $m(@{$self->armies})
     {
         if($m->waiting)
@@ -820,7 +820,7 @@ sub cmd_index_up
             $m->cmd_index($m->cmd_index+1);
         }
     }
-    $self->save_mecha_status();
+    $self->save_light();
 }
 
 sub manage_attack
@@ -1149,6 +1149,15 @@ sub save
 
 
 }
+
+sub save_light
+{
+    my $self = shift;
+    $self->save_mecha_status();
+    $self->save_sighting_matrix();
+}
+
+
 sub save_mecha_status
 {
     my $self = shift;
@@ -1158,6 +1167,15 @@ sub save_mecha_status
     {
         $db->get_collection('mechas')->update_one( { 'name' => $m->name }, { '$set' => $m->to_mongo });
     }
+}
+sub save_sighting_matrix
+{
+    my $self = shift;
+    my $mongo = MongoDB->connect(); 
+    my $matrix = $self->sighting_matrix->to_mongo();
+    $matrix->{status_element} = 'sighting_matrix';
+    my $db = $mongo->get_database('gunpla_' . $self->name);
+    $db->get_collection('status')->update_one({ status_element => 'sighting_matrix' }, { '$set' => $matrix });
 }
 
 
