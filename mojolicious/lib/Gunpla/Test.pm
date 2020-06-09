@@ -88,10 +88,11 @@ sub build_drift_dice
 {
     my $direction = shift;
     my $quantity = shift;
-    my @out;
+    my @out = ();
     for(my $i = 0; $i < $quantity; $i++)
     {
         push @out, $direction;
     }
+    return @out;
 }
 1;

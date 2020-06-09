@@ -999,6 +999,7 @@ sub dice
     my $min = shift;
     my $max = shift;
     my $reason = shift;
+    #$self->log("Values available: " . @{$self->dice_results}); #Keep it as counter when needed
     if(@{$self->dice_results})
     {
         my $v = shift @{$self->dice_results};
@@ -1007,6 +1008,7 @@ sub dice
     }
     my $random_range = $max - $min + 1;
     my $out = int(rand($random_range)) + $min;
+    $self->log("Regular dice: $out for $reason") if $reason ne "drift direction";
     return $out;
 }
 
@@ -1231,7 +1233,10 @@ sub log_tracer
     foreach my $mname (@{$self->log_tracing})
     {
         my $m = $self->get_mecha_by_name($mname);
-        $self->log("### " . $m->name . " " . $m->position->as_string . " " . $m->inertia . " " . $m->energy . " " . $m->life);
+        if($m)
+        {
+            $self->log("### " . $m->name . " " . $m->position->as_string . " " . $m->inertia . " " . $m->energy . " " . $m->life);
+        }
     }
 }
 
