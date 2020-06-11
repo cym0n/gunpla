@@ -143,6 +143,19 @@ sub targets
                 }
             }
         }
+        elsif($_ eq 'friends_no_wait')
+        {
+            my ( $mecha_obj ) = $db->get_collection('mechas')->find({ name => $mecha })->all();
+            my @mec = $db->get_collection('mechas')->find()->all();
+            foreach my $fm (@mec)
+            {
+                if($fm->{name} ne $mecha_obj->{name} && $fm->{faction} eq $mecha_obj->{faction} && $fm->{waiting} == 0)
+                {
+                    my $m = target_from_mongo_to_json($game, $mecha, 'mechas', $fm);
+                    push @out, $m;
+                }
+            }
+        }
     }
     if(defined $c->param('min-distance'))
     {
@@ -299,6 +312,10 @@ sub add_command
         elsif($configured_command->{filter} eq 'last')
         {
             $ok = $mecha->{movement_target}->{name} eq $target_id || $mecha->{attack_target}->{name} eq $target_id;
+        }
+        elsif($configured_command->{filter} eq 'friends-no-wait')
+        {
+            $ok = $target_obj->{name} ne $mecha->{name} && $target_obj->{faction} eq $mecha->{faction} && $target_obj->{waiting} == 0;
         }
         my $mp = target_from_mongo_to_json($params->{game}, $params->{mecha}, $target_obj->{source}, $target_obj);
         if(exists $configured_command->{min_distance})

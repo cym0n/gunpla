@@ -241,6 +241,14 @@ sub build_commands
             velocity => 0,
             min_distance => 0,
         }, 1);
+    $self->configure_command( {
+            code => 'support',
+            label => 'ASK SUPPORT',
+            filter => 'friends-no-wait',
+            params_label => 'Select friendly Mecha',
+            machinegun => 0,
+            velocity => 0,
+        }, 1);
 }
 
 
@@ -528,6 +536,7 @@ sub arrived
 {
     my $self = shift;
     my $m = shift;
+    return 'NOMOVEMENT' if ! %{$m->movement_target};
     if($m->movement_target->{class} eq 'dynamic')
     {
         $m->destination($self->get_position_from_movement_target($m->movement_target));

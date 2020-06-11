@@ -58,6 +58,7 @@ use constant FILTERS => { 'waypoints' => [ 'waypoints' ],
                           'hotspots' => [ 'hotspots' ],
                           'landing' => [ 'landing' ],
                           'last-sight' => [ 'last_sight' ],
+                          'friends-no-wait' => [ 'friends_no_wait' ],
                         };
 use constant SUBFILTERS => { 'waypoints' => ['WP'],
                              'sighted_by_me' => ['MEC'],
@@ -65,7 +66,8 @@ use constant SUBFILTERS => { 'waypoints' => ['WP'],
                              'map_elements' => ['WP', 'AST', 'SAR'],
                              'hotspots' => ['AST', 'SAR'],
                              'landing' => ['AST', 'SAR',],
-                             'last_sight' => ['MEC'] };
+                             'last_sight' => ['MEC'],
+                             'friends_no_wait' => ['MEC'] };
 
        
 use constant ENERGY_STANDARD_BONUS => 1;
