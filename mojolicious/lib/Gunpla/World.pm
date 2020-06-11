@@ -524,6 +524,37 @@ sub all_ready_and_fetched
     return 1;
 }
 
+sub arrived
+{
+    my $self = shift;
+    my $m = shift;
+    if($m->movement_target->{class} eq 'dynamic')
+    {
+        $m->destination($self->get_position_from_movement_target($m->movement_target));
+    }              
+    if($m->attack && $m->attack eq 'SWORD')
+    {
+        my $target = $self->get_mecha_by_name($m->movement_target->{name});
+        return $m->position->distance($target->position) <= SWORD_DISTANCE ? 'SWORD' : 0;
+    }
+    elsif($m->action && $m->action eq 'LAND')
+    {
+        return $m->position->distance($m->destination) <= LANDING_DISTANCE ? 'LAND' : 0;
+    }
+    elsif($m->destination->equals($m->position))
+    {
+        return 'ARRIVED';
+    }
+    elsif($m->movement_target->{nearby} && $m->position->distance($m->destination) < NEARBY)
+    {
+        return 'NEARBY';
+    }
+    else
+    {
+        return 0;
+    }
+}
+
 
 sub action
 {
@@ -551,14 +582,30 @@ sub action
             {
                 if(%{$m->movement_target})
                 {
-                    if($m->attack && $m->attack eq 'SWORD')
+                    if(my $is_arrived = $self->arrived($m))
                     {
-                        my $target = $self->get_mecha_by_name($m->movement_target->{name});
-                        $m->set_destination($target->position->clone);
-                        $m->mod_attack_gauge(1);
-                        if($m->position->distance($target->position) > SWORD_DISTANCE)
+                        if($is_arrived eq 'SWORD')
                         {
-                            $m->plan_and_move();
+                            $self->manage_attack('SWORD', $m);
+                        }
+                        elsif($is_arrived eq 'LAND')
+                        {
+                            $self->manage_action('LAND', $m);
+                        } 
+                        elsif($is_arrived eq 'ARRIVED')
+                        {
+                            $self->event($m->name . " reached destination: " . ELEMENT_TAGS->{$m->movement_target->{type}} . " " . $m->movement_target->{name}, [ $m->name ], [ $m->name ]);
+                        }
+                        elsif($is_arrived eq 'NEARBY')
+                        {
+                            $self->event($m->name . " reached the nearby of " . ELEMENT_TAGS->{$m->movement_target->{type}} . " " . $m->movement_target->{name}, [ $m->name ], [ $m->name ]);
+                        }
+                    }
+                    else
+                    {
+                        if($m->attack && $m->attack eq 'SWORD')
+                        {
+                            $m->mod_attack_gauge(1);
                             $m->attack_limit($m->attack_limit -1);
                             if($m->attack_limit == 0)
                             {
@@ -566,48 +613,15 @@ sub action
                                 $self->event($m->name . " exhausted attack charge", [$m->name], [$m->name]);
                             }
                         }
-                        else
+                        if($m->action && $m->action eq 'BOOST')
                         {
-                            $self->manage_attack('SWORD', $m);
-                        }
-                    }
-                    elsif($m->action && $m->action eq 'LAND')
-                    {
-                        if($m->position->distance($m->destination) > LANDING_DISTANCE)
-                        {
-                            $m->plan_and_move();
-                        }
-                        else
-                        {
-                            $self->manage_action('LAND', $m);
-                        }
-                    }
-                    else
-                    {
-                        if($m->movement_target->{class} eq 'dynamic')
-                        {
-                            $m->destination($self->get_position_from_movement_target($m->movement_target));
-                        }              
-                        if($m->destination->equals($m->position))
-                        {
-                            $self->event($m->name . " reached destination: " . ELEMENT_TAGS->{$m->movement_target->{type}} . " " . $m->movement_target->{name}, [ $m->name ], [ $m->name ]);
-                        }
-                        elsif($m->movement_target->{nearby} && $m->position->distance($m->destination) < NEARBY)
-                        {
-                            $self->event($m->name . " reached the nearby of " . ELEMENT_TAGS->{$m->movement_target->{type}} . " " . $m->movement_target->{name}, [ $m->name ], [ $m->name ]);
-                        }
-                        else
-                        {
-                            $m->plan_and_move();
-                            if($m->action && $m->action eq 'BOOST')
+                            $m->mod_action_gauge(-1);
+                            if($m->action_gauge == 0)
                             {
-                                $m->mod_action_gauge(-1);
-                                if($m->action_gauge == 0)
-                                {
-                                    $self->event($m->name . " exhausted boost", [ $m->name ]);
-                                }
+                                $self->event($m->name . " exhausted boost", [ $m->name ]);
                             }
                         }
+                        $m->plan_and_move();
                     }
                 }
                 elsif($m->attack_target->{class} && $m->attack_target->{class} eq 'dynamic')
