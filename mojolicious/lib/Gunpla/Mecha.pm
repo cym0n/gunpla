@@ -95,7 +95,7 @@ has attack => (
 );
 has attack_target => (
     is => 'rw',
-    default => sub { { type => 'none' } }
+    default => sub { { } }
 );
 has attack_limit => (
     is => 'rw',
@@ -109,6 +109,10 @@ has action => (
 );
 has action_gauge => (
     is => 'rw',
+);
+has action_target => (
+    is => 'rw',
+    default => sub { { } }
 );
 
 
@@ -599,6 +603,21 @@ sub command
         $self->action("GUARD");
         $self->action_gauge($target);
     }
+    elsif($command eq 'support')
+    {
+        if($self->action eq 'SUPPORT' and $self->action_target->{name} eq $target->name)
+        {
+            #Nothing to do, it's a resume. We don't reset the gauge
+        }
+        else
+        {
+            $self->stop_action();
+            #No stop_movement and stop_attack. Let them go on (hopefully) while the action gauge grows
+            $self->action('SUPPORT');
+            $self->action_target({ type => 'MEC', 'name' => $target->name });
+            $self->action_gauge(0);
+        }
+    }
     else
     {
         die "Unrecognized command $command";    
@@ -640,6 +659,7 @@ sub to_mongo
         status => $self->status,
         action => $self->action,
         action_gauge => $self->action_gauge,
+        action_target => $self->action_target,
         energy => $self->energy,
         max_energy => $self->max_energy,
         log_file => $self->log_file,

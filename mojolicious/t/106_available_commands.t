@@ -105,6 +105,15 @@ $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
                             'velocity' => 0,
                             'energy_needed' => 20000
                           },
+                          { 
+                            'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=friends-no-wait',
+                            'velocity' => 0,
+                            'code' => 'support',
+                            'machinegun' => 0,
+                            'label' => 'ASK SUPPORT',
+                            'filter' => 'friends-no-wait',
+                            'params_label' => 'Select friendly Mecha',
+                          },
                           {
                             'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=sighted-by-faction',
                             'velocity' => 0,

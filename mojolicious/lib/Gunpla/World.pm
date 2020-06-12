@@ -443,34 +443,45 @@ sub add_command
     eval {
         if($m->inertia == 0 || ! $self->inertia)
         {
-             $self->log("ADD COMMAND to $mecha: " . $self->command_string($command_mongo));
-             if($self->available_commands->{$command_mongo->{command}}->{filter})
-             {
-                 $m->command($command, $self->get_target_from_world_id($params), $velocity);
-                 if($command eq 'sword')
-                 {
-                     $self->log($m->name. " starting attack gauge: " . $m->attack_gauge);
-                 }
-             }
-             elsif($self->available_commands->{$command_mongo->{command}}->{values})
-             {
-                 $m->command($command, $params, $velocity);
-             }
-             else
-             {
-                 $m->command($command, undef, $velocity);
-             }
-             if($secondary_command)
-             {
-                 if($secondary_command eq 'machinegun')
-                 {
-                     $m->command('machinegun', $self->get_target_from_world_id($secondary_params), undef);
-                 }
-                 elsif($secondary_command eq 'boost')
-                 {
-                     $m->command('boost', undef, undef);
-                 }
-             }
+            $self->log("ADD COMMAND to $mecha: " . $self->command_string($command_mongo));
+            my $params_elaborated;
+            if($self->available_commands->{$command_mongo->{command}}->{filter})
+            {
+               $params_elaborated = $self->get_target_from_world_id($params);
+            }
+            elsif($self->available_commands->{$command_mongo->{command}}->{values})
+            {
+                $params_elaborated = $params;
+            }
+            else
+            {
+                $params_elaborated = undef;
+            }
+            $m->command($command, $params_elaborated, $velocity);
+            if($command eq 'sword')
+            {
+                $self->log($m->name. " starting attack gauge: " . $m->attack_gauge);
+            }
+            if($command eq 'support')
+            {
+                #Allow mecha to keep direction. If destination is reached just make it drift.
+                #Support command does not change movement target
+                if($self->arrived($m))
+                {
+                    $m->movement_target({ type => 'drifting' });
+                }
+            }
+            if($secondary_command)
+            {
+                if($secondary_command eq 'machinegun')
+                {
+                    $m->command('machinegun', $self->get_target_from_world_id($secondary_params), undef);
+                }
+                elsif($secondary_command eq 'boost')
+                {
+                    $m->command('boost', undef, undef);
+                }
+            }
         }
         else
         {
@@ -537,6 +548,7 @@ sub arrived
     my $self = shift;
     my $m = shift;
     return 'NOMOVEMENT' if ! %{$m->movement_target};
+    return 0 if $m->movement_target->{type} eq 'drifting';
     if($m->movement_target->{class} eq 'dynamic')
     {
         $m->destination($self->get_position_from_movement_target($m->movement_target));
@@ -630,7 +642,23 @@ sub action
                                 $self->event($m->name . " exhausted boost", [ $m->name ]);
                             }
                         }
-                        $m->plan_and_move();
+                        if($m->action && $m->action eq 'SUPPORT')
+                        {
+                            $m->mod_action_gauge(1);
+                            if($m->action_gauge == SUPPORT_GAUGE)
+                            {
+                                $m->action_gauge(0); #We reset this because another support action would be misrecognized as resume
+                                $self->event($m->name . " ask for support to " . $m->action_target->{name}, [$m->name, $m->action_target->{name}], [$m->name]);
+                            }
+                        }
+                        if($m->movement_target->{type} eq 'drifting')
+                        {
+                            $m->drift_and_move($self->dice(0, 2, "drift direction"));
+                        }
+                        else
+                        {
+                            $m->plan_and_move();
+                        }
                     }
                 }
                 elsif($m->attack_target->{class} && $m->attack_target->{class} eq 'dynamic')

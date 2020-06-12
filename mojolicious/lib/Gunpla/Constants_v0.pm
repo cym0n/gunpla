@@ -43,6 +43,7 @@ use constant SIGHT_SENSOR_ARRAY_BONUS => 100000;
 use constant SIGHT_MINIMUM => 10000;
 use constant BOOST_GAUGE => 50000;
 use constant BOOST_VELOCITY => 9;
+use constant SUPPORT_GAUGE => 14000;
 use constant ELEMENT_TAGS => { 'AST' => 'asteroid', 
                                 'MEC' => 'mecha',
                               'WP' => 'waypoint', 
@@ -122,6 +123,7 @@ our @EXPORT_OK = (
     'SIGHT_MINIMUM',
     'BOOST_GAUGE',
     'BOOST_VELOCITY',
+    'SUPPORT_GAUGE',
     'ELEMENT_TAGS',
     'FILTERS',
     'SUBFILTERS',
