@@ -55,6 +55,7 @@ sub emulate_commands
     $world->fetch_commands_from_mongo();
     my $e = $world->action();
     $world->save;
+    $world->log("Remaining dice results: " . @{$world->dice_results});
     return $e;
 }
 

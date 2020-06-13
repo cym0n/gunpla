@@ -605,7 +605,7 @@ sub command
     }
     elsif($command eq 'support')
     {
-        if($self->action eq 'SUPPORT' and $self->action_target->{name} eq $target->name)
+        if($self->action && $self->action eq 'SUPPORT' and $self->action_target->{name} eq $target->name)
         {
             #Nothing to do, it's a resume. We don't reset the gauge
         }

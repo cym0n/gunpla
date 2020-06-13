@@ -9,7 +9,6 @@ use lib 'lib';
 use Data::Dumper;
 use Gunpla::World;
 use Gunpla::Test;
-use Gunpla::Position;
 
 my $world = Gunpla::Test::test_bootstrap('t112.csv');
 my $t = Test::Mojo->new('GunplaServer');
