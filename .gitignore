@@ -2,3 +2,6 @@ build/
 node_modules/
 solidity/build/
 solidity/node_modules/
+TODO
+TOOLS
+autotest.log
