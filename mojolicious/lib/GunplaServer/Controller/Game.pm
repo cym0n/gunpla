@@ -149,7 +149,7 @@ sub targets
             my @mec = $db->get_collection('mechas')->find()->all();
             foreach my $fm (@mec)
             {
-                if($fm->{name} ne $mecha_obj->{name} && $fm->{faction} eq $mecha_obj->{faction} && $fm->{waiting} == 0)
+                if($fm->{name} ne $mecha_obj->{name} && $fm->{faction} eq $mecha_obj->{faction} && $fm->{waiting} == 0 && $fm->{cmd_fetched} == 1)
                 {
                     my $m = target_from_mongo_to_json($game, $mecha, 'mechas', $fm);
                     push @out, $m;
