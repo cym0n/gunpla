@@ -7,8 +7,7 @@ use base 'Exporter';
 
 use constant GET_AWAY_DISTANCE => 30000;
 use constant MACHINEGUN_DAMAGE => 20;
-#MACHINGUN_GAUGE: 400 is too low. It means that you can shot all your shots also if an enemy with boost run to you at velocity 6
-use constant MACHINEGUN_GAUGE => 800;
+use constant MACHINEGUN_GAUGE => 800; #MACHINGUN_GAUGE: 400 is too low. It means that you can shot all your shots also if an enemy with boost run to you at velocity 6
 use constant MACHINEGUN_RANGE => 1500;
 use constant MACHINEGUN_SHOTS => 3;
 use constant MACHINEGUN_SWORD_GAUGE_DAMAGE => 300; 
@@ -44,6 +43,7 @@ use constant SIGHT_SENSOR_ARRAY_BONUS => 100000;
 use constant SIGHT_MINIMUM => 1000;
 use constant BOOST_GAUGE => 50000;
 use constant BOOST_VELOCITY => 9;
+use constant SUPPORT_GAUGE => 14000;
 use constant ELEMENT_TAGS => { 'AST' => 'asteroid', 
                                 'MEC' => 'mecha',
                               'WP' => 'waypoint', 
@@ -59,6 +59,7 @@ use constant FILTERS => { 'waypoints' => [ 'waypoints' ],
                           'hotspots' => [ 'hotspots' ],
                           'landing' => [ 'landing' ],
                           'last-sight' => [ 'last_sight' ],
+                          'friends-no-wait' => [ 'friends_no_wait' ],
                         };
 use constant SUBFILTERS => { 'waypoints' => ['WP'],
                              'sighted_by_me' => ['MEC'],
@@ -66,7 +67,8 @@ use constant SUBFILTERS => { 'waypoints' => ['WP'],
                              'map_elements' => ['WP', 'AST', 'SAR'],
                              'hotspots' => ['AST', 'SAR'],
                              'landing' => ['AST', 'SAR',],
-                             'last_sight' => ['MEC'] };
+                             'last_sight' => ['MEC'],
+                             'friends_no_wait' => ['MEC'] };
 
        
 use constant ENERGY_STANDARD_BONUS => 1;
@@ -121,6 +123,7 @@ our @EXPORT_OK = (
     'SIGHT_MINIMUM',
     'BOOST_GAUGE',
     'BOOST_VELOCITY',
+    'SUPPORT_GAUGE',
     'ELEMENT_TAGS',
     'FILTERS',
     'SUBFILTERS',
