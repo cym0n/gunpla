@@ -31,6 +31,58 @@ sub already_on_target
     return $counter;
 }
 
+sub manage_events
+{
+    my $self = shift;
+    if($self->event_is(undef))
+    {
+        $self->aim($self->my_wp);
+        return { 
+            command => 'flywp',
+            params => $self->my_wp,
+            secondarycommand => undef,
+            secondaryparams => undef,
+            velocity => 6
+        }
+    }
+    elsif($self->event_is('exhausted energy'))
+    {
+        return { 
+            command => 'flywp',
+            params => $self->aim,
+            secondarycommand => undef,
+            secondaryparams => undef,
+            velocity => 4
+        }
+    }
+    elsif($self->event_is('reached destination'))
+    {
+        my $target = $self->next_wp;
+        $self->aim($target);
+        return { 
+            command => 'flywp',
+            params => $target,
+            secondarycommand => undef,
+            secondaryparams => undef,
+            velocity => 4
+        }
+    }
+    else
+    {
+        my $target = $self->next_wp;
+        $self->aim($target);
+        return { 
+            command => 'flywp',
+            params => $target,
+            secondarycommand => undef,
+            secondaryparams => undef,
+            velocity => 4
+        }
+    }
+
+}
+
+
 sub elaborate
 {
     my $self = shift;
@@ -78,51 +130,7 @@ sub elaborate
             }
         }
     }
-    if($self->event_is(undef))
-    {
-        $self->aim($self->my_wp);
-        return { 
-            command => 'flywp',
-            params => $self->my_wp,
-            secondarycommand => undef,
-            secondaryparams => undef,
-            velocity => 6
-        }
-    }
-    elsif($self->event_is('exhausted energy'))
-    {
-        return { 
-            command => 'flywp',
-            params => $self->aim,
-            secondarycommand => undef,
-            secondaryparams => undef,
-            velocity => 4
-        }
-    }
-    elsif($self->event_is('reached destination'))
-    {
-        my $target = $self->next_wp;
-        $self->aim($target);
-        return { 
-            command => 'flywp',
-            params => $target,
-            secondarycommand => undef,
-            secondaryparams => undef,
-            velocity => 4
-        }
-    }
-    else
-    {
-        my $target = $self->next_wp;
-        $self->aim($target);
-        return { 
-            command => 'flywp',
-            params => $target,
-            secondarycommand => undef,
-            secondaryparams => undef,
-            velocity => 4
-        }
-    }
+    return $self->manage_events();
 }
 
 sub my_wp
