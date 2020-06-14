@@ -7,6 +7,12 @@ use Data::Dumper;
 
 extends 'Gunpla::Mecha::IA';
 
+### PATROL
+#
+# Mecha fly between a set of waypoints. When an enemy is on sight it attacks. If two mechas are already on target the target is ignored
+
+
+
 has waypoints => (
     is => 'ro',
     default => sub { [ ] }
@@ -30,6 +36,56 @@ sub already_on_target
     }
     return $counter;
 }
+
+sub manage_targets
+{
+    my $self = shift;
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $self->game);
+    my @mec = $db->get_collection('mechas')->find()->all();
+    my @targets;
+    for(@mec)
+    {
+        if(sighted_by_faction($self->game, $self->mecha, $_))
+        {
+            my $m = target_from_mongo_to_json($self->game, $self->mecha, 'mechas', $_);
+            push @targets, $m;
+        }
+    }
+    if(@targets)
+    {
+        foreach my $t (@targets)
+        {
+            my $already = $self->already_on_target($t->{world_id});
+            if($already < 2)
+            {
+                $self->aim($t->{world_id});
+                if($t->{distance} < 2000)
+                {
+                    return { 
+                        command => 'sword',
+                        params => $t->{world_id},
+                        secondarycommand => undef,
+                        secondaryparams => undef,
+                        velocity => undef
+                    }
+                }
+                else
+                {
+                    return { 
+                        command => 'flymec',
+                        params => $t->{world_id},
+                        secondarycommand => 'machinegun',
+                        secondaryparams => $t->{world_id},
+                        velocity => 6
+                    }
+                }
+            }
+        }
+    }
+    return undef;
+}
+
 
 sub manage_events
 {
@@ -86,51 +142,15 @@ sub manage_events
 sub elaborate
 {
     my $self = shift;
-    my $client = MongoDB->connect();
-    my $db = $client->get_database('gunpla_' . $self->game);
-
-    my @mec = $db->get_collection('mechas')->find()->all();
-    my @targets;
-    for(@mec)
+    my $target_managed = $self->manage_targets();
+    if($target_managed)
     {
-        if(sighted_by_faction($self->game, $self->mecha, $_))
-        {
-            my $m = target_from_mongo_to_json($self->game, $self->mecha, 'mechas', $_);
-            push @targets, $m;
-        }
+        return $target_managed;
     }
-    if(@targets)
+    else
     {
-        foreach my $t (@targets)
-        {
-            my $already = $self->already_on_target($t->{world_id});
-            if($already < 2)
-            {
-                $self->aim($t->{world_id});
-                if($t->{distance} < 2000)
-                {
-                    return { 
-                        command => 'sword',
-                        params => $t->{world_id},
-                        secondarycommand => undef,
-                        secondaryparams => undef,
-                        velocity => undef
-                    }
-                }
-                else
-                {
-                    return { 
-                        command => 'flymec',
-                        params => $t->{world_id},
-                        secondarycommand => 'machinegun',
-                        secondaryparams => $t->{world_id},
-                        velocity => 6
-                    }
-                }
-            }
-        }
+        return $self->manage_events();
     }
-    return $self->manage_events();
 }
 
 sub my_wp
