@@ -139,6 +139,19 @@ has log_file => (
 
 with 'Gunpla::Mecha::Role::IA';
 
+sub mod_life
+{
+    my $self = shift;
+    my $value = shift;
+    my $new_value = $self->life + $value;
+    $new_value = $new_value < 0 ? 0 : $new_value;
+    $self->life($new_value);
+    $self->log("Adding $value to life. Life now is $new_value");
+}
+
+
+
+
 sub is_status
 {
     my $self = shift;

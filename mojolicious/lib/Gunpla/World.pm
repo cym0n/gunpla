@@ -924,7 +924,7 @@ sub manage_attack
             if($roll + $gauge_bonus >= SWORD_WIN)
             {
                 my $damage = SWORD_DAMAGE + ($gauge_bonus * SWORD_DAMAGE_BONUS_FACTOR);
-                $defender->life($defender->life - $damage);
+                $defender->mod_life(-1 * $damage);
                 $defender->mod_inertia(INERTIA_SWORD_SLASH);
                 $self->event($attacker->name . " slash with sword mecha " .  $defender->name, [ $attacker->name, $defender->name ],  [ $attacker->name, $defender->name ]);
             }
@@ -955,7 +955,7 @@ sub manage_attack
         my $roll = $self->dice(1, 20, "machingun hit");
         if($roll + $distance_bonus >= MACHINEGUN_WIN)
         {
-            $defender->life($defender->life - MACHINEGUN_DAMAGE);   
+            $defender->mod_life(-1 * MACHINEGUN_DAMAGE);   
             if($defender->attack && $defender->attack eq 'SWORD')
             {
                 $defender->mod_attack_gauge(-1 * MACHINEGUN_SWORD_GAUGE_DAMAGE);
@@ -987,7 +987,7 @@ sub manage_attack
         $roll += RIFLE_LANDED_BONUS if($attacker->is_status('landed'));
         if($roll + $distance_bonus >= RIFLE_WIN)
         {
-            $defender->life($defender->life - RIFLE_DAMAGE);   
+            $defender->mod_life(-1 * RIFLE_DAMAGE);   
             if($defender->attack && $defender->attack eq 'SWORD')
             {
                 $defender->mod_attack_gauge(-1 * RIFLE_SWORD_GAUGE_DAMAGE);
