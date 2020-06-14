@@ -46,6 +46,7 @@ is(Gunpla::Test::emulate_commands($world,
     { 'Wing' => { command =>'sword', params => 'MEC-Leo-3' }}
 ), 2, "Second sword hit");
 is($world->cemetery->[0]->name, "Leo-3", "Leo-3 is dead");
+is($world->armies->[3]->life, 960, "Wing life");
 $world->log_tracing([ 'Wing', 'Leo-1', 'Leo-2', 'Leo-4' ]);
 is(Gunpla::Test::emulate_commands($world, 
     { 'Wing' => { command =>'flywp', params => 'WP-blue', velocity => 4 } }
