@@ -22,7 +22,7 @@ $world->armies->[1]->energy(10000);
 is(Gunpla::Test::emulate_commands($world, $commands), 1);
 diag("Guncannon reached destination as first. Energy consumed, max velocity");
 is_deeply($world->get_events('Guncannon'), [ 'Guncannon reached destination: waypoint paris' ]);
-is($world->armies->[0]->energy, 460085);
+is($world->armies->[0]->energy, 460084);
 is($world->armies->[0]->velocity, 6);
 diag("Psychogundam reached destination as second. Energy not consumed, velocity 5");
 is(Gunpla::Test::emulate_commands($world, { 'Guncannon' => { command => 'wait' }}), 1);
@@ -36,7 +36,7 @@ is($world->armies->[1]->energy, 0);
 is($world->armies->[1]->velocity, 4);
 diag("Psychogundam reach destination and velocity 4, recharging");
 is(Gunpla::Test::emulate_commands($world, { 'Psychogundam' => { command =>'flywp', params => 'WP-blue', velocity => 4}}), 1);
-is($world->armies->[1]->energy, 66327);
+is($world->armies->[1]->energy, 66332);
 is($world->armies->[1]->velocity, 4);
 
 Gunpla::Test::clean_db('autotest', 1);

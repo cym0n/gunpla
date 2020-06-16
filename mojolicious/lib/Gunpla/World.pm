@@ -123,6 +123,7 @@ sub add_mecha
     
     $mecha->position($self->waypoints->{$self->spawn_points->{$faction}}->clone());
     $mecha->set_destination($mecha->position->clone());
+    $mecha->start_gauges();
 
     push @{$self->armies}, $mecha;
     return $mecha;

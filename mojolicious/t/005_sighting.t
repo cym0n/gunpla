@@ -38,10 +38,10 @@ diag("Checking game status after the event");
 is($world->sighting_matrix->matrix->{'RX78'}->{'Hyakushiki'}, 0, "RX78 Sighting matrix");
 is($world->armies->[0]->waiting, 1, "RX79 Waiting");
 is($world->armies->[0]->cmd_index, 2, "RX78 CMD index");
-is($world->armies->[0]->position->x, 67836, "RX78 X position");
+is($world->armies->[0]->position->x, 67835, "RX78 X position");
 is($world->armies->[1]->waiting, 0, "Hyakushiki Waiting");
 is($world->armies->[1]->cmd_index, 0, "Hyakushiki CMD index");
-is($world->armies->[1]->position->x, -72912, "Hyakushiki X position");
+is($world->armies->[1]->position->x, -72913, "Hyakushiki X position");
 
 
 Gunpla::Test::clean_db('autotest', 1);

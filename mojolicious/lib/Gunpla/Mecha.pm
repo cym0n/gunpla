@@ -2,6 +2,7 @@ package Gunpla::Mecha;
 
 use v5.10;
 use Moo;
+use Gunpla::Gauge;
 use Gunpla::Constants ':all';
 use Gunpla::Position;
 use Data::Dumper;
@@ -36,6 +37,11 @@ has suspended_command => (
     is => 'rw',
 );
 
+has gauges => (
+    is => 'rw',
+    default => sub { {} }
+);
+
 #Navigation
 has movement_target => (
     is => 'rw',
@@ -59,10 +65,6 @@ has velocity => (
 has acceleration => (
     is => 'rw',
 );
-has acceleration_gauge => (
-    is => 'rw',
-    default => 0
-);
 has acceleration_matrix => (
     is => 'ro',
     default => sub { 
@@ -77,10 +79,6 @@ has acceleration_matrix => (
 has max_velocity => (
     is => 'rw',
     default => 5
-);
-has velocity_gauge => (
-    is => 'rw',
-    default => 0
 );
 has velocity_vector => (
     is => 'rw',
@@ -149,6 +147,45 @@ sub mod_life
     $self->log("Adding $value to life. Life now is $new_value");
 }
 
+#All the gauges are configured here
+sub start_gauges
+{
+    my $self = shift;
+    $self->init_gauge('acceleration');
+    $self->init_gauge('velocity');
+}
+
+
+sub init_gauge
+{
+    my $self = shift;
+    my $label = shift;
+    if($label eq 'acceleration')
+    {
+        $self->gauges->{'acceleration'} = Gunpla::Gauge->new({ max_level => $self->acceleration, 
+                                                               level     => $self->acceleration,
+                                                               loop      => 1 });
+    }
+    elsif($label eq 'velocity') #We use the velocity gauge as an accumulation gauge and put te check outside
+    {
+        $self->gauges->{'velocity'} = Gunpla::Gauge->new({ max_level    => 0, 
+                                                           level        => 0,
+                                                           accumulation => 1 });
+
+    }
+}
+
+sub gauges_to_mongo
+{
+    my $self = shift;
+    my $out = {};
+    foreach my $g (keys %{$self->gauges})
+    {
+        $out->{$g} = $self->gauges->{$g}->to_mongo();
+    }
+    return $out;
+    
+}
 
 
 
@@ -238,8 +275,8 @@ sub stop_movement
     $self->course->{axis} = '';
     $self->destination($self->position);
     $self->velocity(0);
-    $self->acceleration_gauge(0);
-    $self->velocity_gauge(0);
+    $self->gauges->{acceleration}->reset();
+    $self->gauges->{velocity}->reset();
     $self->velocity_vector(undef);
     $self->velocity_target(0);
 }
@@ -288,20 +325,18 @@ sub ok_velocity
     my $move = 0;
     if($self->get_velocity > 0)
     {
-        $self->velocity_gauge($self->velocity_gauge + 1);
-        if($self->velocity_gauge > (VELOCITY_LIMIT  - $self->get_velocity))
+        $self->gauges->{velocity}->run();
+        if($self->gauges->{velocity}->level > (VELOCITY_LIMIT  - $self->get_velocity))
         {
-            $self->velocity_gauge(0);
+            $self->gauges->{velocity}->reset();
             $move = 1;
         }
     }
     if($self->acceleration_needed())
     {
-        $self->acceleration_gauge($self->acceleration_gauge + 1);
-        if($self->acceleration_gauge > $self->acceleration)
+        if($self->gauges->{acceleration}->run())
         {
             $self->velocity($self->velocity + 1);
-            $self->acceleration_gauge(0);
         }
     }
     elsif($self->velocity > $self->velocity_target)
@@ -653,9 +688,7 @@ sub to_mongo
         destination => $self->destination ? $self->destination->to_mongo() : undef,
         velocity => $self->velocity,
         acceleration => $self->acceleration,
-        acceleration_gauge => $self->acceleration_gauge,
         max_velocity => $self->max_velocity,
-        velocity_gauge => $self->velocity_gauge,
         velocity_vector => $self->velocity_vector ? $self->velocity_vector->to_mongo() : undef,
         velocity_target => $self->velocity_target,
         cmd_index => $self->cmd_index,
@@ -676,6 +709,7 @@ sub to_mongo
         energy => $self->energy,
         max_energy => $self->max_energy,
         log_file => $self->log_file,
+        gauges => $self->gauges_to_mongo(),
         IA => $self->ia_to_mongo(),
     }
 }
@@ -688,6 +722,8 @@ sub from_mongo
     my $destination = $data->{destination};
     my $velocity_vector = $data->{velocity_vector};
     my $IA = $data->{IA};
+    my $gauges = $data->{gauges};
+    delete $data->{gauges};
     delete $data->{position};
     delete $data->{destination};
     delete $data->{velocity_vector};
@@ -695,6 +731,10 @@ sub from_mongo
     $m->position(Gunpla::Position->from_mongo($position));
     $m->destination(Gunpla::Position->from_mongo($destination));
     $m->velocity_vector(Gunpla::Position->from_mongo($velocity_vector));
+    foreach my $g(keys %{$gauges})
+    {
+        $m->gauges->{$g} = Gunpla::Gauge->new($gauges->{$g});
+    }
     if($IA)
     {
         $m->ia_from_mongo($IA);
