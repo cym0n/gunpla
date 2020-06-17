@@ -461,7 +461,7 @@ sub add_command
             $m->command($command, $params_elaborated, $velocity);
             if($command eq 'sword')
             {
-                $self->log($m->name. " starting attack gauge: " . $m->attack_gauge);
+                $self->log($m->name. " starting attack gauge: " . $m->get_gauge_level('sword'));
             }
             if($command eq 'support')
             {
@@ -627,7 +627,7 @@ sub action
                     {
                         if($m->attack && $m->attack eq 'SWORD')
                         {
-                            $m->mod_attack_gauge(1);
+                            $m->run_gauge('sword');
                             $m->attack_limit($m->attack_limit -1);
                             if($m->attack_limit == 0)
                             {
@@ -637,8 +637,7 @@ sub action
                         }
                         if($m->action && $m->action eq 'BOOST')
                         {
-                            $m->mod_action_gauge(-1);
-                            if($m->action_gauge == 0)
+                            if($m->run_gauge('boost'))
                             {
                                 $self->event($m->name . " exhausted boost", [ $m->name ]);
                             }
@@ -884,14 +883,14 @@ sub manage_attack
         my $clash = 1;
         if($defender->attack && $defender->attack eq 'SWORD' && $defender->attack_target->{name} eq $attacker->name)
         {
-            $self->log($attacker->name . " gauge: ". $attacker->attack_gauge . " VS " . $defender->name . " gauge: ". $defender->attack_gauge);
-            if($defender->attack_gauge > $attacker->attack_gauge || $defender->energy < SWORD_ENERGY)
+            $self->log($attacker->name . " gauge: ". $attacker->get_gauge_level('sword') . " VS " . $defender->name . " gauge: ". $defender->get_gauge_level('sword'));
+            if($defender->get_gauge_level('sword') > $attacker->get_gauge_level('sword') || $defender->energy < SWORD_ENERGY)
             {
                 my $switch = $attacker;
                 $attacker = $defender;
                 $defender = $switch;
             }
-            elsif($defender->attack_gauge == $attacker->attack_gauge)
+            elsif($defender->get_gauge_level('sword') == $attacker->get_gauge_level('sword'))
             {
                 $self->event($attacker->name . " and " . $defender->name . " attacks nullified",  [ $attacker->name, $defender->name ],  [ $attacker->name, $defender->name ] );
                 $clash = 0;
@@ -909,10 +908,11 @@ sub manage_attack
         }
         if($clash)
         {
-            my $gauge_bonus = $attacker->attack_gauge < 1200 ? 0 :
-                                        $attacker->attack_gauge < 2000 ? 1 :
-                                            $attacker->attack_gauge < 4000 ? 2 :
-                                                $attacker->attack_gauge < 5600 ? 3 : 4;
+            my $gauge = $attacker->get_gauge_level('sword');
+            my $gauge_bonus = $gauge < 1200 ? 0 :
+                                $gauge < 2000 ? 1 :
+                                    $gauge < 4000 ? 2 :
+                                        $gauge < 5600 ? 3 : 4;
             my $roll = $self->dice(1, 20, "sword clash");
             if($roll + $gauge_bonus >= SWORD_WIN)
             {
@@ -951,7 +951,7 @@ sub manage_attack
             $defender->mod_life(-1 * MACHINEGUN_DAMAGE);   
             if($defender->attack && $defender->attack eq 'SWORD')
             {
-                $defender->mod_attack_gauge(-1 * MACHINEGUN_SWORD_GAUGE_DAMAGE);
+                $defender->mod_gauge('sword', -1 * MACHINEGUN_SWORD_GAUGE_DAMAGE);
             }
             $self->event($attacker->name . " hits with machine gun " .  $defender->name, { $attacker->name => 0, $defender->name => 1});
         }
@@ -983,7 +983,7 @@ sub manage_attack
             $defender->mod_life(-1 * RIFLE_DAMAGE);   
             if($defender->attack && $defender->attack eq 'SWORD')
             {
-                $defender->mod_attack_gauge(-1 * RIFLE_SWORD_GAUGE_DAMAGE);
+                $defender->mod_gauge('sword', -1 * RIFLE_SWORD_GAUGE_DAMAGE);
             }
             $defender->mod_inertia(INERTIA_RIFLE_SHOT);
             $self->event($attacker->name . " hits with rifle " .  $defender->name, [ $attacker->name, $defender->name ], [$attacker->name]);

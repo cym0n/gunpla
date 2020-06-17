@@ -43,6 +43,14 @@ sub down
     $level = 0 if $level < 0;
     $self->level($level);
 }
+sub mod
+{
+    my $self = shift;
+    my $value = shift;
+    my $new_value = $self->level + $value;
+    $new_value = 0 if $new_value < 0;
+    $self->level($new_value);
+}
 
 sub run
 {

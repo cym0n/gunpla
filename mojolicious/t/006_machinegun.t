@@ -28,7 +28,7 @@ diag("Checking mechas stats");
 is($world->armies->[0]->velocity, 10);
 is($world->armies->[0]->position->x, 600);
 is($world->armies->[0]->attack_limit, 0);
-is($world->armies->[0]->attack_gauge, 0);
+is($world->armies->[0]->get_gauge_level('machinegun'), 0);
 is($world->armies->[1]->life, 960);
 
 Gunpla::Test::clean_db('autotest', 1);

@@ -98,9 +98,6 @@ has attack_target => (
 has attack_limit => (
     is => 'rw',
 );
-has attack_gauge => (
-    is => 'rw',
-);
 #Action
 has action => (
     is => 'rw'
@@ -187,9 +184,33 @@ sub init_gauge
                                                              type => 'attack', });
                                                              
     }
+    elsif($label eq 'boost')
+    {
+        $self->gauges->{'boost'} = Gunpla::Gauge->new({ max_level => BOOST_GAUGE,
+                                                        level => BOOST_GAUGE,
+                                                        type => 'action', });
+                                                             
+    }
+    elsif($label eq 'sword')
+    {
+        $self->gauges->{'sword'} = Gunpla::Gauge->new({ max_level => 0,
+                                                        level => 0,
+                                                        accumulation => 1,
+                                                        type => 'attack' });
+
+    }
        
                                                 
 }
+
+sub mod_gauge
+{
+    my $self = shift;
+    my $label = shift;
+    my $value = shift;
+    $self->gauges->{$label}->mod($value);
+}
+
 
 sub run_gauge
 {
@@ -202,7 +223,14 @@ sub get_gauge_level
 {
     my $self = shift;
     my $label = shift;
-    return $self->gauges->{$label}->level;
+    if(exists $self->gauges->{$label})
+    {
+        return $self->gauges->{$label}->level;
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 sub reset_gauge
@@ -281,15 +309,6 @@ sub delete_status
     $self->status(\@new);
 }
 
-sub mod_attack_gauge
-{
-    my $self = shift;
-    my $value = shift;
-    my $new_value = $self->attack_gauge + $value;
-    $new_value = $new_value < 0 ? 0 : $new_value;
-    $self->attack_gauge($new_value);
-}
-
 sub mod_action_gauge
 {
     my $self = shift;
@@ -319,6 +338,7 @@ sub stop_action
 {
     my $self = shift;
     $self->action(undef);
+    $self->delete_all_gauges('action');
 }
 
 sub stop_movement
@@ -342,7 +362,6 @@ sub stop_attack
     $self->attack(undef);
     $self->attack_target({ type => 'none' });
     $self->attack_limit(0);
-    $self->attack_gauge(0);
     $self->delete_all_gauges('attack');
 }
 
@@ -602,7 +621,8 @@ sub command
             $self->attack_target({ type => 'MEC', 'name' => $target->name, class => 'dynamic'  });
             $self->attack_limit(SWORD_ATTACK_TIME_LIMIT);
             $self->log("Attack gauge start is " . SWORD_GAUGE_VELOCITY_BONUS . " * " . $actual_velocity);
-            $self->attack_gauge(SWORD_GAUGE_VELOCITY_BONUS * $actual_velocity);
+            $self->init_gauge('sword');
+            $self->mod_gauge('sword', SWORD_GAUGE_VELOCITY_BONUS * $actual_velocity);
             $self->stop_action(); #Here to transmit BOOST to GAUGE_VELOCITY_BONUS
         }
     }
@@ -677,7 +697,7 @@ sub command
         $self->stop_attack();    
         $self->stop_action();    
         $self->action("BOOST");
-        $self->action_gauge(BOOST_GAUGE);
+        $self->init_gauge('boost');
     }
     elsif($command eq 'last')
     {
@@ -756,7 +776,6 @@ sub to_mongo
         attack => $self->attack,
         attack_target => $self->attack_target,
         attack_limit => $self->attack_limit,
-        attack_gauge => $self->attack_gauge,
         life => $self->life,
         status => $self->status,
         action => $self->action,
