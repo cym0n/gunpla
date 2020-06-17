@@ -682,8 +682,7 @@ sub action
                 {
                     if($m->attack eq 'MACHINEGUN')
                     {
-                        $m->mod_attack_gauge(1);
-                        if($m->attack_gauge >= MACHINEGUN_GAUGE)
+                        if($m->run_gauge('machinegun'))
                         {
                             my $target = $self->get_mecha_by_name($m->attack_target->{name});
                             if($m->position->distance($target->position) <= MACHINEGUN_RANGE)
@@ -943,7 +942,7 @@ sub manage_attack
     }
     elsif($attack eq 'MACHINEGUN')
     {
-        $attacker->attack_gauge(0);
+        $attacker->reset_gauge('machinegun');
         my $distance = $attacker->position->distance($defender->position);
         my $distance_bonus = 3 - ceil((3 * $distance) / MACHINEGUN_RANGE);
         my $roll = $self->dice(1, 20, "machingun hit");

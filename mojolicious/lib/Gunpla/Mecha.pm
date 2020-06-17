@@ -180,6 +180,14 @@ sub init_gauge
                                                         level => RIFLE_GAUGE,
                                                         type => 'attack' });
     }
+    elsif($label eq 'machinegun')
+    {
+        $self->gauges->{'machinegun'} = Gunpla::Gauge->new({ max_level => MACHINEGUN_GAUGE,
+                                                             level => MACHINEGUN_GAUGE,
+                                                             type => 'attack', });
+                                                             
+    }
+       
                                                 
 }
 
@@ -210,6 +218,16 @@ sub delete_gauge
     my $self = shift;
     my $label = shift;
     delete $self->gauges->{$label};
+}
+
+sub delete_all_gauges
+{
+    my $self = shift;
+    my $type = shift;
+    foreach my $g (keys %{$self->gauges})
+    {
+        $self->delete_gauge($g) if($self->gauges->{$g}->type eq $type);
+    }
 }
 
 sub gauges_to_mongo
@@ -325,6 +343,7 @@ sub stop_attack
     $self->attack_target({ type => 'none' });
     $self->attack_limit(0);
     $self->attack_gauge(0);
+    $self->delete_all_gauges('attack');
 }
 
 sub get_velocity
@@ -650,7 +669,7 @@ sub command
             $self->attack_limit(MACHINEGUN_SHOTS);
             $self->attack('MACHINEGUN');
             $self->attack_target({ type => 'MEC', 'name' => $target->name, class => 'dynamic'  });
-            $self->attack_gauge(0);
+            $self->init_gauge('machinegun');
         }
     }
     elsif($command eq 'boost')
