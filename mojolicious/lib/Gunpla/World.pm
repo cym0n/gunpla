@@ -644,10 +644,9 @@ sub action
                         }
                         if($m->action && $m->action eq 'SUPPORT')
                         {
-                            $m->mod_action_gauge(1);
-                            if($m->action_gauge == SUPPORT_GAUGE)
+                            if($m->run_gauge('support'))
                             {
-                                $m->action_gauge(0); #We reset this because another support action would be misrecognized as resume
+                                $m->reset_gauge('support'); #We reset this because another support action would be misrecognized as resume
                                 $self->event($m->name . " ask for support to " . $m->action_target->{name}, [$m->name, $m->action_target->{name}], [$m->name]);
                             }
                         }
@@ -670,8 +669,7 @@ sub action
                 {
                     if($m->action eq 'GUARD')
                     {
-                        $m->mod_action_gauge(-1);
-                        if($m->action_gauge == 0)
+                        if($m->run_gauge('guard'))
                         {
                             $self->event($m->name . " ended the guard", [ $m->name ], [ $m->name ]);
                         }

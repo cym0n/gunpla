@@ -102,9 +102,6 @@ has attack_limit => (
 has action => (
     is => 'rw'
 );
-has action_gauge => (
-    is => 'rw',
-);
 has action_target => (
     is => 'rw',
     default => sub { { } }
@@ -156,6 +153,7 @@ sub init_gauge
 {
     my $self = shift;
     my $label = shift;
+    my $custom_level = shift;
     if($label eq 'acceleration')
     {
         $self->gauges->{'acceleration'} = Gunpla::Gauge->new({ max_level => $self->acceleration, 
@@ -198,6 +196,20 @@ sub init_gauge
                                                         accumulation => 1,
                                                         type => 'attack' });
 
+    }
+    elsif($label eq 'guard')
+    {
+        $self->gauges->{'guard'} = Gunpla::Gauge->new({ max_level => $custom_level,
+                                                        level => $custom_level,
+                                                        type => 'action', });
+                                                             
+    }
+    elsif($label eq 'support')
+    {
+        $self->gauges->{'support'} = Gunpla::Gauge->new({ max_level => SUPPORT_GAUGE,
+                                                          level => SUPPORT_GAUGE,
+                                                          type => 'action', });
+                                                             
     }
        
                                                 
@@ -307,15 +319,6 @@ sub delete_status
         $self->delete_status('sensor-array-linked') if $self->is_status('sensor-array-linked');
     }
     $self->status(\@new);
-}
-
-sub mod_action_gauge
-{
-    my $self = shift;
-    my $value = shift;
-    my $new_value = $self->action_gauge + $value;
-    $new_value = $new_value < 0 ? 0 : $new_value;
-    $self->action_gauge($new_value);
 }
 
 sub mod_inertia
@@ -725,7 +728,7 @@ sub command
         $self->stop_attack();    
         $self->stop_action();    
         $self->action("GUARD");
-        $self->action_gauge($target);
+        $self->init_gauge('guard', $target);
     }
     elsif($command eq 'support')
     {
@@ -739,7 +742,7 @@ sub command
             #No stop_movement and stop_attack. Let them go on (hopefully) while the action gauge grows
             $self->action('SUPPORT');
             $self->action_target({ type => 'MEC', 'name' => $target->name });
-            $self->action_gauge(0);
+            $self->init_gauge('support');
         }
     }
     else
@@ -779,7 +782,6 @@ sub to_mongo
         life => $self->life,
         status => $self->status,
         action => $self->action,
-        action_gauge => $self->action_gauge,
         action_target => $self->action_target,
         energy => $self->energy,
         max_energy => $self->max_energy,
