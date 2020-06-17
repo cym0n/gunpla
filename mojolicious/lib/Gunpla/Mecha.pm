@@ -155,7 +155,6 @@ sub start_gauges
     $self->init_gauge('velocity');
 }
 
-
 sub init_gauge
 {
     my $self = shift;
@@ -164,15 +163,53 @@ sub init_gauge
     {
         $self->gauges->{'acceleration'} = Gunpla::Gauge->new({ max_level => $self->acceleration, 
                                                                level     => $self->acceleration,
-                                                               loop      => 1 });
+                                                               loop      => 1,
+                                                               type      => 'movement' });
     }
     elsif($label eq 'velocity') #We use the velocity gauge as an accumulation gauge and put te check outside
     {
         $self->gauges->{'velocity'} = Gunpla::Gauge->new({ max_level    => 0, 
                                                            level        => 0,
-                                                           accumulation => 1 });
+                                                           accumulation => 1,
+                                                           type         => 'movement' });
 
     }
+    elsif($label eq 'rifle')
+    {
+        $self->gauges->{'rifle'} = Gunpla::Gauge->new({ max_level => RIFLE_GAUGE,
+                                                        level => RIFLE_GAUGE,
+                                                        type => 'attack' });
+    }
+                                                
+}
+
+sub run_gauge
+{
+    my $self = shift;
+    my $label = shift;
+    return $self->gauges->{$label}->run();
+}
+
+sub get_gauge_level
+{
+    my $self = shift;
+    my $label = shift;
+    return $self->gauges->{$label}->level;
+}
+
+sub reset_gauge
+{
+    my $self = shift;
+    my $label = shift;
+    $self->gauges->{$label}->reset();
+}
+
+
+sub delete_gauge
+{
+    my $self = shift;
+    my $label = shift;
+    delete $self->gauges->{$label};
 }
 
 sub gauges_to_mongo
@@ -275,8 +312,8 @@ sub stop_movement
     $self->course->{axis} = '';
     $self->destination($self->position);
     $self->velocity(0);
-    $self->gauges->{acceleration}->reset();
-    $self->gauges->{velocity}->reset();
+    $self->reset_gauge('acceleration');
+    $self->reset_gauge('velocity');
     $self->velocity_vector(undef);
     $self->velocity_target(0);
 }
@@ -325,16 +362,16 @@ sub ok_velocity
     my $move = 0;
     if($self->get_velocity > 0)
     {
-        $self->gauges->{velocity}->run();
-        if($self->gauges->{velocity}->level > (VELOCITY_LIMIT  - $self->get_velocity))
+        $self->run_gauge('velocity');
+        if($self->get_gauge_level('velocity') > (VELOCITY_LIMIT  - $self->get_velocity))
         {
-            $self->gauges->{velocity}->reset();
+            $self->reset_gauge('velocity');
             $move = 1;
         }
     }
     if($self->acceleration_needed())
     {
-        if($self->gauges->{acceleration}->run())
+        if($self->run_gauge('acceleration'))
         {
             $self->velocity($self->velocity + 1);
         }
@@ -588,7 +625,7 @@ sub command
             $self->attack_limit(RIFLE_ATTACK_TIME_LIMIT);
             $self->attack('RIFLE');
             $self->attack_target({ type => 'MEC', 'name' => $target->name, class => 'dynamic'  });
-            $self->attack_gauge(0);
+            $self->init_gauge('rifle');
         }
     }
     elsif($command eq 'land')

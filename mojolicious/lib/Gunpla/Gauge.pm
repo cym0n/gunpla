@@ -24,6 +24,10 @@ has accumulation => (
     is => 'rw',
     default => 0
 );
+has type => (
+    is => 'rw',
+    default => 0,
+);
 
 sub up
 {
@@ -36,6 +40,7 @@ sub down
 {
     my $self = shift;
     my $level = $self->level -1;
+    $level = 0 if $level < 0;
     $self->level($level);
 }
 
@@ -74,7 +79,8 @@ sub to_mongo
     return { max_level    => $self->max_level, 
              level        => $self->level,
              accumulation => $self->accumulation,
-             loop         => $self->loop };
+             loop         => $self->loop,
+             type         => $self->type };
 }
 
 1;

@@ -701,27 +701,20 @@ sub action
                         }
                         else
                         {
-                            if($m->attack_gauge < RIFLE_GAUGE)
+                            if($m->run_gauge('rifle'))
                             {
-                                $m->mod_attack_gauge(1);
-                            }
-                            else
-                            {
-                                if($m->position->distance($target->position) > RIFLE_MAX_DISTANCE)
-                                {
-                                    $m->attack_limit($m->attack_limit -1);
-                                    if($m->attack_limit == 0)
-                                    {
-                                        $m->stop_attack();
-                                        $m->mod_inertia(INERTIA_RIFLE_TOO_CLOSE);
-                                        $self->event($m->name . " time for rifle shot exhausted", [$m->name], [ $m->name ]);
-                                    }
-                                }
-                                else
+                                if($m->position->distance($target->position) <= RIFLE_MAX_DISTANCE)
                                 {
                                     $self->manage_attack('RIFLE', $m);
                                 }
                             }
+                        }
+                        $m->attack_limit($m->attack_limit -1);
+                        if($m->attack_limit == 0)
+                        {
+                            $m->stop_attack();
+                            $m->mod_inertia(INERTIA_RIFLE_TOO_CLOSE);
+                            $self->event($m->name . " time for rifle shot exhausted", [$m->name], [ $m->name ]);
                         }
                     }
                 }
@@ -1002,6 +995,7 @@ sub manage_attack
         }
         $attacker->attack_limit(0); #Avoid a new rifle order is misinterpreted as resume
         $attacker->add_energy(-1 * RIFLE_ENERGY);
+        $attacker->delete_gauge('rifle');
         $self->collect_dead();
     }
 }
