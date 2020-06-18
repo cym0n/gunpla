@@ -13,10 +13,15 @@ use Gunpla::Position;
 use Gunpla::Mecha;
 use Gunpla::Sight;
 use Data::Dumper;
+use Config::Any;
 
 
 has name => (
     is => 'ro',
+);
+has config => (
+    is => 'rw',
+    default => sub { {} }
 );
 
 has waypoints => (
@@ -97,6 +102,18 @@ has mecha_templates => (
     default => sub { {} }
 );
 
+sub load_config
+{
+    my $self = shift;
+    my $cfg_file = shift || 'standard.yaml';
+    my $module_file_path = __FILE__;
+    my $root_path = abs_path($module_file_path);
+    $root_path =~ s/World\.pm//;
+    my $data_directory = $root_path . "../../config";
+    my $cfg = Config::Any->load_files({files => [ "$data_directory/$cfg_file"], use_ext => 1 }); 
+    $self->config($cfg->[0]->{"$data_directory/$cfg_file"});
+}
+
 
 sub add_mecha
 {
@@ -176,7 +193,7 @@ sub build_commands
             params_label => 'Select a Mecha',
             velocity => 1,
             machinegun => 1,
-            min_distance => NEARBY,
+            min_distance => $self->config->{NEARBY},
         }, 1);
     $self->configure_command( {
             code => 'flyhot',
@@ -185,7 +202,7 @@ sub build_commands
             params_label => 'Select a Hotspot',
             velocity => 1,
             machinegun => 1,
-            min_distance => NEARBY,
+            min_distance => $self->config->{NEARBY},
         }, 1);
     $self->configure_command( {
             code => 'sword',
@@ -194,7 +211,7 @@ sub build_commands
             params_label => 'Select a Mecha',
             machinegun => 0,
             velocity => 0,
-            energy_needed => SWORD_ENERGY_NEEDED
+            energy_needed => $self->config->{SWORD_ENERGY_NEEDED},
         }, 1);
     $self->configure_command( {
             code => 'away',
@@ -211,7 +228,7 @@ sub build_commands
             params_label => 'Select a Mecha',
             machinegun => 0,
             velocity => 0,
-            energy_needed => RIFLE_ENERGY_NEEDED
+            energy_needed => $self->config->{RIFLE_ENERGY_NEEDED},
         }, 1);
     $self->configure_command( {
             code => 'land',
@@ -221,7 +238,7 @@ sub build_commands
             machinegun => 0,
             velocity => 0,
             min_distance => 0,
-            max_distance => LANDING_RANGE,
+            max_distance => $self->config->{LANDING_RANGE},
         }, 1);
     $self->configure_command( {
             code => 'last',
@@ -304,6 +321,8 @@ sub init_scenario
 {
     my $self = shift;
     my $file = shift;
+    my $config = shift;
+    $self->load_config($config);
     my $module_file_path = __FILE__;
     my $root_path = abs_path($module_file_path);
     $root_path =~ s/World\.pm//;
@@ -557,17 +576,17 @@ sub arrived
     if($m->attack && $m->attack eq 'SWORD')
     {
         my $target = $self->get_mecha_by_name($m->movement_target->{name});
-        return $m->position->distance($target->position) <= SWORD_DISTANCE ? 'SWORD' : 0;
+        return $m->position->distance($target->position) <= $self->config->{SWORD_DISTANCE} ? 'SWORD' : 0;
     }
     elsif($m->action && $m->action eq 'LAND')
     {
-        return $m->position->distance($m->destination) <= LANDING_DISTANCE ? 'LAND' : 0;
+        return $m->position->distance($m->destination) <= $self->config->{LANDING_DISTANCE} ? 'LAND' : 0;
     }
     elsif($m->destination->equals($m->position))
     {
         return 'ARRIVED';
     }
-    elsif($m->movement_target->{nearby} && $m->position->distance($m->destination) < NEARBY)
+    elsif($m->movement_target->{nearby} && $m->position->distance($m->destination) < $self->config->{NEARBY})
     {
         return 'NEARBY';
     }
@@ -682,7 +701,7 @@ sub action
                         if($m->run_gauge('machinegun'))
                         {
                             my $target = $self->get_mecha_by_name($m->attack_target->{name});
-                            if($m->position->distance($target->position) <= MACHINEGUN_RANGE)
+                            if($m->position->distance($target->position) <= $self->config->{MACHINEGUN_RANGE})
                             {
                                 $self->manage_attack('MACHINEGUN', $m);
                             }
@@ -691,7 +710,7 @@ sub action
                     elsif($m->attack eq 'RIFLE')
                     {
                         my $target = $self->get_mecha_by_name($m->attack_target->{name});
-                        if($m->position->distance($target->position) < RIFLE_MIN_DISTANCE)
+                        if($m->position->distance($target->position) < $self->config->{RIFLE_MIN_DISTANCE})
                         {
                             $self->event($m->name . ": rifle target " . $target->name . " too close", [ $m->name ], [ $m->name ]);
                         }
@@ -699,7 +718,7 @@ sub action
                         {
                             if($m->run_gauge('rifle'))
                             {
-                                if($m->position->distance($target->position) <= RIFLE_MAX_DISTANCE)
+                                if($m->position->distance($target->position) <= $self->config->{RIFLE_MAX_DISTANCE})
                                 {
                                     $self->manage_attack('RIFLE', $m);
                                 }
@@ -709,7 +728,7 @@ sub action
                         if($m->attack_limit == 0)
                         {
                             $m->stop_attack();
-                            $m->mod_inertia(INERTIA_RIFLE_TOO_CLOSE);
+                            $m->mod_inertia($self->config->{INERTIA_RIFLE_TOO_CLOSE});
                             $self->event($m->name . " time for rifle shot exhausted", [$m->name], [ $m->name ]);
                         }
                     }
@@ -872,7 +891,7 @@ sub manage_attack
     my $defender = $self->get_mecha_by_name($attacker->attack_target->{name});
     if($attack eq 'SWORD')
     {
-        if($attacker->energy < SWORD_ENERGY)
+        if($attacker->energy < $self->config->{SWORD_ENERGY})
         {
             $self->event($attacker->name . ": not enough energy for sword", [$attacker->name], [ $attacker->name ]);
             return;
@@ -882,7 +901,7 @@ sub manage_attack
         if($defender->attack && $defender->attack eq 'SWORD' && $defender->attack_target->{name} eq $attacker->name)
         {
             $self->log($attacker->name . " gauge: ". $attacker->get_gauge_level('sword') . " VS " . $defender->name . " gauge: ". $defender->get_gauge_level('sword'));
-            if($defender->get_gauge_level('sword') > $attacker->get_gauge_level('sword') || $defender->energy < SWORD_ENERGY)
+            if($defender->get_gauge_level('sword') > $attacker->get_gauge_level('sword') || $defender->energy < $self->config->{SWORD_ENERGY})
             {
                 my $switch = $attacker;
                 $attacker = $defender;
@@ -895,13 +914,13 @@ sub manage_attack
                 $attacker->stop_attack();
                 $attacker->stop_action();
                 $attacker->stop_movement();
-                $attacker->add_energy(-1 * SWORD_ENERGY);
-                $attacker->mod_inertia(INERTIA_SWORD_NULLIFIED);
+                $attacker->add_energy(-1 * $self->config->{SWORD_ENERGY});
+                $attacker->mod_inertia($self->config->{INERTIA_SWORD_NULLIFIED});
                 $defender->stop_action();
                 $defender->stop_attack();
                 $defender->stop_movement();
-                $defender->add_energy(-1 * SWORD_ENERGY);
-                $defender->mod_inertia(INERTIA_SWORD_NULLIFIED);
+                $defender->add_energy(-1 * $self->config->{SWORD_ENERGY});
+                $defender->mod_inertia($self->config->{INERTIA_SWORD_NULLIFIED});
             }
         }
         if($clash)
@@ -912,27 +931,27 @@ sub manage_attack
                                     $gauge < 4000 ? 2 :
                                         $gauge < 5600 ? 3 : 4;
             my $roll = $self->dice(1, 20, "sword clash");
-            if($roll + $gauge_bonus >= SWORD_WIN)
+            if($roll + $gauge_bonus >= $self->config->{SWORD_WIN})
             {
-                my $damage = SWORD_DAMAGE + ($gauge_bonus * SWORD_DAMAGE_BONUS_FACTOR);
+                my $damage = $self->config->{SWORD_DAMAGE} + ($gauge_bonus * $self->config->{SWORD_DAMAGE_BONUS_FACTOR});
                 $defender->mod_life(-1 * $damage);
-                $defender->mod_inertia(INERTIA_SWORD_SLASH);
+                $defender->mod_inertia($self->config->{INERTIA_SWORD_SLASH});
                 $self->event($attacker->name . " slash with sword mecha " .  $defender->name, [ $attacker->name, $defender->name ],  [ $attacker->name, $defender->name ]);
             }
             else
             {
-                $attacker->mod_inertia(INERTIA_SWORD_DODGE);
+                $attacker->mod_inertia($self->config->{INERTIA_SWORD_DODGE});
                 $self->event($defender->name . " dodged " .  $attacker->name, [ $attacker->name, $defender->name ], [ $attacker->name]);
             }
         }
         my @dirs = qw(x y z);
         my $bounce_direction = $dirs[$self->dice(0, 2, "sword bounce direction")];
-        $attacker->position->$bounce_direction($attacker->position->$bounce_direction - SWORD_BOUNCE);
+        $attacker->position->$bounce_direction($attacker->position->$bounce_direction - $self->config->{SWORD_BOUNCE});
         $attacker->stop_attack();
         $attacker->stop_action();
         $attacker->stop_movement();
-        $attacker->add_energy(-1 * SWORD_ENERGY);
-        $defender->position->$bounce_direction($defender->position->$bounce_direction + SWORD_BOUNCE);
+        $attacker->add_energy(-1 * $self->config->{SWORD_ENERGY});
+        $defender->position->$bounce_direction($defender->position->$bounce_direction + $self->config->{SWORD_BOUNCE});
         $defender->stop_attack();
         $defender->stop_action();
         $defender->stop_movement();
@@ -942,14 +961,14 @@ sub manage_attack
     {
         $attacker->reset_gauge('machinegun');
         my $distance = $attacker->position->distance($defender->position);
-        my $distance_bonus = 3 - ceil((3 * $distance) / MACHINEGUN_RANGE);
+        my $distance_bonus = 3 - ceil((3 * $distance) / $self->config->{MACHINEGUN_RANGE});
         my $roll = $self->dice(1, 20, "machingun hit");
-        if($roll + $distance_bonus >= MACHINEGUN_WIN)
+        if($roll + $distance_bonus >= $self->config->{MACHINEGUN_WIN})
         {
-            $defender->mod_life(-1 * MACHINEGUN_DAMAGE);   
+            $defender->mod_life(-1 * $self->config->{MACHINEGUN_DAMAGE});   
             if($defender->attack && $defender->attack eq 'SWORD')
             {
-                $defender->mod_gauge('sword', -1 * MACHINEGUN_SWORD_GAUGE_DAMAGE);
+                $defender->mod_gauge('sword', -1 * $self->config->{MACHINEGUN_SWORD_GAUGE_DAMAGE});
             }
             $self->event($attacker->name . " hits with machine gun " .  $defender->name, { $attacker->name => 0, $defender->name => 1});
         }
@@ -967,23 +986,23 @@ sub manage_attack
     }
     elsif($attack eq 'RIFLE')
     {
-        if($attacker->energy < RIFLE_ENERGY)
+        if($attacker->energy < $self->config->{RIFLE_ENERGY})
         {
             $self->event($attacker->name . ": not enough energy for rifle", [$attacker->name], [$attacker->name]);
             return;
         }
         my $distance = $attacker->position->distance($defender->position);
-        my $distance_bonus = 3 - ceil((3 * $distance) / RIFLE_MAX_DISTANCE);
+        my $distance_bonus = 3 - ceil((3 * $distance) / $self->config->{RIFLE_MAX_DISTANCE});
         my $roll = $self->dice(1, 20, "rifle hit");
-        $roll += RIFLE_LANDED_BONUS if($attacker->is_status('landed'));
-        if($roll + $distance_bonus >= RIFLE_WIN)
+        $roll += $self->config->{RIFLE_LANDED_BONUS} if($attacker->is_status('landed'));
+        if($roll + $distance_bonus >= $self->config->{RIFLE_WIN})
         {
-            $defender->mod_life(-1 * RIFLE_DAMAGE);   
+            $defender->mod_life(-1 * $self->config->{RIFLE_DAMAGE});   
             if($defender->attack && $defender->attack eq 'SWORD')
             {
-                $defender->mod_gauge('sword', -1 * RIFLE_SWORD_GAUGE_DAMAGE);
+                $defender->mod_gauge('sword', -1 * $self->config->{RIFLE_SWORD_GAUGE_DAMAGE});
             }
-            $defender->mod_inertia(INERTIA_RIFLE_SHOT);
+            $defender->mod_inertia($self->config->{INERTIA_RIFLE_SHOT});
             $self->event($attacker->name . " hits with rifle " .  $defender->name, [ $attacker->name, $defender->name ], [$attacker->name]);
         }
         else
@@ -991,7 +1010,7 @@ sub manage_attack
             $self->event($attacker->name . " missed " . $defender->name . " with rifle", [$attacker->name], [$attacker->name]);
         }
         $attacker->attack_limit(0); #Avoid a new rifle order is misinterpreted as resume
-        $attacker->add_energy(-1 * RIFLE_ENERGY);
+        $attacker->add_energy(-1 * $self->config->{RIFLE_ENERGY});
         $attacker->delete_gauge('rifle');
         $self->collect_dead();
     }
@@ -1225,6 +1244,8 @@ sub save_sighting_matrix
 sub load
 {
     my $self = shift;
+    my $cfg_file = shift;
+    $self->load_config($cfg_file);
     my $mongo = MongoDB->connect();
     my $db = $mongo->get_database('gunpla_' . $self->name);
     my @mecha = $db->get_collection('mechas')->find()->all();
@@ -1289,7 +1310,6 @@ sub log
     my $final_message = "[G:" . $self->name . "] [T" . $self->timestamp . "] " .$message . "\n";
     print {$fh} $final_message;
     close($fh);
-    print STDERR $final_message if $self->log_stderr;
 }
 
 sub log_tracer
