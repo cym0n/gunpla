@@ -43,7 +43,7 @@ use constant SIGHT_SENSOR_ARRAY_BONUS => 100000;
 use constant SIGHT_MINIMUM => 1000;
 use constant BOOST_GAUGE => 50000;
 use constant BOOST_VELOCITY => 9;
-use constant SUPPORT_GAUGE => 14000;
+use constant SUPPORT_GAUGE => 4000;
 use constant ELEMENT_TAGS => { 'AST' => 'asteroid', 
                                 'MEC' => 'mecha',
                               'WP' => 'waypoint', 
