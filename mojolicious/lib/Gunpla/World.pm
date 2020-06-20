@@ -8,7 +8,7 @@ use MongoDB;
 use Cwd 'abs_path';
 use JSON::XS;
 use Gunpla::Constants ':all';
-use Gunpla::Utils qw(get_game_events load_game_config);
+use Gunpla::Utils qw(get_game_events);
 use Gunpla::Position;
 use Gunpla::Mecha;
 use Gunpla::Sight;

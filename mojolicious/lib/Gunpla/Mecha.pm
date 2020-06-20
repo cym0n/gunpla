@@ -757,7 +757,7 @@ sub command
 sub available_max_velocity
 {
     my $self = shift;
-    my $available_max_velocity = $self->energy > ENERGY_AVAILABLE_FOR_HIGH_SPEED ?
+    my $available_max_velocity = $self->energy > $self->config->{ENERGY_AVAILABLE_FOR_HIGH_SPEED} ?
                                     $self->max_velocity : $self->max_velocity - 2;
     return $available_max_velocity;
 }
