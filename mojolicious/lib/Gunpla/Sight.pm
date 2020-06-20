@@ -15,6 +15,11 @@ has factions => (
     default => sub { {} }
 );
 
+has config => (
+    is => 'rw',
+    default => sub { {} }
+);
+
 sub init
 {
     my $self = shift;
@@ -60,7 +65,7 @@ sub turn_on_mecha2mecha
     my $self = shift;
     my $from = shift;
     my $target = shift;
-    $self->matrix->{$from}->{$target} = SIGHT_TOLERANCE;
+    $self->matrix->{$from}->{$target} = $self->config->{SIGHT_TOLERANCE};
 }
 
 
@@ -101,9 +106,9 @@ sub calculate
                 my $threshold = $m->sensor_range;
                 if($threshold > 0) #Blind mechas remain blind
                 {
-                    $threshold += SIGHT_SENSOR_ARRAY_BONUS if $m->is_status('sensor-array-linked');
-                    $threshold -= SIGHT_LANDED_BONUS if $other->is_status('landed');
-                    $threshold = SIGHT_MINIMUM if $threshold < SIGHT_MINIMUM;
+                    $threshold += $self->config->{SIGHT_SENSOR_ARRAY_BONUS} if $m->is_status('sensor-array-linked');
+                    $threshold -= $self->config->{SIGHT_LANDED_BONUS} if $other->is_status('landed');
+                    $threshold = $self->config->{SIGHT_MINIMUM} if $threshold < $self->config->{SIGHT_MINIMUM};
                 }
                 if($m->position->distance($other->position) < $threshold)
                 {
@@ -111,7 +116,7 @@ sub calculate
                     {
                         if($self->factions->{$other->faction}->{$m->name})
                         {
-                            $m->mod_inertia(INERTIA_SECOND_SIGHT);
+                            $m->mod_inertia($self->config->{INERTIA_SECOND_SIGHT});
                         }
                         push @out_events, [ $m->name, $other->name, 1];
                         $self->mod_faction($m->faction, $other->name, 1);

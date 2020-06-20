@@ -15,7 +15,9 @@ has name => (
 has faction => (
     is => 'ro'
 );
-
+has config => (
+    is => 'rw'
+);
 #Command management
 has waiting => (
     is => 'rw',
@@ -171,21 +173,21 @@ sub init_gauge
     }
     elsif($label eq 'rifle')
     {
-        $self->gauges->{'rifle'} = Gunpla::Gauge->new({ max_level => RIFLE_GAUGE,
-                                                        level => RIFLE_GAUGE,
+        $self->gauges->{'rifle'} = Gunpla::Gauge->new({ max_level => $self->config->{RIFLE_GAUGE},
+                                                        level => $self->config->{RIFLE_GAUGE},
                                                         type => 'attack' });
     }
     elsif($label eq 'machinegun')
     {
-        $self->gauges->{'machinegun'} = Gunpla::Gauge->new({ max_level => MACHINEGUN_GAUGE,
-                                                             level => MACHINEGUN_GAUGE,
+        $self->gauges->{'machinegun'} = Gunpla::Gauge->new({ max_level => $self->config->{MACHINEGUN_GAUGE},
+                                                             level => $self->config->{MACHINEGUN_GAUGE},
                                                              type => 'attack', });
                                                              
     }
     elsif($label eq 'boost')
     {
-        $self->gauges->{'boost'} = Gunpla::Gauge->new({ max_level => BOOST_GAUGE,
-                                                        level => BOOST_GAUGE,
+        $self->gauges->{'boost'} = Gunpla::Gauge->new({ max_level => $self->config->{BOOST_GAUGE},
+                                                        level => $self->config->{BOOST_GAUGE},
                                                         type => 'action', });
                                                              
     }
@@ -206,8 +208,8 @@ sub init_gauge
     }
     elsif($label eq 'support')
     {
-        $self->gauges->{'support'} = Gunpla::Gauge->new({ max_level => SUPPORT_GAUGE,
-                                                          level => SUPPORT_GAUGE,
+        $self->gauges->{'support'} = Gunpla::Gauge->new({ max_level => $self->config->{SUPPORT_GAUGE},
+                                                          level => $self->config->{SUPPORT_GAUGE},
                                                           type => 'action', });
                                                              
     }
@@ -373,11 +375,11 @@ sub get_velocity
     my $self = shift;
     if($self->attack && $self->attack eq 'SWORD')
     {
-        return SWORD_VELOCITY;
+        return $self->config->{SWORD_VELOCITY};
     } 
     elsif($self->action && $self->action eq 'BOOST')
     {
-        return BOOST_VELOCITY;
+        return $self->config->{BOOST_VELOCITY};
     }
     else
     {
@@ -404,7 +406,7 @@ sub ok_velocity
     if($self->get_velocity > 0)
     {
         $self->run_gauge('velocity');
-        if($self->get_gauge_level('velocity') > (VELOCITY_LIMIT  - $self->get_velocity))
+        if($self->get_gauge_level('velocity') > ($self->config->{VELOCITY_LIMIT}  - $self->get_velocity))
         {
             $self->reset_gauge('velocity');
             $move = 1;
@@ -531,26 +533,26 @@ sub drift_and_move
 sub energy_routine
 {
     my $self = shift;
-    my $energy_delta = ENERGY_STANDARD_BONUS;
+    my $energy_delta = $self->config->{ENERGY_STANDARD_BONUS};
 
     if($self->attack && $self->attack eq 'SWORD')
     {
-        $energy_delta -= ENERGY_SWORD_VELOCITY_MALUS;
+        $energy_delta -= $self->config->{ENERGY_SWORD_VELOCITY_MALUS};
     } 
     elsif($self->action && $self->action eq 'BOOST')
     {
-        $energy_delta -= ENERGY_BOOST_MALUS;
+        $energy_delta -= $self->config->{ENERGY_BOOST_MALUS};
     }
     else
     {
         my $high_velocity = $self->max_velocity - 1;
         if($self->get_velocity == $self->max_velocity)
         {
-            $energy_delta -= ENERGY_MAX_VELOCITY_MALUS;
+            $energy_delta -= $self->config->{ENERGY_MAX_VELOCITY_MALUS};
         }
         elsif($self->get_velocity == $high_velocity)
         {
-            $energy_delta -= ENERGY_HIGH_VELOCITY_MALUS;
+            $energy_delta -= $self->config->{ENERGY_HIGH_VELOCITY_MALUS};
         }
     }
     $self->add_energy($energy_delta);
@@ -622,10 +624,10 @@ sub command
             $self->set_destination($target->position->clone());
             $self->movement_target({ type => 'MEC', 'name' => $target->name, class => 'dynamic'  });
             $self->attack_target({ type => 'MEC', 'name' => $target->name, class => 'dynamic'  });
-            $self->attack_limit(SWORD_ATTACK_TIME_LIMIT);
-            $self->log("Attack gauge start is " . SWORD_GAUGE_VELOCITY_BONUS . " * " . $actual_velocity);
+            $self->attack_limit($self->config->{SWORD_ATTACK_TIME_LIMIT});
+            $self->log("Attack gauge start is " . $self->config->{SWORD_GAUGE_VELOCITY_BONUS} . " * " . $actual_velocity);
             $self->init_gauge('sword');
-            $self->mod_gauge('sword', SWORD_GAUGE_VELOCITY_BONUS * $actual_velocity);
+            $self->mod_gauge('sword', $self->config->{SWORD_GAUGE_VELOCITY_BONUS} * $actual_velocity);
             $self->stop_action(); #Here to transmit BOOST to GAUGE_VELOCITY_BONUS
         }
     }
@@ -642,7 +644,7 @@ sub command
         }
         $self->stop_action();    
         $self->stop_attack();    
-        my $destination = $self->position->away_from($position, GET_AWAY_DISTANCE);
+        my $destination = $self->position->away_from($position, $self->config->{GET_AWAY_DISTANCE});
         $self->set_destination($destination);
         $self->movement_target({ type => 'VOID', name => 'space', class => 'fixed'  });
         $self->velocity_target($velocity);
@@ -664,7 +666,7 @@ sub command
             $self->stop_action();    
             $self->stop_attack();    
             $self->stop_movement();
-            $self->attack_limit(RIFLE_ATTACK_TIME_LIMIT);
+            $self->attack_limit($self->config->{RIFLE_ATTACK_TIME_LIMIT});
             $self->attack('RIFLE');
             $self->attack_target({ type => 'MEC', 'name' => $target->name, class => 'dynamic'  });
             $self->init_gauge('rifle');
@@ -676,7 +678,7 @@ sub command
         $self->stop_action();    
         $self->action("LAND");
         $self->set_destination($target->{position}->clone());
-        $self->velocity_target(LANDING_VELOCITY);
+        $self->velocity_target($self->config->{LANDING_VELOCITY});
         $self->movement_target({ type => $target->{type}, 'name' => $target->{id}, class => 'fixed' });
         
     }
@@ -689,7 +691,7 @@ sub command
         else
         {
             $self->stop_attack();    
-            $self->attack_limit(MACHINEGUN_SHOTS);
+            $self->attack_limit($self->config->{MACHINEGUN_SHOTS});
             $self->attack('MACHINEGUN');
             $self->attack_target({ type => 'MEC', 'name' => $target->name, class => 'dynamic'  });
             $self->init_gauge('machinegun');
@@ -752,6 +754,14 @@ sub command
     $self->delete_status('stuck');
 }
 
+sub available_max_velocity
+{
+    my $self = shift;
+    my $available_max_velocity = $self->energy > ENERGY_AVAILABLE_FOR_HIGH_SPEED ?
+                                    $self->max_velocity : $self->max_velocity - 2;
+    return $available_max_velocity;
+}
+
 
 
 sub to_mongo
@@ -768,6 +778,7 @@ sub to_mongo
         velocity => $self->velocity,
         acceleration => $self->acceleration,
         max_velocity => $self->max_velocity,
+        available_max_velocity => $self->available_max_velocity,
         velocity_vector => $self->velocity_vector ? $self->velocity_vector->to_mongo() : undef,
         velocity_target => $self->velocity_target,
         cmd_index => $self->cmd_index,
