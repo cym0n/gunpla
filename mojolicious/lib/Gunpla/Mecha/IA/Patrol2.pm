@@ -35,7 +35,6 @@ sub manage_targets
             if($am->{waiting})
             {
                 $on_wait++;
-                say STDERR $self->mecha .  ": Putting on wait for " . $am->{name};
             }
             else
             {
@@ -43,7 +42,6 @@ sub manage_targets
                 if($f->{distance} < $min_distance)
                 {
                     $to_call = $f->{world_id};
-                    say STDERR $self->mecha .  ": Friend to call is " . $f->{world_id};
                 }
             }
         }
@@ -53,7 +51,6 @@ sub manage_targets
         foreach my $t (@targets)
         {
             my $already = $self->already_on_target($t->{world_id});
-            say STDERR $self->mecha .  ": already is $already, on_wait is $on_wait";
             if($already == 0 && ! $on_wait)
             {
                 $self->aim($t->{world_id});

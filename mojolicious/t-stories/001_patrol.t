@@ -9,11 +9,13 @@ use Gunpla::World;
 use Gunpla::Test;
 use Gunpla::Position;
 
+our $config_file = 'ciao';
+
 #THE STORY: Wing approaches the surveillance perimeter and encounter Leo-3. Leo-3 fly toward him with machingun. Wing first shoots with the RIFLE then turn on the BOOST to short the distance with the enemy and slash with the blade. Having the boost as bonus he wins the sword fight. One more hit finishes Leo-3
 #    Inertia doesn't really affect Leo-3 because the original command: fly to WP-barcelona keeps him on track
 
 my @dice = (15, 10, 15, 15, 1, Gunpla::Test::build_drift_dice(0, 699), 20);
-my $world = Gunpla::Test::test_bootstrap('arena-0.csv', \@dice);
+my $world = Gunpla::Test::test_bootstrap('arena-0.csv', \@dice, undef, 'stories.yaml');
 $world->log_tracing([ 'Wing', 'Leo-3']);
 is(@{$world->armies}, 5, "Checking mechas created on init");
 is(Gunpla::Test::emulate_commands($world, 
@@ -33,7 +35,7 @@ is_deeply($world->get_events('Wing'), ["Leo-3 hits with machine gun Wing"], "Leo
 position_test(-2926, -1426); #[d:1500] enter machinegun range
 is(Gunpla::Test::emulate_commands($world, $wing_charge), 2, "Wing charges with boost");
 is_deeply($world->get_events('Wing'), ["Leo-3 hits with machine gun Wing"], "Leo-3 hits with the machine gun");
-position_test(-2659, -1559); #[d:1100]
+position_test(-2659, -1560); #[d:1100]
 is(Gunpla::Test::emulate_commands($world, $wing_charge), 2, "Wing charges with boost while Leo-3 ends his machine gun attack");
 is_deeply($world->get_events('Wing'), ["Wing reached the nearby of mecha Leo-3"], "Wing reached the nearby of mecha Leo-3");
 is_deeply($world->get_events('Leo-3'), ["Leo-3 reached the nearby of mecha Wing"], "Leo-3 reached the nearby of mecha Wing");

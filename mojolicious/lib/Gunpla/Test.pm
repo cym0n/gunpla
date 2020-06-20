@@ -9,11 +9,14 @@ sub test_bootstrap
     my $scenario = shift;
     my $dice = shift || [];
     my $name = shift || 'autotest';
+    my $config_file = shift;
+    
+
     clean_db($name);
     my $world = Gunpla::World->new(name => $name, dice_results => $dice, log_file => "$name.log");
     $world->log("--- BOOSTRAP --- Scenario: $scenario");
     $world->log("  Tampered dice values") if @{$dice};
-    $world->init_scenario($scenario);
+    $world->init_scenario($scenario, $config_file);
     $world->save();
     return $world;
 }
@@ -21,13 +24,14 @@ sub test_bootstrap
 sub reload
 {
     my $world = shift;
+    my $config_file = shift;
     my $name = $world->name;
     my $dice = $world->dice_results;
     my $inertia = $world->inertia;
     my $log_tracing = $world->log_tracing;
     my $log_stderr = $world->log_stderr;
     $world =  Gunpla::World->new(name => $name, dice_results => $dice, log_file => "$name.log", inertia => $inertia, log_tracing => $log_tracing, log_stderr => $log_stderr);
-    $world->load;
+    $world->load($config_file);
     return $world;
 }
 
@@ -37,9 +41,10 @@ sub emulate_commands
     my $world = shift;
     my $commands = shift;
     my $reload = shift;
+    my $config_file = shift;
     if($reload)
     {
-        $world = reload($world);
+        $world = reload($world, $config_file);
     }
     for(keys %{$commands})
     {
