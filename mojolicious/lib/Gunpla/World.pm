@@ -8,7 +8,7 @@ use MongoDB;
 use Cwd 'abs_path';
 use JSON::XS;
 use Gunpla::Constants ':all';
-use Gunpla::Utils qw(get_game_events);
+use Gunpla::Utils qw(get_game_events load_game_config);
 use Gunpla::Position;
 use Gunpla::Mecha;
 use Gunpla::Sight;
@@ -105,15 +105,26 @@ has mecha_templates => (
 sub load_config
 {
     my $self = shift;
-    my $cfg_file = shift || 'standard.yaml';
+    my $cfg_file = shift;
     my $module_file_path = __FILE__;
     my $root_path = abs_path($module_file_path);
     $root_path =~ s/World\.pm//;
     my $data_directory = $root_path . "../../config";
-    my $cfg = Config::Any->load_files({files => [ "$data_directory/$cfg_file"], use_ext => 1 }); 
-    $self->config($cfg->[0]->{"$data_directory/$cfg_file"});
-}
 
+    my @files = ( "$data_directory/default.yaml" );
+    push @files, "$data_directory/$cfg_file" if($cfg_file);
+    my $cfg = Config::Any->load_files({files => \@files, use_ext => 1, flatten_to_hash => 1 }); 
+    my $game_config = {};
+    foreach my $f (@files)
+    {
+        $self->log("Loading config file $f");
+        foreach my $k (keys %{$cfg->{$f}})
+        {
+            $game_config->{$k} = $cfg->{$f}->{$k}
+        }
+    }
+    $self->config($game_config);
+}
 
 sub add_mecha
 {
@@ -135,6 +146,7 @@ sub add_mecha
     $template->{name} = $name;
     $template->{faction} = $faction;
     $template->{log_file} = $self->log_file;
+    $template->{config} = $self->config;
     die "Mecha with name $name already present" if($self->get_mecha_by_name($name));
     my $mecha = Gunpla::Mecha->new($template);
     
@@ -379,7 +391,7 @@ sub init_scenario
             $self->control->{$values[1]} = $values[2];
         }
     }
-    my $sight = Gunpla::Sight->new();
+    my $sight = Gunpla::Sight->new({config => $self->config});
     $sight->init($self->armies);
     $self->sighting_matrix($sight);
     $self->sighting_matrix->calculate(undef, $self->armies); #Trashing away events
@@ -1251,6 +1263,7 @@ sub load
     my @mecha = $db->get_collection('mechas')->find()->all();
     foreach my $m (@mecha)
     {
+        $m->{config} = $self->config;
         if($m->{life} > 0)
         {
             push @{$self->armies}, Gunpla::Mecha->from_mongo($m);
@@ -1280,7 +1293,7 @@ sub load
     my ( $sighting_matrix ) = $db->get_collection('status')->find({ status_element => 'sighting_matrix' })->all();
     delete $sighting_matrix->{status_element};
     delete $sighting_matrix->{_id};
-    my $sight = Gunpla::Sight->new();
+    my $sight = Gunpla::Sight->new({config => $self->config});
     $self->log("Loading sight: " . Dumper($sighting_matrix));
     $sight->load($sighting_matrix);
     $self->sighting_matrix($sight);

@@ -102,8 +102,6 @@ sub target_from_mongo_to_json
 sub mecha_from_mongo_to_json
 {
     my $mecha = shift;
-    my $available_max_velocity = $mecha->{energy} > ENERGY_AVAILABLE_FOR_HIGH_SPEED ?
-                                    $mecha->{max_velocity} : $mecha->{max_velocity} - 2;
     return { name     => $mecha->{name},
              label     => $mecha->{name},
              map_type => 'mecha',
@@ -114,7 +112,7 @@ sub mecha_from_mongo_to_json
              velocity => $mecha->{velocity},
              energy   => $mecha->{energy},
              max_velocity => $mecha->{max_velocity},
-             available_max_velocity => $available_max_velocity,
+             available_max_velocity => $mecha->{available_max_velocity},
              waiting  => $mecha->{waiting} };
 }
 
@@ -196,3 +194,4 @@ sub get_game_events
     }
     return \@out;
 }
+
