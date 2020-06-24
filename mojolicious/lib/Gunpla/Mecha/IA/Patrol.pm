@@ -77,7 +77,7 @@ sub manage_targets
                         params => $t->{world_id},
                         secondarycommand => 'machinegun',
                         secondaryparams => $t->{world_id},
-                        velocity => 6
+                        velocity => 4
                     }
                 }
             }
@@ -98,7 +98,7 @@ sub manage_events
             params => $self->my_wp,
             secondarycommand => undef,
             secondaryparams => undef,
-            velocity => 6
+            velocity => 4
         }
     }
     elsif($self->event_is('exhausted energy'))
