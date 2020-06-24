@@ -1333,7 +1333,7 @@ sub log_tracer
         my $m = $self->get_mecha_by_name($mname);
         if($m)
         {
-            $self->log("### " . $m->name . " " . $m->position->as_string . " " . $m->inertia . " " . $m->energy . " " . $m->life);
+            $self->log("### " . $m->name . " " . $m->position->as_string . " I:" . $m->inertia . " E:" . $m->energy . " L:" . $m->life);
         }
     }
 }

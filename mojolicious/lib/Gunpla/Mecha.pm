@@ -149,6 +149,7 @@ sub start_gauges
     my $self = shift;
     $self->init_gauge('acceleration');
     $self->init_gauge('velocity');
+    $self->init_gauge('energy');
 }
 
 sub init_gauge
@@ -213,6 +214,14 @@ sub init_gauge
                                                           type => 'action', });
                                                              
     }
+    if($label eq 'energy')
+    {
+        $self->gauges->{'energy'} = Gunpla::Gauge->new({ max_level => $self->config->{ENERGY_GAUGE}, 
+                                                         level     => $self->config->{ENERGY_GAUGE},
+                                                         loop      => 1,
+                                                         type      => 'basic' });
+    }
+
        
                                                 
 }
@@ -533,8 +542,11 @@ sub drift_and_move
 sub energy_routine
 {
     my $self = shift;
-    my $energy_delta = $self->config->{ENERGY_STANDARD_BONUS};
-
+    my $energy_delta = 0;
+    if($self->run_gauge('energy'))
+    {
+        $energy_delta++;
+    }
     if($self->attack && $self->attack eq 'SWORD')
     {
         $energy_delta -= $self->config->{ENERGY_SWORD_VELOCITY_MALUS};
