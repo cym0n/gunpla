@@ -1077,16 +1077,26 @@ sub dice
     my $min = shift;
     my $max = shift;
     my $reason = shift;
-    #$self->log("Values available: " . @{$self->dice_results}); #Keep it as counter when needed
-    if(@{$self->dice_results})
+    my $out;
+    my $dice_type;
+    if(exists $self->config->{DICE_RESULTS}->{$reason})
     {
-        my $v = shift @{$self->dice_results};
-        $self->log("Loaded dice: $v for $reason") if $reason ne "drift direction";
-        return $v;
+        $out = $self->config->{DICE_RESULTS}->{$reason};
+        $dice_type = 'Configured';
     }
-    my $random_range = $max - $min + 1;
-    my $out = int(rand($random_range)) + $min;
-    $self->log("Regular dice: $out for $reason") if $reason ne "drift direction";
+    elsif(@{$self->dice_results})
+    {
+        $out = shift @{$self->dice_results};
+        $dice_type = 'Loaded';
+        $self->log("WARNING! Dice value $out out of range for $reason") if($out < $min || $out > $max);
+    }
+    else
+    {
+        my $random_range = $max - $min + 1;
+        $out = int(rand($random_range)) + $min;
+        $dice_type = 'Regular';
+    }
+    $self->log("$dice_type dice: $out for $reason") if $reason ne "drift direction";
     return $out;
 }
 
