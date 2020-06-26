@@ -79,7 +79,7 @@ sub manage_targets
                         params => $t->{world_id},
                         secondarycommand => 'machinegun',
                         secondaryparams => $t->{world_id},
-                        velocity => 6
+                        velocity => 4
                     }
                 }
             }
