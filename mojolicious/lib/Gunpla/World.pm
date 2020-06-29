@@ -933,6 +933,7 @@ sub manage_attack
                 $defender->stop_movement();
                 $defender->add_energy(-1 * $self->config->{SWORD_ENERGY});
                 $defender->mod_inertia($self->config->{INERTIA_SWORD_NULLIFIED});
+                $self->sighting_matrix->force_sighting($attacker, $defender, 1);
             }
         }
         if($clash)
@@ -967,6 +968,7 @@ sub manage_attack
         $defender->stop_attack();
         $defender->stop_action();
         $defender->stop_movement();
+        $self->sighting_matrix->force_sighting($attacker, $defender, 1);
         $self->collect_dead();
     }
     elsif($attack eq 'MACHINEGUN')
@@ -988,6 +990,7 @@ sub manage_attack
         {
             $self->event($attacker->name . " missed " . $defender->name . " with machine gun", { $attacker->name => 0, $defender->name => 0});
         }
+        $self->sighting_matrix->force_sighting($attacker, $defender, 1);
         $attacker->attack_limit($attacker->attack_limit - 1);
         if($attacker->attack_limit == 0)
         {
@@ -1021,6 +1024,7 @@ sub manage_attack
         {
             $self->event($attacker->name . " missed " . $defender->name . " with rifle", [$attacker->name], [$attacker->name]);
         }
+        $self->sighting_matrix->force_sighting($attacker, $defender, 1);
         $attacker->attack_limit(0); #Avoid a new rifle order is misinterpreted as resume
         $attacker->add_energy(-1 * $self->config->{RIFLE_ENERGY});
         $attacker->delete_gauge('rifle');

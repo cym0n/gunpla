@@ -60,6 +60,25 @@ sub mod_faction
     }
 }
 
+sub force_sighting
+{
+    my $self = shift;
+    my $from = shift;
+    my $target = shift;
+    my $both = shift;
+    if($from->sensor_range > 0)
+    {
+        $self->turn_on_mecha2mecha($from->name, $target->name);
+    }
+    if($both)
+    {
+        if($target->sensor_range > 0)
+        {
+            $self->turn_on_mecha2mecha($target->name, $from->name);
+        }
+    }
+}
+
 sub turn_on_mecha2mecha
 {
     my $self = shift;

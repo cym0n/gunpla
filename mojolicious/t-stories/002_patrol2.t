@@ -49,7 +49,7 @@ is(Gunpla::Test::emulate_commands($world,
 is($world->cemetery->[0]->name, "Leo-3", "Leo-3 is dead");
 is($world->armies->[3]->life, 800, "Wing life");
 is($world->armies->[3]->energy, 34477, "Wing Energy");
-$world->log_tracing([ 'Wing', 'Leo-4' ]);
+$world->log_tracing([ 'Wing', 'Leo-1', 'Leo-2', 'Leo-4' ]);
 $adversary_index = 2;
 $wing_index = 3;
 position_test(-6861, 1072); #[d:~5400]
@@ -57,9 +57,20 @@ is(Gunpla::Test::emulate_commands($world,
     { 'Wing' => { command =>'flywp', params => 'WP-blue', velocity => 4 } }
 ), 1, 'Wing heading his target after Leo-3 defeat');
 is_deeply($world->get_events('Wing'), ["Wing sighted Leo-4"], "Leo-4, called by Leo-3, joins the fight");
-is(Gunpla::Test::emulate_commands($world, 
-    { 'Wing' => { command =>'flywp', params => 'WP-blue', velocity => 4 } }
-), 2, 'Wing ignores Leo-4');
+
+#If Wing ignores Leo-4 dies
+#for(my $i = 0; $i < 10; $i++)
+#{
+#    is(Gunpla::Test::emulate_commands($world, 
+#        { 'Wing' => { command =>'flywp', params => 'WP-blue', velocity => 4 } }
+#    ), 2, 'Wing ignores Leo-4');
+#}
+
+#Trying to escape to the farest waypoint is useless
+#is(Gunpla::Test::emulate_commands($world, 
+#    { 'Wing' => { command =>'flywp', params => 'WP-paris', velocity => 6 } }
+#), 1, 'Wing tries to avoid Leo-4');
+
 
 Gunpla::Test::clean_db('autotest', 1);
 done_testing();
