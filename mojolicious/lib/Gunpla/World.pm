@@ -770,6 +770,7 @@ sub process_sight_events
 {
     my $self = shift;
     my @events = @_;
+    my @already = ();
     foreach my $e (@events)
     {
         if($e->[2] == 1)
@@ -783,7 +784,8 @@ sub process_sight_events
             next if ! $m || ! $other;
             my $check_faction = $m->faction;
             my $check_name = $other->name;
-            if(! $self->sighting_matrix->see_faction($check_faction, $check_name))
+            if(! $self->sighting_matrix->see_faction($check_faction, $check_name) && 
+               ! grep { $_ eq "$check_faction $check_name"} @already)
             {
                 my $involved = {};
                 my $stuck = [];
@@ -818,7 +820,8 @@ sub process_sight_events
                         }
                     }
                 }                            
-                $self->event($m->name . " lost contact with " . $other->name, $involved, $stuck);
+                push @already, "$check_faction $check_name";
+                $self->event("contact lost: " . $other->name, $involved, $stuck);
             }
         }
     }
@@ -1060,7 +1063,8 @@ sub collect_dead
     {
         if($m->life <= 0)
         {
-            $self->sighting_matrix->remove_from_matrix($m, $self->armies);
+            my @out_events = $self->sighting_matrix->remove_from_matrix($m, $self->armies);
+            $self->process_sight_events(@out_events);
             push @{$self->cemetery}, $m;
             $self->log($m->name . " removed from game");
         }

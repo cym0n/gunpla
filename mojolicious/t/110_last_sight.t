@@ -35,7 +35,7 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
 
 is(Gunpla::Test::emulate_commands($world, $commands, 1), 1);
 $world = Gunpla::Test::reload($world);
-is_deeply($world->get_events('Hyakushiki'), [ 'Hyakushiki lost contact with RX78' ]);
+is_deeply($world->get_events('Hyakushiki'), [ 'contact lost: RX78' ]);
 
 $t->get_ok('/game/targets?game=autotest&mecha=Hyakushiki&filter=last-sight')
     ->status_is(200)->json_is({

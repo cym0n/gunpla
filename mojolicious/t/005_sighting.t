@@ -32,7 +32,7 @@ is(Gunpla::Test::emulate_commands($world,
 
 }),
 1, "Hyakushiki get away from RX78 that is chasing him issuing blocking event");
-is_deeply($world->get_events('RX78'), [ 'RX78 lost contact with Hyakushiki' ], "Checking event generation");
+is_deeply($world->get_events('RX78'), [ 'contact lost: Hyakushiki' ], "Checking event generation");
 
 diag("Checking game status after the event");
 is($world->sighting_matrix->matrix->{'RX78'}->{'Hyakushiki'}, 0, "RX78 Sighting matrix");

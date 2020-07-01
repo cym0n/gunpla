@@ -172,6 +172,7 @@ sub remove_from_matrix
                 $self->mod_faction($mecha->faction, $t->name, -1);
             }
             $self->matrix->{$t->name}->{$mecha->name} = 0;
+            push @out_events, [ $t->name, $mecha->name, -1];
         }
     }
     foreach my $f (keys %{$self->factions})

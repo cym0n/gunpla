@@ -9,8 +9,7 @@ use Gunpla::World;
 use Gunpla::Test;
 use Gunpla::Position;
 
-#THE STORY: Wing approaches the surveillance perimeter and encounter Leo-3. Leo-3 fly toward him with machingun. Wing first shoots with the RIFLE then turn on the BOOST to short the distance with the enemy and slash with the blade. Having the boost as bonus he wins the sword fight. One more hit finishes Leo-3
-#    Inertia doesn't really affect Leo-3 because the original command: fly to WP-barcelona keeps him on track
+#THE STORY: Wing slashes Leo-3 as in story 001 but in the meantime Leo-4 arrives for support, finding Wing lacking energy and defeating him.
 
 my @dice = (15, 10, 15, 15, 1, 20, 0, 20, 20);
 my $world = Gunpla::Test::test_bootstrap('arena-1.csv', \@dice, undef, 'stories.yaml');
@@ -45,7 +44,7 @@ is(Gunpla::Test::emulate_commands($world,
 is_deeply($world->get_events('Wing'), ["Wing slash with sword mecha Leo-3"], "Wing slash with sword mecha Leo-3");
 is(Gunpla::Test::emulate_commands($world, 
     { 'Wing' => { command =>'sword', params => 'MEC-Leo-3' }}
-), 2, "Second sword hit");
+), 3, "Second sword hit");
 is($world->cemetery->[0]->name, "Leo-3", "Leo-3 is dead");
 is($world->armies->[3]->life, 800, "Wing life");
 is($world->armies->[3]->energy, 34477, "Wing Energy");
