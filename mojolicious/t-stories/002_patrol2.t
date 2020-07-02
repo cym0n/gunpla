@@ -11,7 +11,7 @@ use Gunpla::Position;
 
 #THE STORY: Wing slashes Leo-3 as in story 001 but in the meantime Leo-4 arrives for support, finding Wing lacking energy and defeating him.
 
-my @dice = (15, 10, 15, 15, 1, 20, 0, 20, 20);
+my @dice = (1, 0);
 my $world = Gunpla::Test::test_bootstrap('arena-1.csv', \@dice, undef, 'stories.yaml');
 $world->log_tracing([ 'Wing', 'Leo-3']);
 is(@{$world->armies}, 5, "Checking mechas created on init");

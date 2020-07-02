@@ -946,8 +946,8 @@ sub manage_attack
                                 $gauge < 2000 ? 1 :
                                     $gauge < 4000 ? 2 :
                                         $gauge < 5600 ? 3 : 4;
-            my $roll = $self->dice(1, 20, "sword clash");
-            if($roll + $gauge_bonus >= $self->config->{SWORD_WIN})
+
+            if($self->hitting("sword clash", $gauge_bonus, $self->config->{SWORD_WIN}))
             {
                 my $damage = $self->config->{SWORD_DAMAGE} + ($gauge_bonus * $self->config->{SWORD_DAMAGE_BONUS_FACTOR});
                 $defender->mod_life(-1 * $damage);
@@ -979,8 +979,7 @@ sub manage_attack
         $attacker->reset_gauge('machinegun');
         my $distance = $attacker->position->distance($defender->position);
         my $distance_bonus = 3 - ceil((3 * $distance) / $self->config->{MACHINEGUN_RANGE});
-        my $roll = $self->dice(1, 20, "machingun hit");
-        if($roll + $distance_bonus >= $self->config->{MACHINEGUN_WIN})
+        if($self->hitting("machinegun hit", $distance_bonus, $self->config->{MACHINEGUN_WIN}))
         {
             $defender->mod_life(-1 * $self->config->{MACHINEGUN_DAMAGE});   
             if($defender->attack && $defender->attack eq 'SWORD')
@@ -1010,10 +1009,9 @@ sub manage_attack
             return;
         }
         my $distance = $attacker->position->distance($defender->position);
-        my $distance_bonus = 3 - ceil((3 * $distance) / $self->config->{RIFLE_MAX_DISTANCE});
-        my $roll = $self->dice(1, 20, "rifle hit");
-        $roll += $self->config->{RIFLE_LANDED_BONUS} if($attacker->is_status('landed'));
-        if($roll + $distance_bonus >= $self->config->{RIFLE_WIN})
+        my $bonus = 3 - ceil((3 * $distance) / $self->config->{RIFLE_MAX_DISTANCE});
+        $bonus += $self->config->{RIFLE_LANDED_BONUS} if($attacker->is_status('landed'));
+        if($self->hitting("rifle hit", $bonus, $self->config->{RIFLE_WIN}))
         {
             $defender->mod_life(-1 * $self->config->{RIFLE_DAMAGE});   
             if($defender->attack && $defender->attack eq 'SWORD')
@@ -1032,6 +1030,23 @@ sub manage_attack
         $attacker->add_energy(-1 * $self->config->{RIFLE_ENERGY});
         $attacker->delete_gauge('rifle');
         $self->collect_dead();
+    }
+}
+
+sub hitting
+{
+    my $self = shift;
+    my $label = shift;
+    my $bonus = shift;
+    my $threshold = shift;
+    if($self->config->{NO_HITTING_LUCK})
+    {
+        return 1;
+    }
+    else
+    {
+        my $roll = $self->dice(1, 20, $label);
+        return $roll + $bonus >= $threshold;
     }
 }
 
