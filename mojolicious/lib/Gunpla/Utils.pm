@@ -1,7 +1,7 @@
 package Gunpla::Utils;
 
 use base 'Exporter';
-our @EXPORT_OK = qw( controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction command_from_mongo_to_json get_from_id get_game_events);
+our @EXPORT_OK = qw( controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction command_from_mongo_to_json get_from_id get_game_events get_command);
 
 use Data::Dumper;
 use MongoDB;
@@ -195,3 +195,43 @@ sub get_game_events
     return \@out;
 }
 
+sub get_command
+{
+    my $game = shift;
+    my $mecha_name = shift;
+    my $prev = shift;
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $game);
+    my ( $mecha ) = $db->get_collection('mechas')->find({ name => $mecha_name })->all();
+    my $mecha_data =  mecha_from_mongo_to_json($mecha);
+    my $cmd_index = $mecha->{cmd_index};
+    $cmd_index-- if $prev;
+    my ( $command ) = $db->get_collection('commands')->find({ mecha => $mecha->{name}, cmd_index => $cmd_index })->all();
+    return (undef, 0) if ! $command;
+    
+    my $ok = 1;
+    my $target_obj = get_from_id($game, $command->{params});
+    if($command->{params} =~ /^MEC/)
+    {   
+        $ok = sighted_by_faction($game, $mecha_name, $target_obj);
+    }
+    my ( $configured_command ) = $db->get_collection('available_commands')->find({ code => $command->{command} })->all();
+    my $mp = target_from_mongo_to_json($game, $mecha_name, $target_obj->{source}, $target_obj);
+    if(exists $configured_command->{min_distance})
+    {
+        $ok = $ok && ($mp->{distance} > $configured_command->{min_distance})
+    }
+    if(exists $configured_command->{max_distance})
+    {
+       $ok = $ok && ($mp->{distance} < $configured_command->{max_distance})
+    }
+    if($command->{velocity})
+    {
+        $ok = $ok && ($command->{velocity} <= $mecha_data->{available_max_velocity});
+    }
+    if($configured_command->{energy_needed})
+    {
+        $ok = $ok && ($mecha_data->{energy} > $configured_command->{energy_needed});
+    }
+    return ($command, $ok);
+}

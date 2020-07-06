@@ -5,7 +5,7 @@ use lib "../../";
 
 use MongoDB;
 use Gunpla::Constants ':all';
-use Gunpla::Utils qw(controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction command_from_mongo_to_json get_from_id);
+use Gunpla::Utils qw(controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction command_from_mongo_to_json get_from_id get_command);
 use Gunpla::Position;
 use Data::Dumper;
 
@@ -387,43 +387,9 @@ sub read_command
     my $mecha_name = $c->param('mecha');
     my $prev = $c->param('prev') || 0;
     my $available = $c->param('available') || 0;
-    my $client = MongoDB->connect();
-    my $db = $client->get_database('gunpla_' . $game);
-    my ( $mecha ) = $db->get_collection('mechas')->find({ name => $mecha_name })->all();
-    my $mecha_data =  mecha_from_mongo_to_json($mecha);
-    my $cmd_index = $mecha->{cmd_index};
-    $cmd_index-- if $prev;
-    $c->app->log->debug("Getting command " . $mecha->{name} . '-' . $cmd_index);
-    my ( $command ) = $db->get_collection('commands')->find({ mecha => $mecha->{name}, cmd_index => $cmd_index })->all();
-    my $ok = 1;
-    if($available)
-    {
-        my $target_obj = get_from_id($game, $command->{params});
-        if($command->{params} =~ /^MEC/)
-        {   
-            $ok = sighted_by_faction($game, $mecha_name, $target_obj);
-        }
-        my ( $configured_command ) = $db->get_collection('available_commands')->find({ code => $command->{command} })->all();
-        my $mp = target_from_mongo_to_json($game, $mecha_name, $target_obj->{source}, $target_obj);
-        if(exists $configured_command->{min_distance})
-        {
-            $ok = $ok && ($mp->{distance} > $configured_command->{min_distance})
-        }
-        if(exists $configured_command->{max_distance})
-        {
-            $ok = $ok && ($mp->{distance} < $configured_command->{max_distance})
-        }
-        if($command->{velocity})
-        {
-            $ok = $ok && ($command->{velocity} <= $mecha_data->{available_max_velocity});
-        }
-        if($configured_command->{energy_needed})
-        {
-            $ok = $ok && ($mecha_data->{energy} > $configured_command->{energy_needed});
-        }
-        
-    }
-    if($ok)
+    my ($command, $ok) = get_command($game, $mecha_name, $prev);
+    $c->app->log->debug("Getting command " . $mecha_name . '-' . $command->{cmd_index});
+    if($ok || (! $available))
     {
         $c->render(json => { command => { command => $command->{command},
                                           params  => $command->{params},
