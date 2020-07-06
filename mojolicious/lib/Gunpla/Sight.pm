@@ -52,11 +52,21 @@ sub mod_faction
     my $faction = shift;
     my $target = shift;
     my $mod = shift;
+    my $before = $self->factions->{$faction}->{$target};
     $self->factions->{$faction}->{$target} = $self->factions->{$faction}->{$target} + $mod;
     if($self->factions->{$faction}->{$target} < 0)
     {
         say STDERR "$faction-$target sighting matrix below 0";
         $self->factions->{$faction}->{$target} = 0;
+    }
+    if($before > 0 && $self->factions->{$faction}->{$target} == 0 || 
+       $before == 0 && $self->factions->{$faction}->{$target} > 0)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
     }
 }
 
@@ -146,14 +156,38 @@ sub calculate
                 {
                     if($self->decrease_mecha2mecha($m->name, $other->name))
                     {
-                        $self->mod_faction($m->faction, $other->name, -1);
-                        push @out_events, [ $m->name, $other->name, -1];
+                        my $disappeared = $self->mod_faction($m->faction, $other->name, -1);
+                        if($disappeared)
+                        {
+                            @out_events = (@out_events, $self->generate_faction_events($armies, $m->faction, $other->name, -1));
+                        }
                     }
                 }
             }
         }
     }
     return @out_events;
+}
+
+sub generate_faction_events
+{
+    my $self = shift;
+    my $armies = shift;
+    my $faction = shift;
+    my $mecha = shift;
+    my $mod = shift;
+    my @events = ();
+    foreach my $a (@{$armies})
+    {
+        if($a->faction eq $faction)
+        {
+            push @events, [ $a->name, $mecha, $mod];
+        }
+    }
+    return @events;
+
+
+
 }
 
 sub remove_from_matrix
@@ -169,7 +203,11 @@ sub remove_from_matrix
             if($self->matrix->{$mecha->name}->{$t->name} > 0)
             {
                 $self->matrix->{$mecha->name}->{$t->name} = 0;
-                $self->mod_faction($mecha->faction, $t->name, -1);
+                my $disappeared = $self->mod_faction($mecha->faction, $t->name, -1);
+                if($disappeared)
+                {
+                    @out_events = (@out_events, $self->generate_faction_events($armies, $mecha->faction, $t->name, -1));
+                }
             }
             $self->matrix->{$t->name}->{$mecha->name} = 0;
             push @out_events, [ $t->name, $mecha->name, -1];

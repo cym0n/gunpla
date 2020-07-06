@@ -2,7 +2,7 @@ package Gunpla::Mecha::IA::Patrol2;
 
 use v5.10;
 use Moo;
-use Gunpla::Utils qw(sighted_by_faction target_from_mongo_to_json);
+use Gunpla::Utils qw(sighted_by_faction target_from_mongo_to_json get_command);
 use Data::Dumper;
 
 extends 'Gunpla::Mecha::IA::Patrol';
@@ -83,6 +83,17 @@ sub manage_targets
                     }
                 }
             }
+        }
+    }
+    #No target on sight but there is the possibility we were following a lead to one    
+    if($self->last_command && $self->last_command->{command} eq 'last')
+    {
+        return {
+            command => 'last',
+            params => undef,
+            secondarycommand => undef,
+            secondaryparams => undef,
+            velocity => 4 
         }
     }
     return undef;

@@ -22,6 +22,10 @@ has aim => (
     is => 'rw'
 );
 
+has last_command => (
+    is => 'rw'
+);
+
 sub already_on_target
 {
     my $self = shift;
@@ -123,6 +127,16 @@ sub manage_events
             velocity => 4
         }
     }
+    elsif($self->event_is('contact lost'))
+    {
+        return {
+            command => 'last',
+            params => $self->aim,
+            secondarycommand => undef,
+            secondaryparams => undef,
+            velocity => 4
+        }
+    }
     else
     {
         my $target = $self->next_wp;
@@ -143,15 +157,19 @@ sub elaborate
 {
     my $self = shift;
     my $target_managed = $self->manage_targets();
+    my $out;
     if($target_managed)
     {
-        return $target_managed;
+        $out = $target_managed;
     }
     else
     {
-        return $self->manage_events();
+        $out = $self->manage_events();
     }
+    $self->last_command($out);
+    return $out;
 }
+
 
 sub my_wp
 {
@@ -179,8 +197,7 @@ sub next_wp
             }
         }
     }
-
-
+    return $self->waypoints->[0];
 }
 
 sub to_mongo
@@ -194,6 +211,7 @@ sub to_mongo
         game => $self->game,
         waypoints => $self->waypoints,
         aim => $self->aim,
+        last_command => $self->last_command,
     };
 }
 1;
