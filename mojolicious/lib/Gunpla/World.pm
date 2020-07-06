@@ -1130,8 +1130,6 @@ sub event
     my $involved_input = shift;
     my $stuck_input = shift;
     return if $self->no_events;
-    $self->log($message);
-    $self->log_tracer();
 
     my $involved = {};
     if(ref $involved_input eq 'ARRAY')
@@ -1149,6 +1147,8 @@ sub event
     {
         $involved = { $involved_input => 1 };
     }
+    $self->log($message . " [" . join(",", map { "$_(" . $involved->{$_} . ")" } keys %{$involved}) . "]");
+    $self->log_tracer();
 
 
     my $mongo = MongoDB->connect(); 
@@ -1361,14 +1361,37 @@ sub log
 sub log_tracer
 {
     my $self = shift;
+    my %positions = ();
+    $self->log("|----");
     foreach my $mname (@{$self->log_tracing})
     {
         my $m = $self->get_mecha_by_name($mname);
         if($m)
         {
-            $self->log("### " . $m->name . " " . $m->position->as_string . " I:" . $m->inertia . " E:" . $m->energy . " L:" . $m->life);
+            $self->log("| " . $m->name . " " . $m->position->as_string . " I:" . $m->inertia . " E:" . $m->energy . " L:" . $m->life);
+            $positions{$m->name} = $m->position;
         }
     }
+    my $distances;
+    foreach my $mname (@{$self->log_tracing})
+    {
+        my $m = $self->get_mecha_by_name($mname);
+        if($m)
+        {
+            foreach my $t (keys %positions)
+            {
+                if($t ne $m->name)
+                {
+                    if(! exists $distances->{$t}->{$m->name})
+                    {
+                        $self->log("| Distance " . $m->name . " - " . $t . ": " . $positions{$t}->distance($m->position));
+                        $distances->{$m->name}->{$t} = 1;
+                    }
+                }
+            }
+        }
+    }
+    $self->log("|----");
 }
 
 sub log_sighting_matrix
