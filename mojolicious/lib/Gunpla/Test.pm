@@ -35,6 +35,38 @@ sub reload
     return $world;
 }
 
+sub csv_commands
+{
+    my $world = shift;
+    my $csv = shift;
+    my $commands;
+    open(my $fh, "< $csv") || die "Impossible to open $csv";
+    for(<$fh>)
+    {
+        chomp;
+        my @values = split ';', $_;
+        push @{$commands->{$values[0]}}, { command => $values[1],
+                                           params => $values[2],
+                                           secondarycommand => $values[3],
+                                           secondaryparams => $values[4],
+                                           velocity => $values[5] };
+    }
+    foreach my $m (@{$world->armies})
+    {
+        if($m->waiting)
+        {
+            my $c = $commands->{$m->name}->[$m->cmd_index];
+            say STDERR "--- Orders for " . $m->name . ": ". $c->{command};
+            $m->waiting(0);
+            $m->cmd_fetched(1);
+            $world->add_command($m->name, $c);
+        }
+    }
+    my $e = $world->action();
+    $world->save;
+    $world->log("Remaining dice results: " . @{$world->dice_results});
+    return $e;
+}
 
 sub emulate_commands
 {

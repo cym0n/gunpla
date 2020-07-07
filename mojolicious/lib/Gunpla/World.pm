@@ -1327,7 +1327,6 @@ sub load
     delete $sighting_matrix->{status_element};
     delete $sighting_matrix->{_id};
     my $sight = Gunpla::Sight->new({config => $self->config});
-    $self->log("Loading sight: " . Dumper($sighting_matrix));
     $sight->load($sighting_matrix);
     $self->sighting_matrix($sight);
     my ( $timestamp ) = $db->get_collection('status')->find({ status_element => 'timestamp' })->all();
