@@ -61,14 +61,12 @@ sub load
                                                    secondarycommand => $values[3],
                                                    secondaryparams => $values[4],
                                                    velocity => $values[5] };
-                say "Acquiring command";
             }
             elsif($reading_tracing)
             {
                 my @values = split ';', $line;
                 my @targets = split ',', $values[2];
                 $tracing->{$values[0]}->{$values[1]} = \@targets;
-                say "Acquiring tracing";
             }
             else
             {
@@ -123,6 +121,8 @@ sub load
 sub run
 {
     my $self = shift;
+    say "\n" . $self->name. "\n";
+    say $self->description . "\n\n";
     my $world = Gunpla::Test::test_bootstrap($self->map, $self->dice, $self->name, $self->configuration);
     my $events = 1;
     while($events)
