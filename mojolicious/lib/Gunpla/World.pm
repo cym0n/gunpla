@@ -475,7 +475,7 @@ sub add_command
     eval {
         if($m->inertia == 0 || ! $self->inertia)
         {
-            $self->log("ADD COMMAND to $mecha: " . $self->command_string($command_mongo));
+            $self->log("ADD COMMAND to $mecha" . "[" . $m->cmd_index . "]: " . $self->command_string($command_mongo));
             my $params_elaborated;
             if($self->available_commands->{$command_mongo->{command}}->{filter})
             {
@@ -1361,6 +1361,7 @@ sub log_tracer
 {
     my $self = shift;
     my %positions = ();
+    return if ! @{$self->log_tracing};
     $self->log("|----");
     foreach my $mname (@{$self->log_tracing})
     {
