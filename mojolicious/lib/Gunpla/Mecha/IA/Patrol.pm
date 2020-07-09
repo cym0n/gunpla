@@ -36,7 +36,7 @@ sub already_on_target
     my $counter = 0;
     for(@mec)
     {
-        $counter++ if($_->{name} ne $self->mecha && $_->{IA}->{aim} && $_->{IA}->{aim} eq $target);
+        $counter++ if($_->{name} ne $self->mecha && $_->{life} > 0 && $_->{IA}->{aim} && $_->{IA}->{aim} eq $target);
     }
     return $counter;
 }

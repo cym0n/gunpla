@@ -30,7 +30,7 @@ sub manage_targets
             my $m = target_from_mongo_to_json($self->game, $self->mecha, 'mechas', $am);
             push @targets, $m;
         }
-        if($am->{faction} eq $self->faction && $am->{name} ne $self->mecha)
+        if($am->{faction} eq $self->faction && $am->{name} ne $self->mecha && $am->{life} > 0)
         {
             if($am->{waiting})
             {
@@ -51,6 +51,7 @@ sub manage_targets
         foreach my $t (@targets)
         {
             my $already = $self->already_on_target($t->{world_id});
+            say $self->mecha . ": Already $already";
             if($already == 0 && ! $on_wait)
             {
                 $self->aim($t->{world_id});
@@ -88,12 +89,19 @@ sub manage_targets
     #No target on sight but there is the possibility we were following a lead to one    
     if($self->last_command && $self->last_command->{command} eq 'last')
     {
-        return {
-            command => 'last',
-            params => undef,
-            secondarycommand => undef,
-            secondaryparams => undef,
-            velocity => 4 
+        if($self->event_is('reached destination')) 
+        {
+            #Last position has been reached but there is no hint about where the target is gone
+        }
+        else
+        {
+            return {
+                command => 'last',
+                params => undef,
+                secondarycommand => undef,
+                secondaryparams => undef,
+                velocity => 4 
+            }
         }
     }
     return undef;
