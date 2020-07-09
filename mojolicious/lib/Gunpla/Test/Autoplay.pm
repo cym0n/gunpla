@@ -27,6 +27,10 @@ has commands => (
 has tracing => (
     is => 'rw'
 );
+has templates => (
+    is => 'rw',
+    default => undef
+);
 sub load
 {
     my $self = shift;
@@ -91,6 +95,10 @@ sub load
                     {
                         $self->configuration($value);
                     }
+                    elsif($element eq 'TEMPLATES')
+                    {
+                        $self->templates($value);
+                    }
                     elsif($element eq 'DICE')
                     {
                         my @dice = split ",", $value;
@@ -124,7 +132,7 @@ sub run
     my $self = shift;
     say "\n" . $self->name. "\n";
     say $self->description . "\n\n";
-    my $world = Gunpla::Test::test_bootstrap($self->map, $self->dice, $self->name, $self->configuration);
+    my $world = Gunpla::Test::test_bootstrap($self->map, $self->dice, $self->name, $self->configuration, $self->templates);
     my $events = 1;
     while($events)
     {
@@ -147,7 +155,7 @@ sub run
             }
         }
         $events = $world->action();
-        say "$events events generated";
+        say "$events events generated" if $events;
         $world->save;
     }
     Gunpla::Test::clean_db('autotest', 1);

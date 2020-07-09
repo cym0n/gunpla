@@ -313,6 +313,7 @@ sub init_mecha_templates
     my $data_directory = $root_path . "../../scenarios/mechas";
     open(my $fh, "< $data_directory/$file") || die "Impossible to open $data_directory/$file";
     my $header = <$fh>;
+    $self->log("Mecha templates: " . $file);
     for(<$fh>)
     {
         chomp;
@@ -334,13 +335,14 @@ sub init_scenario
     my $self = shift;
     my $file = shift;
     my $config = shift;
+    my $templates = shift;
     $self->load_config($config);
     my $module_file_path = __FILE__;
     my $root_path = abs_path($module_file_path);
     $root_path =~ s/World\.pm//;
     my $data_directory = $root_path . "../../scenarios";
     $self->build_commands();
-    $self->init_mecha_templates();
+    $self->init_mecha_templates($templates);
     my %counters = ( "MEC" => 0,
                      "MEC-IA" => 0,
                      "AST" => 0,

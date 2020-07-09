@@ -10,13 +10,14 @@ sub test_bootstrap
     my $dice = shift || [];
     my $name = shift || 'autotest';
     my $config_file = shift;
+    my $templates = shift;
     
 
     clean_db($name);
     my $world = Gunpla::World->new(name => $name, dice_results => $dice, log_file => "$name.log");
     $world->log("--- BOOSTRAP --- Scenario: $scenario");
     $world->log("  Tampered dice values") if @{$dice};
-    $world->init_scenario($scenario, $config_file);
+    $world->init_scenario($scenario, $config_file, $templates);
     $world->save();
     return $world;
 }
