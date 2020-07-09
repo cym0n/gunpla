@@ -41,6 +41,7 @@ sub load
     {
         chomp;
         my $line = $_;
+        next if $line =~ /^#/;
         if($line eq 'COMMANDS')
         {
             $reading_commands = 1;
@@ -134,7 +135,7 @@ sub run
                 if(exists $self->commands->{$m->name}->[$m->cmd_index])
                 {
                     my $c = $self->commands->{$m->name}->[$m->cmd_index];
-                    say "--- Orders for " . $m->name . ": ". $c->{command};
+                    say "Orders for " . $m->name . ": ". $world->command_string($c);
                     $m->waiting(0);
                     $m->cmd_fetched(1);
                     $world->add_command($m->name, $c);
@@ -146,6 +147,7 @@ sub run
             }
         }
         $events = $world->action();
+        say "$events events generated";
         $world->save;
     }
     Gunpla::Test::clean_db('autotest', 1);

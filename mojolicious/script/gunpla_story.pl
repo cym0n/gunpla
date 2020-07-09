@@ -3,10 +3,10 @@
 use strict;
 use v5.10;
 use lib 'lib';
-use MongoDB;
 use Gunpla::Test::Autoplay;
 
+my $story = shift;
 my $game = Gunpla::Test::Autoplay->new();
-$game->load('stories/patrol.story');
+$game->load('stories/' . $story);
 $game->run();
 
