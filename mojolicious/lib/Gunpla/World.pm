@@ -164,7 +164,12 @@ sub get_mecha_by_name
 {
     my $self = shift;
     my $name = shift;
+    my $dead_or_alive = shift;
     foreach my $m (@{$self->armies})
+    {
+        return $m if($m->name eq $name);
+    }
+    foreach my $m (@{$self->cemetery})
     {
         return $m if($m->name eq $name);
     }
@@ -421,6 +426,7 @@ sub get_target_from_world_id
     my $self = shift;
     my $target_id = shift;
     return undef if ! $target_id;
+    my $dead_or_alive = shift;
     my $target_type;
     my $target_name;
     if($target_id =~ /(\d+),(\d+),(\d+)/)
@@ -442,7 +448,7 @@ sub get_target_from_world_id
     }
     elsif($target_type eq 'MEC')
     {
-        return $self->get_mecha_by_name($target_name);
+        return $self->get_mecha_by_name($target_name, $dead_or_alive, $dead_or_alive);
     }
     else
     {
@@ -481,7 +487,9 @@ sub add_command
             my $params_elaborated;
             if($self->available_commands->{$command_mongo->{command}}->{filter})
             {
-               $params_elaborated = $self->get_target_from_world_id($params);
+                my $dead_or_alive = 0;
+                $dead_or_alive = 1 if ($command_mongo->{command} eq 'last');
+                $params_elaborated = $self->get_target_from_world_id($params, $dead_or_alive);
             }
             elsif($self->available_commands->{$command_mongo->{command}}->{values})
             {
@@ -763,9 +771,20 @@ sub action
             $self->save_light();
         }
     }
+    return 0 if($self->ia_only);
     $self->cmd_index_up();
     $self->ia(1) unless $steps && $counter == $steps;
     return $self->generated_events();
+}
+
+sub ia_only
+{
+    my $self = shift;
+    for(@{$self->armies})
+    {
+        return 0 if ! $_->ia;
+    }
+    return 1;
 }
 
 sub process_sight_events
