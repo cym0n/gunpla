@@ -1,5 +1,5 @@
 NAME:Patrol2
-DESCRIPTION:Same story of Patrol but now enemies are more clever and can ask for support
+DESCRIPTION:Same story of Patrol but now enemies are more clever and can ask for support (patrolling diamon is littler
 MAP:arena-1.csv
 CONFIGURATION:stories.yaml
 DICE:1,0
@@ -12,7 +12,13 @@ Wing;flymec;MEC-Leo-3;boost;;6
 Wing;flymec;MEC-Leo-3;boost;;6
 Wing;sword;MEC-Leo-3;;;
 Wing;sword;MEC-Leo-3;;;
-#After sight review: Leo-4 loses contact with Wing when Leo-3 dies, trying to get to his last position is useless. Wing escapes and win
+#Wing ignores any other enemy. Leo-2 and Leo-4 attack and destory him
+Wing;flywp;WP-blue;;;4
+Wing;flywp;WP-blue;;;4
+Wing;flywp;WP-blue;;;4
+Wing;flywp;WP-blue;;;4
+Wing;flywp;WP-blue;;;4
+Wing;flywp;WP-blue;;;4
 Wing;flywp;WP-blue;;;4
 Wing;flywp;WP-blue;;;4
 Wing;flywp;WP-blue;;;4
