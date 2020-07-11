@@ -1,5 +1,6 @@
 package Gunpla::Test;
 
+use v5.10;
 use MongoDB;
 use Data::Dumper;
 use Gunpla::World;
@@ -11,10 +12,10 @@ sub test_bootstrap
     my $name = shift || 'autotest';
     my $config_file = shift;
     my $templates = shift;
-    
+    my $logfile = shift || "$name.log";
 
     clean_db($name);
-    my $world = Gunpla::World->new(name => $name, dice_results => $dice, log_file => "$name.log");
+    my $world = Gunpla::World->new(name => $name, dice_results => $dice, log_file => $logfile);
     $world->log("--- BOOSTRAP --- Scenario: $scenario");
     $world->log("  Tampered dice values") if @{$dice};
     $world->init_scenario($scenario, $config_file, $templates);

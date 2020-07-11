@@ -51,7 +51,6 @@ sub manage_targets
         foreach my $t (@targets)
         {
             my $already = $self->already_on_target($t->{world_id});
-            say $self->mecha . ": Already $already";
             if($already == 0 && ! $on_wait)
             {
                 $self->aim($t->{world_id});

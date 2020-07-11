@@ -3,6 +3,7 @@ package Gunpla::Test::Autoplay;
 use v5.10;
 use Moo;
 use Gunpla::Test;
+use DateTime;
 use Data::Dumper;
 
 
@@ -131,8 +132,10 @@ sub run
 {
     my $self = shift;
     say "\n" . $self->name. "\n";
-    say $self->description . "\n\n";
-    my $world = Gunpla::Test::test_bootstrap($self->map, $self->dice, $self->name, $self->configuration, $self->templates);
+    say $self->description . "\n";
+    my $logfile = $self->name . "_" . DateTime->now->ymd('') . DateTime->now->hms('') . ".log";
+    say "Logfile is $logfile\n";
+    my $world = Gunpla::Test::test_bootstrap($self->map, $self->dice, $self->name, $self->configuration, $self->templates, $logfile);
     my $events = 1;
     while($events)
     {
