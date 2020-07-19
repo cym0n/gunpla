@@ -143,10 +143,10 @@ sub calculate
                 {
                     if($self->matrix->{$m->name}->{$other->name} == 0)
                     {
-                        if($self->factions->{$other->faction}->{$m->name})
-                        {
-                            $m->mod_inertia($self->config->{INERTIA_SECOND_SIGHT});
-                        }
+                        #if($self->factions->{$other->faction}->{$m->name})
+                        #{
+                        #    $m->mod_inertia($self->config->{INERTIA_SECOND_SIGHT});
+                        #}
                         push @out_events, [ $m->name, $other->name, 1];
                         $self->mod_faction($m->faction, $other->name, 1);
                     }

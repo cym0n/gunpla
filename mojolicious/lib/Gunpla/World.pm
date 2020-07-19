@@ -117,7 +117,7 @@ sub load_config
     my $game_config = {};
     foreach my $f (@files)
     {
-        $self->log("Loading config file $f");
+        $self->log("INI", "Loading config file $f");
         foreach my $k (keys %{$cfg->{$f}})
         {
             $game_config->{$k} = $cfg->{$f}->{$k}
@@ -145,7 +145,7 @@ sub add_mecha
     die "NO TEMPLATE for $name" if ! $template;
     $template->{name} = $name;
     $template->{faction} = $faction;
-    $template->{log_file} = $self->log_file;
+    #$template->{log_file} = $self->log_file;
     $template->{config} = $self->config;
     die "Mecha with name $name already present" if($self->get_mecha_by_name($name));
     my $mecha = Gunpla::Mecha->new($template);
@@ -318,7 +318,7 @@ sub init_mecha_templates
     my $data_directory = $root_path . "../../scenarios/mechas";
     open(my $fh, "< $data_directory/$file") || die "Impossible to open $data_directory/$file";
     my $header = <$fh>;
-    $self->log("Mecha templates: " . $file);
+    $self->log("INI", "Mecha templates: " . $file);
     for(<$fh>)
     {
         chomp;
@@ -483,7 +483,7 @@ sub add_command
     eval {
         if($m->inertia == 0 || ! $self->inertia)
         {
-            $self->log("ADD COMMAND to $mecha" . "[" . $m->cmd_index . "]: " . $self->command_string($command_mongo));
+            $self->log("CMD", "ADD COMMAND to $mecha" . "[" . $m->cmd_index . "]: " . $self->command_string($command_mongo));
             my $params_elaborated;
             if($self->available_commands->{$command_mongo->{command}}->{filter})
             {
@@ -502,7 +502,7 @@ sub add_command
             $m->command($command, $params_elaborated, $velocity);
             if($command eq 'sword')
             {
-                $self->log($m->name. " starting attack gauge: " . $m->get_gauge_level('sword'));
+                $self->log(undef, $m->name. " starting attack gauge: " . $m->get_gauge_level('sword'));
             }
             if($command eq 'support')
             {
@@ -527,17 +527,17 @@ sub add_command
         }
         else
         {
-            $self->log("SUSPENDED COMMAND for $mecha: " . $self->command_string($command_mongo));
+            $self->log("CMD", "SUSPENDED COMMAND for $mecha: " . $self->command_string($command_mongo));
             $m->suspended_command($command_mongo);
             if($m->is_status('stuck'))
             {
-                $self->log("$mecha is stuck");
+                $self->log(undef, "$mecha is stuck");
             }
         }
     };
     if($@)
     {
-        $self->log("ERROR: $@");
+        $self->log(undef, "ERROR: $@");
         $m->waiting(1);
         $self->cmd_index_up();
     }
@@ -627,6 +627,7 @@ sub action
     $self->generated_events(0);
     while($self->all_ready && (! $steps || $counter < $steps))
     {
+        my @global_sight_events = ();
         for(@{$self->armies})
         {
             my $m = $_;
@@ -756,13 +757,39 @@ sub action
                     }
                 }
             }
+            my $before_energy = $m->energy;
             $m->energy_routine();
-            if($m->energy == 0)
+            if($before_energy > 0 && $m->energy == 0)
             {
                 $self->event($m->name . " exhausted energy", [$m->name]);
             }
             my @out_events = $self->sighting_matrix->calculate($m->name, $self->armies);
+            @global_sight_events = (@global_sight_events, @out_events);
             $self->process_sight_events(@out_events);
+            $self->collect_mecha_logs(); 
+        }
+        #INTERTIA ATTRIBUTION (must be done here to be equal and avoid bias on contemporary sight)
+        foreach my $e (@global_sight_events)
+        {
+            if($e->[2] == 1)
+            {
+                my $contemporary = 0;
+                foreach my $e2 (@global_sight_events)
+                {   
+                    if($e2->[0] eq $e->[1] && $e2->[1] eq $e->[0] && $e2->[2] == 1)
+                    {
+                        $contemporary = 1;
+                    }
+                }
+                if(! $contemporary)
+                {
+                    if($self->sighting_matrix->see($e->[1], $e->[0]))
+                    {
+                        my $m = $self->get_mecha_by_name($e->[0]);
+                        $m->mod_inertia($self->config->{INERTIA_SECOND_SIGHT}); 
+                    }
+                }
+            }
         }
         $counter++;
         $self->timestamp($self->timestamp+1);
@@ -849,8 +876,6 @@ sub process_sight_events
 
 }
 
-
-
 sub ia
 {
     my $self = shift;
@@ -872,6 +897,7 @@ sub ia
                 }
             }
         }
+        $self->collect_mecha_logs();
     }
     $self->action() if $self->all_ready() && $run;
 }
@@ -936,7 +962,7 @@ sub manage_attack
         my $clash = 1;
         if($defender->attack && $defender->attack eq 'SWORD' && $defender->attack_target->{name} eq $attacker->name)
         {
-            $self->log($attacker->name . " gauge: ". $attacker->get_gauge_level('sword') . " VS " . $defender->name . " gauge: ". $defender->get_gauge_level('sword'));
+            $self->log(undef, $attacker->name . " gauge: ". $attacker->get_gauge_level('sword') . " VS " . $defender->name . " gauge: ". $defender->get_gauge_level('sword'));
             if($defender->get_gauge_level('sword') > $attacker->get_gauge_level('sword') || $defender->energy < $self->config->{SWORD_ENERGY})
             {
                 my $switch = $attacker;
@@ -1102,7 +1128,7 @@ sub collect_dead
             my @out_events = $self->sighting_matrix->remove_from_matrix($m, $self->armies);
             $self->process_sight_events(@out_events);
             push @{$self->cemetery}, $m;
-            $self->log($m->name . " removed from game");
+            $self->log(undef, $m->name . " removed from game");
         }
         else
         {
@@ -1132,7 +1158,7 @@ sub dice
     {
         $out = shift @{$self->dice_results};
         $dice_type = 'Loaded';
-        $self->log("WARNING! Dice value $out out of range for $reason") if($out < $min || $out > $max);
+        $self->log("DIC", "WARNING! Dice value $out out of range for $reason") if($out < $min || $out > $max);
     }
     else
     {
@@ -1140,7 +1166,7 @@ sub dice
         $out = int(rand($random_range)) + $min;
         $dice_type = 'Regular';
     }
-    $self->log("$dice_type dice: $out for $reason") if $reason ne "drift direction";
+    $self->log("DIC", "$dice_type dice: $out for $reason") if $reason ne "drift direction";
     return $out;
 }
 
@@ -1168,7 +1194,7 @@ sub event
     {
         $involved = { $involved_input => 1 };
     }
-    $self->log($message . " [" . join(",", map { "$_(" . $involved->{$_} . ")" } keys %{$involved}) . "]");
+    $self->log("EVN", $message . " [" . join(",", map { "$_(" . $involved->{$_} . ")" } keys %{$involved}) . "]");
     $self->log_tracer();
 
 
@@ -1371,10 +1397,22 @@ sub log
 {
     my $self = shift;
     return if ! $self->log_file;
+    my $tag = shift || 'GEN';
     my $message = shift;
+    my $no_timestamp = shift;
+    my $final_message;
+    if($no_timestamp)
+    {
+        $final_message = $message;
+    }
+    else
+    {
+        $tag = "[" . $tag . "]";
+        my $timestamp =  "[T" .  sprintf("%08d", $self->timestamp) . "]";
+        $final_message = join(" ", $timestamp, $tag, $message);
+    }
     open(my $fh, '>> ' . $self->log_file);
-    my $final_message = "[G:" . $self->name . "] [T" . $self->timestamp . "] " .$message . "\n";
-    print {$fh} $final_message;
+    print {$fh} "$final_message\n";
     close($fh);
 }
 
@@ -1383,13 +1421,13 @@ sub log_tracer
     my $self = shift;
     my %positions = ();
     return if ! @{$self->log_tracing};
-    $self->log("|----");
+    $self->log("TRC", "|----");
     foreach my $mname (@{$self->log_tracing})
     {
         my $m = $self->get_mecha_by_name($mname);
         if($m)
         {
-            $self->log("| " . $m->name . " " . $m->position->as_string . " I:" . $m->inertia . " E:" . $m->energy . " L:" . $m->life);
+            $self->log("TRC", "| " . $m->name . " " . $m->position->as_string . " I:" . $m->inertia . " E:" . $m->energy . " L:" . $m->life);
             $positions{$m->name} = $m->position;
         }
     }
@@ -1405,21 +1443,35 @@ sub log_tracer
                 {
                     if(! exists $distances->{$t}->{$m->name})
                     {
-                        $self->log("| Distance " . $m->name . " - " . $t . ": " . $positions{$t}->distance($m->position));
+                        $self->log("TRC", "| Distance " . $m->name . " - " . $t . ": " . $positions{$t}->distance($m->position));
                         $distances->{$m->name}->{$t} = 1;
                     }
                 }
             }
         }
     }
-    $self->log("|----");
+    $self->log("TRC", "|----");
 }
 
 sub log_sighting_matrix
 {
     my $self = shift;
-    $self->log("### SIGHTING MATRIX");
-    $self->log("\n" . $self->sighting_matrix->to_string());
+    $self->log("SGH", "### SIGHTING MATRIX");
+    #TODO:multiline logs are not managed with tags
+    $self->log("SGH", "\n" . $self->sighting_matrix->to_string());
+}
+
+sub collect_mecha_logs
+{
+    my $self = shift;
+    foreach my $m (@{$self->armies})
+    {
+        for(@{$m->log_lines})
+        {
+            $self->log("MEC", $m->name . ": " . $_);
+        }
+        $m->log_lines([]);
+    }
 }
 
 1;

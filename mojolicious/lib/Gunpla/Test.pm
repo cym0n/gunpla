@@ -16,8 +16,8 @@ sub test_bootstrap
 
     clean_db($name);
     my $world = Gunpla::World->new(name => $name, dice_results => $dice, log_file => $logfile);
-    $world->log("--- BOOSTRAP --- Scenario: $scenario");
-    $world->log("  Tampered dice values") if @{$dice};
+    $world->log("INI","--- BOOSTRAP --- Scenario: $scenario");
+    $world->log("DIC", "Tampered dice values: " . @{$dice}) if @{$dice};
     $world->init_scenario($scenario, $config_file, $templates);
     $world->save();
     return $world;
@@ -66,7 +66,7 @@ sub csv_commands
     }
     my $e = $world->action();
     $world->save;
-    $world->log("Remaining dice results: " . @{$world->dice_results});
+    $world->log("DIC", "Remaining dice results: " . @{$world->dice_results});
     return $e;
 }
 
@@ -94,7 +94,7 @@ sub emulate_commands
     $world->fetch_commands_from_mongo();
     my $e = $world->action();
     $world->save;
-    $world->log("Remaining dice results: " . @{$world->dice_results});
+    $world->log("DIC", "Remaining dice results: " . @{$world->dice_results});
     return $e;
 }
 

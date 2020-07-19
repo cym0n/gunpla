@@ -130,6 +130,10 @@ has status => (
 has log_file => (
     is => 'rw',
 );
+has log_lines => (
+    is => 'rw',
+    default => sub { [] }
+);
 
 with 'Gunpla::Mecha::Role::IA';
 
@@ -845,12 +849,18 @@ sub from_mongo
 sub log
 {
     my $self = shift;
-    return if ! $self->log_file;
     my $message = shift;
-    $message = "[M:" . $self->name . "] ". $message;
-    open(my $fh, '>> ' . $self->log_file);
-    print {$fh} $message . "\n";
-    close($fh);
+    if($self->log_file)
+    {
+        $message = "[M:" . $self->name . "] ". $message;
+        open(my $fh, '>> ' . $self->log_file);
+        print {$fh} $message . "\n";
+        close($fh);
+    }
+    else
+    {
+        push @{$self->log_lines}, $message;
+    }
 }
 
 sub relevant_target

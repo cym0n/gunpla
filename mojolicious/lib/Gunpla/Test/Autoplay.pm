@@ -10,6 +10,9 @@ use Data::Dumper;
 has name => (
     is => 'rw'
 );
+has title => (
+    is => 'rw'
+);
 has description => (
     is => 'rw'
 );
@@ -36,6 +39,8 @@ sub load
 {
     my $self = shift;
     my $file = shift;
+    my $title = shift;
+    $self->title($title);
     open(my $story, "< $file");
 
     my $commands = {};
@@ -133,9 +138,11 @@ sub run
     my $self = shift;
     say "\n" . $self->name. "\n";
     say $self->description . "\n";
+    say $self->title . "\n";
     my $logfile = "log/" . $self->name . "_" . DateTime->now->ymd('') . DateTime->now->hms('') . ".log";
     say "Logfile is $logfile\n";
     my $world = Gunpla::Test::test_bootstrap($self->map, $self->dice, $self->name, $self->configuration, $self->templates, $logfile);
+    $world->log(undef, ">>>>>>>>>>\n>>> " . $self->title . "\n>>>>>>>>>>", 1);
     my $events = 1;
     while($events)
     {
@@ -162,6 +169,7 @@ sub run
         $world->save;
     }
     Gunpla::Test::clean_db('autotest', 1);
+    say `cat $logfile`;
 }
 
 1;
