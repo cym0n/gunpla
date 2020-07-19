@@ -5,6 +5,7 @@ use Moo;
 use Gunpla::Test;
 use DateTime;
 use Data::Dumper;
+use Gunpla::Utils qw(copy_table update_log_file);
 
 
 has name => (
@@ -31,6 +32,9 @@ has commands => (
 has tracing => (
     is => 'rw'
 );
+has snapshots => (
+    is => 'rw'
+);
 has templates => (
     is => 'rw',
     default => undef
@@ -45,8 +49,10 @@ sub load
 
     my $commands = {};
     my $tracing = {};
+    my $snapshots = {};
     my $reading_commands = 0;
     my $reading_tracing = 0;
+    my $reading_snapshots = 0;
     for(<$story>)
     {
         chomp;
@@ -56,11 +62,19 @@ sub load
         {
             $reading_commands = 1;
             $reading_tracing = 0;
+            $reading_snapshots = 0;
         }
         elsif($line eq 'TRACING')
         {
             $reading_tracing = 1;
             $reading_commands = 0;
+            $reading_snapshots = 0;
+        }
+        elsif($line eq 'SNAPSHOTS')
+        {
+            $reading_tracing = 0;
+            $reading_commands = 0;
+            $reading_snapshots = 1;
         }
         else
         {
@@ -78,6 +92,11 @@ sub load
                 my @values = split ';', $line;
                 my @targets = split ',', $values[2];
                 $tracing->{$values[0]}->{$values[1]} = \@targets;
+            }
+            elsif($reading_snapshots)
+            {
+                my @values = split ';', $line;
+                $snapshots->{$values[0]}->{$values[1]} = $values[2];
             }
             else
             {
@@ -131,17 +150,28 @@ sub load
         die "Malformed file $file";
     }
     $self->tracing($tracing);
+    $self->snapshots($snapshots);
 }
 
 sub run
 {
     my $self = shift;
+    my $snap = shift;
     say "\n" . $self->name. "\n";
     say $self->description . "\n";
     say $self->title . "\n";
     my $logfile = "log/" . $self->name . "_" . DateTime->now->ymd('') . DateTime->now->hms('') . ".log";
     say "Logfile is $logfile\n";
-    my $world = Gunpla::Test::test_bootstrap($self->map, $self->dice, $self->name, $self->configuration, $self->templates, $logfile);
+    my $world;
+    if($snap)
+    {
+        $world = Gunpla::World->new(name => $self->name, dice_results => $self->dice, log_file => $logfile);
+        $world = $self->load_snapshot($world, $snap);
+    }
+    else
+    {
+        $world = Gunpla::Test::test_bootstrap($self->map, $self->dice, $self->name, $self->configuration, $self->templates, $logfile);
+    }
     $world->log(undef, ">>>>>>>>>>\n>>> " . $self->title . "\n>>>>>>>>>>", 1);
     my $events = 1;
     while($events)
@@ -160,6 +190,12 @@ sub run
                     if(exists $self->tracing->{$m->name}->{$m->cmd_index})
                     {
                         $world->log_tracing($self->tracing->{$m->name}->{$m->cmd_index});
+                        say "Tracing updated: " . join ", ", @{$self->tracing->{$m->name}->{$m->cmd_index}};
+                    }
+                    if(exists $self->snapshots->{$m->name}->{$m->cmd_index})
+                    {
+                        my $snap = $self->take_snapshot($world, $self->snapshots->{$m->name}->{$m->cmd_index});
+                        say "Snapshot taken: $snap";
                     }
                 }
             }
@@ -170,6 +206,38 @@ sub run
     }
     Gunpla::Test::clean_db('autotest', 1);
     say `cat $logfile`;
+}
+
+sub take_snapshot
+{
+    my $self = shift;
+    my $world = shift;
+    my $snap_name = shift;
+    my $snap = 'snap_' . $world->name . '_' . $snap_name;
+    Gunpla::Test::clean_db($snap);
+    $world->save($snap);
+    Gunpla::Utils::copy_table('events', $world->name, $snap);
+    return $snap;
+}
+
+sub load_snapshot
+{
+    my $self = shift;
+    my $world = shift;
+    my $snap_name = shift;
+    say "Loading snapshot $snap_name";
+    Gunpla::Test::clean_db($world->name);
+
+    my @tables = qw ( available_commands events map mechas status );
+    for(@tables)
+    {
+        Gunpla::Utils::copy_table($_, $snap_name, $world->name);
+    }
+    Gunpla::Utils::update_log_file($world->name, $world->log_file);
+    my $new_world = Gunpla::Test::reload($world, $self->configuration); 
+    $new_world->log("INI", "loaded from snapshot $snap_name");
+    say "Loaded mechas: " . @{$new_world->armies};
+    return $new_world;
 }
 
 1;

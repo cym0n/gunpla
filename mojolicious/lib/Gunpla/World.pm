@@ -1251,8 +1251,9 @@ sub is_spawn_point
 sub save
 {
     my $self = shift;
+    my $db_name = shift || $self->name;
     my $mongo = MongoDB->connect(); 
-    my $db = $mongo->get_database('gunpla_' . $self->name);
+    my $db = $mongo->get_database('gunpla_' . $db_name);
     $db->get_collection('mechas')->drop();
     $db->get_collection('map')->drop();
     $db->get_collection('status')->drop();
@@ -1260,7 +1261,7 @@ sub save
     my $masterdb = $mongo->get_database('gunpla__core');
     my $now = DateTime->now();
     $now->set_time_zone("Europe/Rome");
-    $masterdb->get_collection('games')->replace_one({ name => $self->name}, { name => $self->name, update_time => $now, timestamp => $self->timestamp }, { upsert => 1 } ); 
+    $masterdb->get_collection('games')->replace_one({ name => $db_name}, { name => $db_name, update_time => $now, timestamp => $self->timestamp }, { upsert => 1 } ); 
 
     foreach my $m (@{$self->armies})
     {
