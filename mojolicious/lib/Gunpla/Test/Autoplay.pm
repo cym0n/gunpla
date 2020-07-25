@@ -195,6 +195,7 @@ sub run
                     if(exists $self->snapshots->{$m->name}->{$m->cmd_index})
                     {
                         my $snap = $self->take_snapshot($world, $self->snapshots->{$m->name}->{$m->cmd_index});
+                        $world->log('TST', "Snapshot taken: " . $self->snapshots->{$m->name}->{$m->cmd_index});
                         say "Snapshot taken: $snap";
                     }
                 }
@@ -228,13 +229,14 @@ sub load_snapshot
     say "Loading snapshot $snap_name";
     Gunpla::Test::clean_db($world->name);
 
-    my @tables = qw ( available_commands events map mechas status );
+    my @tables = qw ( events map mechas status );
     for(@tables)
     {
         Gunpla::Utils::copy_table($_, $snap_name, $world->name);
     }
     Gunpla::Utils::update_log_file($world->name, $world->log_file);
     my $new_world = Gunpla::Test::reload($world, $self->configuration); 
+    $new_world->build_commands();
     $new_world->log("INI", "loaded from snapshot $snap_name");
     say "Loaded mechas: " . @{$new_world->armies};
     return $new_world;

@@ -448,7 +448,7 @@ sub get_target_from_world_id
     }
     elsif($target_type eq 'MEC')
     {
-        return $self->get_mecha_by_name($target_name, $dead_or_alive, $dead_or_alive);
+        return $self->get_mecha_by_name($target_name, $dead_or_alive);
     }
     else
     {
