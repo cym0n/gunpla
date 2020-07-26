@@ -10,6 +10,12 @@ has command => (
     default => sub { { } }
 );
 
+has package => (
+    is => 'ro',
+    default => 'Gunpla::Mecha::IA::Single'
+);
+
+
 sub elaborate
 {
     my $self = shift;

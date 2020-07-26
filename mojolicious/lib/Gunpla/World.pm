@@ -402,6 +402,7 @@ sub init_scenario
     $sight->init($self->armies);
     $self->sighting_matrix($sight);
     $self->sighting_matrix->calculate(undef, $self->armies); #Trashing away events
+    $self->save();
     $self->ia();
 }
 

@@ -1,7 +1,7 @@
 package Gunpla::Utils;
 
 use base 'Exporter';
-our @EXPORT_OK = qw( controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction command_from_mongo_to_json get_from_id get_game_events get_command copy_table update_log_file);
+our @EXPORT_OK = qw( controlled target_from_mongo_to_json mecha_from_mongo_to_json sighted_by_me sighted_by_faction command_from_mongo_to_json get_from_id get_game_events get_command copy_table update_log_file get_log_file get_timestamp);
 
 use Data::Dumper;
 use MongoDB;
@@ -259,4 +259,24 @@ sub update_log_file
     my $db = $client->get_database('gunpla_' . $db_name);
     $db->get_collection('status')->update_one({status_element => 'log_file'},{ '$set' => { log_file => $log_file}});
 }
+
+sub get_log_file
+{
+    my $db_name = shift;
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $db_name);
+    my ($log) = $db->get_collection('status')->find({status_element => 'log_file'})->all();
+    return $log->{log_file};
+}
+
+sub get_timestamp
+{
+    my $db_name = shift;
+    my $client = MongoDB->connect();
+    my $db = $client->get_database('gunpla_' . $db_name);
+    my ($ts) = $db->get_collection('status')->find({status_element => 'timestamp'})->all();
+    return $ts->{timestamp};
+}
+
+1;
 

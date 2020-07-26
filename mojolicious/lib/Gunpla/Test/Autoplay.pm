@@ -159,7 +159,7 @@ sub run
     my $snap = shift;
     say "\n" . $self->name. "\n";
     say $self->description . "\n";
-    say $self->title . "\n";
+    say $self->title . "\n" if $self->title;
     my $logfile = "log/" . $self->name . "_" . DateTime->now->ymd('') . DateTime->now->hms('') . ".log";
     say "Logfile is $logfile\n";
     my $world;
@@ -167,12 +167,15 @@ sub run
     {
         $world = Gunpla::World->new(name => $self->name, dice_results => $self->dice, log_file => $logfile);
         $world = $self->load_snapshot($world, $snap);
+        open(my $snapfh, "> $logfile.dmp");
+        print {$snapfh} Dumper($world);
+        close($snapfh);
     }
     else
     {
         $world = Gunpla::Test::test_bootstrap($self->map, $self->dice, $self->name, $self->configuration, $self->templates, $logfile);
     }
-    $world->log(undef, ">>>>>>>>>>\n>>> " . $self->title . "\n>>>>>>>>>>", 1);
+    $world->log(undef, ">>>>>>>>>>\n>>> " . $self->title . "\n>>>>>>>>>>", 1) if $self->title;
     my $events = 1;
     while($events)
     {
@@ -197,6 +200,9 @@ sub run
                         my $snap = $self->take_snapshot($world, $self->snapshots->{$m->name}->{$m->cmd_index});
                         $world->log('TST', "Snapshot taken: " . $self->snapshots->{$m->name}->{$m->cmd_index});
                         say "Snapshot taken: $snap";
+                        open(my $snapfh, "> $logfile.dmp");
+                        print {$snapfh} Dumper($world);
+                        close($snapfh);
                     }
                 }
             }

@@ -7,6 +7,12 @@ use Data::Dumper;
 
 extends 'Gunpla::Mecha::IA::Patrol';
 
+has package => (
+    is => 'ro',
+    default => 'Gunpla::Mecha::IA::Patrol2'
+);
+
+
 ### PATROL
 #
 # Mecha fly between a set of waypoints. When an enemy is on sight it attacks. If two mechas are already on target the target is ignored. 
@@ -23,6 +29,7 @@ sub manage_targets
     my $on_wait = 0;
     my $to_call = undef;
     my $min_distance = 1000000000000000000000;
+    $self->log("Target management: Patrol2");
     foreach my $am (@mec)
     {
         if(sighted_by_faction($self->game, $self->mecha, $am))
@@ -46,11 +53,13 @@ sub manage_targets
             }
         }
     }
+    $self->log("Targets: " . @targets . ", On wait: " . $on_wait);
     if(@targets)
     {
         foreach my $t (@targets)
         {
             my $already = $self->already_on_target($t->{world_id});
+            $self->log("For " . $t->{world_id} . " already $already");
             if($already == 0 && ! $on_wait)
             {
                 $self->aim($t->{world_id});
@@ -62,6 +71,7 @@ sub manage_targets
             elsif($already < 2)
             {
                 $self->aim($t->{world_id});
+                $self->log("For " . $t->{world_id} . " distance " . $t->{distance});
                 if($t->{distance} < 2000)
                 {
                     return { 
@@ -94,6 +104,7 @@ sub manage_targets
         }
         else
         {
+            $self->log("last command issued");
             return {
                 command => 'last',
                 params => undef,

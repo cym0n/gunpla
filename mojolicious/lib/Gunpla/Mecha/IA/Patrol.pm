@@ -26,6 +26,12 @@ has last_command => (
     is => 'rw'
 );
 
+has package => (
+    is => 'ro',
+    default => 'Gunpla::Mecha::IA::Patrol'
+);
+
+
 sub already_on_target
 {
     my $self = shift;
@@ -48,6 +54,7 @@ sub manage_targets
     my $db = $client->get_database('gunpla_' . $self->game);
     my @mec = $db->get_collection('mechas')->find()->all();
     my @targets;
+    $self->log("Target management: Patrol");
     for(@mec)
     {
         if(sighted_by_faction($self->game, $self->mecha, $_))
@@ -156,14 +163,17 @@ sub manage_events
 sub elaborate
 {
     my $self = shift;
+    
     my $target_managed = $self->manage_targets();
     my $out;
     if($target_managed)
     {
+        $self->log("Managed by target");
         $out = $target_managed;
     }
     else
     {
+        $self->log("Managed by events");
         $out = $self->manage_events();
     }
     $self->last_command($out);
@@ -204,7 +214,7 @@ sub to_mongo
 {
     my $self = shift;
     return { 
-        package => __PACKAGE__,
+        package => $self->package,
         mecha_index => $self->mecha_index,
         mecha => $self->mecha,
         faction => $self->faction,
