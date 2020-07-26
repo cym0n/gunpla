@@ -14,7 +14,6 @@ use Gunpla::Position;
 my @dice = (Gunpla::Test::build_drift_dice(1, 7000), Gunpla::Test::build_drift_dice(0, 7000), Gunpla::Test::build_drift_dice(1, 7000), Gunpla::Test::build_drift_dice(0, 7000)); 
 
 my $world = Gunpla::Test::test_bootstrap('t018.csv', \@dice);
-my $t = Test::Mojo->new('GunplaServer');
 
 is(Gunpla::Test::emulate_commands($world, {
     'RX78'       => { command => 'flywp', params => 'WP-asgard',    velocity => 6 },
