@@ -41,10 +41,10 @@ $t->get_ok('/game/targets?game=autotest&mecha=Hyakushiki&filter=last-sight')
     ->status_is(200)->json_is({
           'targets' => [
                          {
-                           'x' => 87254, 
+                           'x' => 87287, 
                            'y' => 0,
                            'world_id' => 'MEC-RX78',
-                           'label' => 'mecha RX78 (87254, 0, 0) d:84090',
+                           'label' => 'mecha RX78 (87287, 0, 0) d:84090',
                            'map_type' => 'MEC',
                            'z' => 0,
                            'distance' => 84090,
@@ -73,7 +73,7 @@ $t->post_ok('/game/command' => {Accept => '*/*'} => json => { game => 'autotest'
 is(Gunpla::Test::emulate_commands($world, {}, 1), 1);
 $world = Gunpla::Test::reload($world);
 is_deeply($world->get_events('Hyakushiki'), [ 'Hyakushiki reached destination: last position of mecha RX78' ]);
-is($world->armies->[1]->position->x, 87254);
+is($world->armies->[1]->position->x, 87287);
 is($world->armies->[1]->position->y, 0);
 is($world->armies->[1]->position->z, 0);
 
