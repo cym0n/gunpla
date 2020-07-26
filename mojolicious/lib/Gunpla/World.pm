@@ -1298,6 +1298,7 @@ sub save
     $db->get_collection('status')->insert_one($sighting_matrix);
     $db->get_collection('status')->insert_one({status_element => 'timestamp', timestamp => $self->timestamp});
     $db->get_collection('status')->insert_one({status_element => 'log_file', log_file => $self->log_file});
+    $db->get_collection('status')->insert_one({status_element => 'log_tracing', log_tracing => $self->log_tracing});
     for(keys %{$self->control})
     {
         $db->get_collection('control')->insert_one({ mecha => $_, player => $self->control->{$_} });
@@ -1382,6 +1383,8 @@ sub load
     $self->timestamp($timestamp->{timestamp});
     my ( $log_file ) = $db->get_collection('status')->find({ status_element => 'log_file' })->all();
     $self->log_file($log_file->{log_file});
+    my ( $log_tracing ) = $db->get_collection('status')->find({ status_element => 'log_tracing' })->all();
+    $self->log_tracing($log_tracing->{log_tracing});
     
     my @commands = $db->get_collection('available_commands')->find()->all();
     for(@commands)
