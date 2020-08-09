@@ -228,7 +228,7 @@ sub build_commands
             params_label => 'Select a Mecha',
             machinegun => 0,
             velocity => 0,
-            energy_needed => $self->config->{SWORD_ENERGY_NEEDED},
+            energy_needed => $self->config->{SWORD_ENERGY},
         }, 1);
     $self->configure_command( {
             code => 'away',
@@ -245,7 +245,7 @@ sub build_commands
             params_label => 'Select a Mecha',
             machinegun => 0,
             velocity => 0,
-            energy_needed => $self->config->{RIFLE_ENERGY_NEEDED},
+            energy_needed => $self->config->{RIFLE_ENERGY},
         }, 1);
     $self->configure_command( {
             code => 'land',
@@ -522,7 +522,15 @@ sub add_command
                 }
                 elsif($secondary_command eq 'boost')
                 {
-                    $m->command('boost', undef, undef);
+                    if($m->energy < $self->config->{BOOST_ENERGY})
+                    {
+                        $self->event($m->name . " has no energy for boost", { $m->name => 0 });
+                    }
+                    else
+                    {
+                        $m->add_energy(-1 * $self->config->{BOOST_ENERGY});
+                        $m->command('boost', undef, undef);
+                    }
                 }
             }
         }
@@ -682,7 +690,8 @@ sub action
                         {
                             if($m->run_gauge('boost'))
                             {
-                                $self->event($m->name . " exhausted boost", [ $m->name ]);
+                                $self->event($m->name . " exhausted boost", { $m->name => 0 });
+                                $m->stop_action();
                             }
                         }
                         if($m->action && $m->action eq 'SUPPORT')
@@ -1170,6 +1179,14 @@ sub dice
     $self->log("DIC", "$dice_type dice: $out for $reason") if $reason ne "drift direction";
     return $out;
 }
+
+#Events interface
+# First argumento is the message
+# Second argument is involved input.
+#   Hash in the form { mecha_name => 0/1 }. If the flag is put to 0 the mecha goes in waiting after the event
+#   Array of mechas or single mecha name are converted all to flag 1
+# Third argument is stuck_input.
+#   Array of mecha names. Mechas here goes in stuck status
 
 sub event
 {

@@ -243,7 +243,8 @@ sub run_gauge
 {
     my $self = shift;
     my $label = shift;
-    return $self->gauges->{$label}->run();
+    my $step = shift;
+    return $self->gauges->{$label}->run($step);
 }
 
 sub get_gauge_level
@@ -355,8 +356,13 @@ sub stop_landing
 sub stop_action
 {
     my $self = shift;
-    $self->action(undef);
-    $self->delete_all_gauges('action');
+    my $exceptions = shift;
+    return if ! $self->action;
+    if(! grep {$self->action eq $_} @{$exceptions})
+    {
+        $self->action(undef);
+        $self->delete_all_gauges('action');
+    }
 }
 
 sub stop_movement
@@ -546,38 +552,20 @@ sub drift_and_move
 sub energy_routine
 {
     my $self = shift;
+    return if $self->action && $self->action eq 'BOOST';
     my $energy_delta = 0;
-    if($self->run_gauge('energy'))
+    my $step = $self->get_velocity >= $self->max_velocity ? $self->config->{ENERGY_MAX_VELOCITY_STEP} : $self->config->{ENERGY_NORMAL_VELOCITY_STEP};
+    if($self->run_gauge('energy', $step))
     {
-        $energy_delta++;
+        $self->add_energy(1);
     }
-    if($self->attack && $self->attack eq 'SWORD')
-    {
-        $energy_delta -= $self->config->{ENERGY_SWORD_VELOCITY_MALUS};
-    } 
-    elsif($self->action && $self->action eq 'BOOST')
-    {
-        $energy_delta -= $self->config->{ENERGY_BOOST_MALUS};
-    }
-    else
-    {
-        my $high_velocity = $self->max_velocity - 1;
-        if($self->get_velocity == $self->max_velocity)
-        {
-            $energy_delta -= $self->config->{ENERGY_MAX_VELOCITY_MALUS};
-        }
-        elsif($self->get_velocity == $high_velocity)
-        {
-            $energy_delta -= $self->config->{ENERGY_HIGH_VELOCITY_MALUS};
-        }
-    }
-    $self->add_energy($energy_delta);
 }
 sub add_energy
 {
     my $self = shift;
     my $energy = shift;
     my $new = $self->energy + $energy;
+    $self->log("Adding energy $energy -> $new");
     $new = 0 if($new < 0);
     $new = $self->max_energy if($new > $self->max_energy);
     $self->energy($new);
@@ -586,11 +574,11 @@ sub add_energy
 sub energy_exhausted
 {
     my $self = shift;
-    if($self->velocity > $self->max_velocity - 2)
-    {
-        $self->velocity($self->max_velocity - 2);
-        $self->velocity_target($self->max_velocity - 2);
-    }
+#    if($self->velocity > $self->max_velocity - 2)
+#    {
+#        $self->velocity($self->max_velocity - 2);
+#        $self->velocity_target($self->max_velocity - 2);
+#    }
 }
 
 
@@ -604,7 +592,7 @@ sub command
     if($command eq 'flywp')
     {
         $self->stop_attack();    
-        $self->stop_action();    
+        $self->stop_action(['BOOST']);    
         $self->set_destination($target->{position}->clone());
         $self->movement_target({ type => 'WP', 'name' => $target->{name}, class => 'fixed'  });
         $self->velocity_target($velocity);
@@ -612,7 +600,7 @@ sub command
     elsif($command eq 'flyhot')
     {
         $self->stop_attack();    
-        $self->stop_action();    
+        $self->stop_action(['BOOST']);    
         $self->set_destination($target->{position}->clone());
         $self->movement_target({ type => $target->{type}, 'name' => $target->{id}, class => 'fixed', nearby => 1  });
         $self->velocity_target($velocity);
@@ -620,7 +608,7 @@ sub command
     elsif($command eq 'flymec')
     {
         $self->stop_attack();    
-        $self->stop_action();    
+        $self->stop_action(['BOOST']);    
         $self->set_destination($target->position->clone());
         $self->movement_target({ type => 'MEC', 'name' => $target->name, class => 'dynamic', nearby => 1  });
         $self->velocity_target($velocity);
@@ -658,7 +646,7 @@ sub command
         {
             $position = $target->position;
         }
-        $self->stop_action();    
+        $self->stop_action(['BOOST']);    
         $self->stop_attack();    
         my $destination = $self->position->away_from($position, $self->config->{GET_AWAY_DISTANCE});
         $self->set_destination($destination);
@@ -735,7 +723,7 @@ sub command
         }
         $true_destination = $self->destination;
         $self->stop_attack();    
-        $self->stop_action();    
+        $self->stop_action(['BOOST']);    
         $self->set_destination($true_destination->clone());
         $self->movement_target({ type => 'LMEC', 'name' => $target->{name}, class => 'fixed'  });
         $self->velocity_target($velocity);

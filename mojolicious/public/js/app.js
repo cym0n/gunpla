@@ -304,7 +304,7 @@ App = {
             form = form +
                 '<label class="radio-inline"> <input type="radio" name="velocity" id="velocity'+i+'" value="'+i+'" '+checked+'>'+i+'</label>';
         }
-        if(data.mecha.max_velocity == data.mecha.available_max_velocity)
+        if(data.mecha.energy >= 2)
         {
             form = form +
                 '<label class="radio-inline"> <input type="radio" name="velocity" id="velocityboost" value="boost">BOOST</label>';
