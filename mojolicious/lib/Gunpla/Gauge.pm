@@ -32,14 +32,16 @@ has type => (
 sub up
 {
     my $self = shift;
-    my $level = $self->level +1;
+    my $step = shift || 1;
+    my $level = $self->level + $step;
     $self->level($level);
 }
 
 sub down
 {
     my $self = shift;
-    my $level = $self->level -1;
+    my $step = shift || 1;
+    my $level = $self->level -$step;
     $level = 0 if $level < 0;
     $self->level($level);
 }
@@ -55,14 +57,15 @@ sub mod
 sub run
 {
     my $self = shift;
+    my $step = shift;
     if($self->accumulation)
     {
-        $self->up;
+        $self->up($step);
         return 0;
     }
     else
     {
-        $self->down;
+        $self->down($step);
         if($self->level == 0)
         {
             $self->reset if($self->loop);
