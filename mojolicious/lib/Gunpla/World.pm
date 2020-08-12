@@ -1074,6 +1074,9 @@ sub manage_attack
         my $distance = $attacker->position->distance($defender->position);
         my $bonus = 3 - ceil((3 * $distance) / $self->config->{RIFLE_MAX_DISTANCE});
         $bonus += $self->config->{RIFLE_LANDED_BONUS} if($attacker->is_status('landed'));
+        $attacker->attack_limit(0); #Avoid a new rifle order is misinterpreted as resume
+        $attacker->add_energy(-1 * $self->config->{RIFLE_ENERGY});
+        $attacker->delete_gauge('rifle');
         if($self->hitting("rifle hit", $bonus, $self->config->{RIFLE_WIN}))
         {
             $defender->mod_life(-1 * $self->config->{RIFLE_DAMAGE});   
@@ -1089,9 +1092,6 @@ sub manage_attack
             $self->event($attacker->name . " missed " . $defender->name . " with rifle", [$attacker->name], [$attacker->name]);
         }
         $self->sighting_matrix->force_sighting($attacker, $defender, 1);
-        $attacker->attack_limit(0); #Avoid a new rifle order is misinterpreted as resume
-        $attacker->add_energy(-1 * $self->config->{RIFLE_ENERGY});
-        $attacker->delete_gauge('rifle');
         $self->collect_dead();
     }
 }

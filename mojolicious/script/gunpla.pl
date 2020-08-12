@@ -20,6 +20,7 @@ my $world = shift;
 my $mongo = MongoDB->connect(); 
 if($command eq 'init')
 {
+    die "No world" if ! $world;
     to_log("Any data about old game $world will be lost...");
     my $db = $mongo->get_database('gunpla_' . $world);
     $db->drop();
