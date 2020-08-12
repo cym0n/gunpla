@@ -703,6 +703,7 @@ sub command
     }
     elsif($command eq 'boost')
     {
+        return if $self->action && $self->action eq 'BOOST';
         $self->stop_attack();    
         $self->stop_action();    
         $self->action("BOOST");

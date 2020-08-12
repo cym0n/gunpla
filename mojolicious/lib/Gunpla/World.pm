@@ -522,14 +522,20 @@ sub add_command
                 }
                 elsif($secondary_command eq 'boost')
                 {
-                    if($m->energy < $self->config->{BOOST_ENERGY})
+                    if($m->action && $m->action eq 'BOOST')
                     {
-                        $self->event($m->name . " has no energy for boost", { $m->name => 0 });
                     }
                     else
                     {
-                        $m->add_energy(-1 * $self->config->{BOOST_ENERGY});
-                        $m->command('boost', undef, undef);
+                        if($m->energy < $self->config->{BOOST_ENERGY})
+                        {
+                            $self->event($m->name . " has no energy for boost", { $m->name => 0 });
+                        }
+                        else
+                        {
+                            $m->add_energy(-1 * $self->config->{BOOST_ENERGY});
+                            $m->command('boost', undef, undef);
+                        }
                     }
                 }
             }
