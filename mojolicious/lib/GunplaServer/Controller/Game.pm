@@ -126,11 +126,11 @@ sub targets
             my ( $the_mecha ) = $db->get_collection('mechas')->find({ name => $mecha })->all();
             my $target = undef;
 
-            if((! $the_mecha->{movement_target} || $the_mecha->{movement_target}->{type} eq 'none') && $the_mecha->{attack_target} && $the_mecha->{attack_target}->{type} eq 'MEC') 
+            if((! %{$the_mecha->{movement_target}} || $the_mecha->{movement_target}->{type} eq 'none') && %{$the_mecha->{attack_target}} && $the_mecha->{attack_target}->{type} eq 'MEC') 
             {
                 $target =  $the_mecha->{attack_target}
             }
-            elsif($the_mecha->{movement_target} && $the_mecha->{movement_target}->{type} eq 'MEC') 
+            elsif(%{$the_mecha->{movement_target}} && $the_mecha->{movement_target}->{type} eq 'MEC') 
             {
                 $target =  $the_mecha->{movement_target}
             }
@@ -388,7 +388,6 @@ sub read_command
     my $prev = $c->param('prev') || 0;
     my $available = $c->param('available') || 0;
     my ($command, $ok) = get_command($game, $mecha_name, $prev);
-    $c->app->log->debug("Getting command " . $mecha_name . '-' . $command->{cmd_index});
     if($ok || (! $available))
     {
         $c->render(json => { command => { command => $command->{command},
