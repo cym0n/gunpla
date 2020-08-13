@@ -247,6 +247,14 @@ sub run_gauge
     return $self->gauges->{$label}->run($step);
 }
 
+sub exists_gauge
+{
+    my $self = shift;
+    my $label = shift;
+    return exists $self->gauges->{$label}
+}
+
+
 sub get_gauge_level
 {
     my $self = shift;
@@ -396,9 +404,9 @@ sub get_velocity
     {
         return $self->config->{SWORD_VELOCITY};
     } 
-    elsif($self->action && $self->action eq 'BOOST')
+    elsif($self->action && $self->action eq 'BOOST' and $self->exists_gauge('boost'))
     {
-        return $self->config->{BOOST_VELOCITY};
+        return $self->max_velocity + $self->config->{BOOST_VELOCITY_BONUS};
     }
     else
     {
@@ -705,9 +713,12 @@ sub command
     {
         return if $self->action && $self->action eq 'BOOST';
         $self->stop_attack();    
-        $self->stop_action();    
+        $self->stop_action();
+        if(! $self->velocity_target || $self->velocity_target < $self->boost_limit_velocity)
+        {
+            $self->velocity_target($self->boost_limit_velocity);
+        }    
         $self->action("BOOST");
-        $self->init_gauge('boost');
     }
     elsif($command eq 'last')
     {
@@ -765,6 +776,26 @@ sub available_max_velocity
     my $available_max_velocity = $self->energy > $self->config->{ENERGY_AVAILABLE_FOR_HIGH_SPEED} ?
                                     $self->max_velocity : $self->max_velocity - 2;
     return $available_max_velocity;
+}
+
+sub boost_limit_velocity
+{
+    my $self = shift;
+    return $self->max_velocity - $self->config->{BOOST_VELOCITY_MINIMUM_DELTA};
+}
+
+sub init_boost
+{
+    my $self = shift;
+    $self->init_gauge('boost');
+}
+
+sub end_boost
+{
+    my $self = shift;
+    $self->stop_action();
+    $self->velocity_target($self->max_velocity);
+    $self->velocity($self->max_velocity);
 }
 
 

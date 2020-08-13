@@ -527,15 +527,8 @@ sub add_command
                     }
                     else
                     {
-                        if($m->energy < $self->config->{BOOST_ENERGY})
-                        {
-                            $self->event($m->name . " has no energy for boost", { $m->name => 0 });
-                        }
-                        else
-                        {
-                            $m->add_energy(-1 * $self->config->{BOOST_ENERGY});
-                            $m->command('boost', undef, undef);
-                        }
+                        #BOOST activation is not here 
+                        $m->command('boost', undef, undef);
                     }
                 }
             }
@@ -694,10 +687,34 @@ sub action
                         }
                         if($m->action && $m->action eq 'BOOST')
                         {
-                            if($m->run_gauge('boost'))
+                            if($m->exists_gauge('boost'))
                             {
-                                $self->event($m->name . " exhausted boost", { $m->name => 0 });
-                                $m->stop_action();
+                                if($m->run_gauge('boost'))
+                                {
+                                    $self->event($m->name . " exhausted boost", { $m->name => 0 });
+                                    $m->end_boost();
+                                }
+                            }
+                            else
+                            {
+                                if($m->velocity >= $m->boost_limit_velocity)
+                                {
+                                    $self->log("CMD", $m->name . ": " . $m->velocity . " > " . $m->boost_limit_velocity);
+                                    my $needed_energy = $self->config->{BOOST_ENERGY};
+                                    if($m->velocity < $m->max_velocity)      
+                                    {
+                                        $needed_energy += $self->config->{BOOST_SLOW_START_EXTRA_MALUS};
+                                    }
+                                    if($m->energy < $needed_energy)
+                                    {
+                                        $self->event($m->name . " has no energy for boost", { $m->name => 0 });
+                                    }
+                                    else
+                                    {
+                                        $m->add_energy(-1 * $needed_energy);
+                                        $m->init_boost();
+                                    }
+                                }
                             }
                         }
                         if($m->action && $m->action eq 'SUPPORT')
