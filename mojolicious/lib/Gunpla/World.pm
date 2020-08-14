@@ -699,7 +699,7 @@ sub action
                             {
                                 if($m->velocity >= $m->boost_limit_velocity)
                                 {
-                                    $self->log("CMD", $m->name . ": " . $m->velocity . " > " . $m->boost_limit_velocity);
+                                    $self->event($m->name . " starting boost", { $m->name => 0 });
                                     my $needed_energy = $self->config->{BOOST_ENERGY};
                                     if($m->velocity < $m->max_velocity)      
                                     {

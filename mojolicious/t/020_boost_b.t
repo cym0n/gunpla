@@ -20,12 +20,12 @@ $world->armies->[0]->velocity(5);
 $world->armies->[1]->set_destination($world->waypoints->{'rome'});
 $world->armies->[1]->velocity(6);
 #$world->armies->[1]->energy(10000);
-is(Gunpla::Test::emulate_commands($world, $commands), 2);
+is(Gunpla::Test::emulate_commands($world, $commands), 3);
 diag("Guncannon go further");
 is_deeply($world->get_events('Guncannon'), [ 'Guncannon reached destination: waypoint paris' ]);
 is($world->armies->[0]->position->y, 40000, "Guncannon Y position");
-is($world->armies->[1]->position->y, 30000, "Psychogundam Y position");
-is($world->armies->[0]->energy, 17, "Guncannon energy"); #Energy gauge gives back only and energy unit
+is($world->armies->[1]->position->y, 35000, "Psychogundam Y position");
+is($world->armies->[0]->energy, 16, "Guncannon energy"); #Energy gauge gives back only and energy unit
 is($world->armies->[1]->energy, 18, "Psychogundam energy");
 
 Gunpla::Test::clean_db('autotest', 1);
