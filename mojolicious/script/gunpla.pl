@@ -21,10 +21,11 @@ my $mongo = MongoDB->connect();
 if($command eq 'init')
 {
     die "No world" if ! $world;
+    $logfile = "server-$world.log" if ! $logfile;
     to_log("Any data about old game $world will be lost...");
     my $db = $mongo->get_database('gunpla_' . $world);
     $db->drop();
-    my $world_obj = Gunpla::World->new(name => $world);
+    my $world_obj = Gunpla::World->new(name => $world, log_file => $logfile);
     if($scenario)
     {
         to_log("Scenario from file $scenario");
@@ -58,7 +59,7 @@ sub to_log
     if($logfile)
     {
         open(my $lfh, ">> $logfile");
-        say {$lfh} $message;
+        say {$lfh} "[TXXXXXXXX] [SCR] $message";
     }
     else
     {
