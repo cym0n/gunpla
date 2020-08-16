@@ -8,7 +8,7 @@ use Gunpla::World;
 use Gunpla::Test;
 
 my $world = Gunpla::Test::test_bootstrap('t103.csv');
-$world->armies->[1]->energy(25000);
+$world->armies->[1]->energy(4);
 $world->save;
 my $t = Test::Mojo->new('GunplaServer');
 $t->app->config->{no_login} = 1;

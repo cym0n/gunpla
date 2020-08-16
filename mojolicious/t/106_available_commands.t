@@ -103,7 +103,7 @@ $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
                             'filter' => 'sighted-by-faction',
                             'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=sighted-by-faction',
                             'velocity' => 0,
-                            'energy_needed' => 20000
+                            'energy_needed' => 3
                           },
                           { 
                             'params_callback' => '/game/targets?game=autotest&mecha=RX78&filter=friends-no-wait',
@@ -122,7 +122,7 @@ $t->get_ok('/game/available-commands?game=autotest&mecha=RX78')
                             'label' => 'SWORD ATTACK',
                             'filter' => 'sighted-by-faction',
                             'params_label' => 'Select a Mecha',
-                            'energy_needed' => 30000
+                            'energy_needed' => 5
                           }
                         ]
            });

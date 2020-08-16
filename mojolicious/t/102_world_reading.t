@@ -35,7 +35,9 @@ $t->get_ok('/game/mechas?game=autotest&mecha=RX78')->status_is(200)->json_is(
             velocity => 0,
             max_velocity => 10,
             available_max_velocity => 10,
-            energy => 700000,
+            boost_limit_velocity => 8,
+            velocity_label => 'STANDING',
+            energy => 18,
         }
     }
 );
