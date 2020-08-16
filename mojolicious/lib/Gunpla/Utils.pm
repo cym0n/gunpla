@@ -113,6 +113,8 @@ sub mecha_from_mongo_to_json
              energy   => $mecha->{energy},
              max_velocity => $mecha->{max_velocity},
              available_max_velocity => $mecha->{available_max_velocity},
+             boost_limit_velocity => $mecha->{boost_limit_velocity},
+             velocity_label => $mecha->{velocity_label},
              waiting  => $mecha->{waiting} };
 }
 

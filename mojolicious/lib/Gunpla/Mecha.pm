@@ -798,6 +798,27 @@ sub end_boost
     $self->velocity($self->max_velocity);
 }
 
+sub velocity_label
+{
+    my $self = shift;
+    if($self->attack && $self->attack eq 'SWORD')
+    {
+        return $self->config->{SWORD_VELOCITY} . " (sword)"
+    }
+    elsif($self->exists_gauge('boost'))
+    {
+        return $self->max_velocity + $self->config->{BOOST_VELOCITY_BONUS} . " (boost)";
+    }
+    elsif($self->velocity && $self->velocity > 0)
+    {
+        return $self->velocity;
+    }
+    elsif(! $self->velocity || $self->velocity == 0)
+    {
+        return 'STANDING';
+    } 
+}
+
 
 
 sub to_mongo
@@ -815,6 +836,8 @@ sub to_mongo
         acceleration => $self->acceleration,
         max_velocity => $self->max_velocity,
         available_max_velocity => $self->available_max_velocity,
+        boost_limit_velocity => $self->boost_limit_velocity,
+        velocity_label => $self->velocity_label,
         velocity_vector => $self->velocity_vector ? $self->velocity_vector->to_mongo() : undef,
         velocity_target => $self->velocity_target,
         cmd_index => $self->cmd_index,
