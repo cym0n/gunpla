@@ -183,6 +183,10 @@ sub game_commands
         $node = 'command';
         $query = { code => $command };
     }
+    else
+    {
+        $query = { combo => 1 };
+    }
  
     my $client = MongoDB->connect();
     my $db = $client->get_database('gunpla_' . $game);

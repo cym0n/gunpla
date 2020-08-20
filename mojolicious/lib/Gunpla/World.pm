@@ -202,6 +202,7 @@ sub build_commands
             machinegun => 1,
             velocity => 1,
             min_distance => 0,
+            combo => 1,
         }, 1);
     $self->configure_command( {
             code => 'flymec',
@@ -211,6 +212,7 @@ sub build_commands
             velocity => 1,
             machinegun => 1,
             min_distance => $self->config->{NEARBY},
+            combo => 1,
         }, 1);
     $self->configure_command( {
             code => 'flyhot',
@@ -220,6 +222,7 @@ sub build_commands
             velocity => 1,
             machinegun => 1,
             min_distance => $self->config->{NEARBY},
+            combo => 1,
         }, 1);
     $self->configure_command( {
             code => 'sword',
@@ -229,6 +232,7 @@ sub build_commands
             machinegun => 0,
             velocity => 0,
             energy_needed => $self->config->{SWORD_ENERGY},
+            combo => 1,
         }, 1);
     $self->configure_command( {
             code => 'away',
@@ -236,7 +240,8 @@ sub build_commands
             filter => 'visible',
             params_label => 'Select a Element',
             machinegun => 1,
-            velocity => 1
+            velocity => 1,
+            combo => 1,
         }, 1);
     $self->configure_command( {
             code => 'rifle',
@@ -246,6 +251,7 @@ sub build_commands
             machinegun => 0,
             velocity => 0,
             energy_needed => $self->config->{RIFLE_ENERGY},
+            combo => 1,
         }, 1);
     $self->configure_command( {
             code => 'land',
@@ -256,6 +262,7 @@ sub build_commands
             velocity => 0,
             min_distance => 0,
             max_distance => $self->config->{LANDING_RANGE},
+            combo => 1,
         }, 1);
     $self->configure_command( {
             code => 'last',
@@ -265,6 +272,7 @@ sub build_commands
             machinegun => 1,
             velocity => 1,
             min_distance => 0,
+            combo => 1,
         }, 1);
     $self->configure_command( {
             code => 'guard',
@@ -275,6 +283,7 @@ sub build_commands
             machinegun => 0,
             velocity => 0,
             min_distance => 0,
+            combo => 1,
         }, 1);
     $self->configure_command( {
             code => 'support',
@@ -283,6 +292,18 @@ sub build_commands
             params_label => 'Select friendly Mecha',
             machinegun => 0,
             velocity => 0,
+            combo => 1,
+        }, 1);
+    $self->configure_command( {
+            code => 'boost',
+            label => 'BOOST',
+            filter => undef,
+            params_label => undef,
+            machinegun => 0,
+            velocity => $self->config->{BOOST_VELOCITY_MINIMUM_DELTA},
+            energy_needed => 
+                { step1 => $self->config->{BOOST_ENERGY}, step2 => $self->config->{BOOST_ENERGY} + $self->config->{BOOST_SLOW_START_EXTRA_MALUS} },
+            combo => 0,
         }, 1);
 }
 

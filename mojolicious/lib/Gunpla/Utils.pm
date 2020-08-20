@@ -39,6 +39,7 @@ sub command_from_mongo_to_json
     {
         $command->{params_callback} = undef
     }
+    delete $command->{combo};
     return $command;
 }
 

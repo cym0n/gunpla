@@ -304,13 +304,28 @@ App = {
             form = form +
                 '<label class="radio-inline"> <input type="radio" name="velocity" id="velocity'+i+'" value="'+i+'" '+checked+'>'+i+'</label>';
         }
-        if(data.mecha.energy >= 2)
-        {
-            form = form +
-                '<label class="radio-inline"> <input type="radio" name="velocity" id="velocityboost" value="boost">BOOST</label>';
-        }
-        form = form + '</div></div><div><input type="hidden" name="defvelocity" id="defvelocity" value="'+def+'"/></div>';
-    $(form).insertAfter(div); });
+        var mecha = data.mecha;
+        fetch('/game/available-commands?game='+App.game+'&mecha='+name+'&command=boost')
+            .then(function(response) { return response.json(); })
+            .then(function(data) { 
+                var limit_velocity = mecha.max_velocity - data.command.velocity;
+                if(mecha.velocity < limit_velocity ||
+                   ( mecha.velocity < mecha.max_velocity && mecha.energy >= data.command.energy_needed.step2 ) || 
+                   ( mecha.velocity = mecha.max_velocity && mecha.energy >= data.command.energy_needed.step1 ) )
+                {
+                    form = form +
+                        '<label class="radio-inline"> <input type="radio" name="velocity" id="velocityboost" value="boost">'+data.command.label+'</label>';
+                    console.log("Boost enabled");
+                }
+                else
+                {
+                    form = form +
+                        '<label class="radio-inline"> <input type="radio" name="velocity" id="velocityboost" value="boost" disabled>'+data.command.label+'</label>';
+                }
+                form = form + '</div></div><div><input type="hidden" name="defvelocity" id="defvelocity" value="'+def+'"/></div>';
+                $(form).insertAfter(div);
+            });
+    });
   },
   machinegunForm : function(name, div) {
      fetch('/game/targets?game='+App.game+'&mecha='+name+'&filter=sighted-by-faction')
