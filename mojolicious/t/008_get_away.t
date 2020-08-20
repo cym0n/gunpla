@@ -10,15 +10,19 @@ use Gunpla::Test;
 use Gunpla::Position;
 
 my $world = Gunpla::Test::test_bootstrap('t008.csv');
-my $commands = { 'RX78' => { command =>'away', params => 'WP-center', velocity => 10} };
+my $commands = { 
+    'RX78-1' => { command =>'away', params => 'WP-center', velocity => 10}, 
+    'RX78-2' => { command =>'away', params => 'WP-blue', velocity => 10} #Away from the position he is
+};
 
-is(Gunpla::Test::emulate_commands($world, $commands), 1);
+is(Gunpla::Test::emulate_commands($world, $commands), 2);
 
-diag("RX78 got away");
-is_deeply($world->get_events('RX78'), [ 'RX78 reached destination: void space' ]);
+diag("RX78 1 and 2 got away");
+is_deeply($world->get_events('RX78-1'), [ 'RX78-1 reached destination: void space' ]);
+is_deeply($world->get_events('RX78-2'), [ 'RX78-2 reached destination: void space' ]);
 
-diag("Check RX78 position");
-is($world->armies->[0]->position->x, 230000);
+is($world->armies->[0]->position->x, 230000, "RX78-1 position");
+is($world->armies->[1]->position->x, 230000, "RX78-2 position");
 
 Gunpla::Test::clean_db('autotest', 1);
 

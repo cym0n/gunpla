@@ -103,7 +103,26 @@ sub away_from
     my $target = shift;
     my $distance = shift;
     
-    my ($versus, $direction) = $target->vector($self, 1);
+    my $versus; 
+    my $direction;
+
+    if($self->equals($target)) #when target and position are the same
+    {
+        if($self->x >= 0)
+        {
+            $versus = $self->new(x => 1, y => 0, z => 0); 
+            $direction = $self->new(x => 1, y => 0, z => 0); 
+        }
+        else
+        {
+            $versus = $self->new(x => -1, y => 0, z => 0); 
+            $direction = $self->new(x => -1, y => 0, z => 0); 
+        }
+    }
+    else
+    {
+        ($versus, $direction) = $target->vector($self, 1);
+    }
 
     return $self->new(
         x => $self->x + ($versus->x * ceil($direction->x * $distance)),
