@@ -14,7 +14,7 @@ use Gunpla::Position;
 diag("Reaching parallel waypoints");
 my $world = Gunpla::Test::test_bootstrap('t021.csv');
 my $commands = { 'Wing' => { command =>'flywp', params => 'WP-scorpio', velocity => 4, secondarycommand => 'boost'}};
-my $commands2 = { 'Wing' => { command =>'flywp', params => 'WP-aries', velocity => 4 }};
+my $commands2 = { 'Wing' => { command =>'flywp', params => 'WP-aries', velocity => 4, secondarycommand => 'boost' }};
 my $commands3 = { 'Wing' => { command =>'flywp', params => 'WP-virgo', velocity => 4, secondarycommand => 'boost'}};
 is(Gunpla::Test::emulate_commands($world, $commands), 2);
 is_deeply($world->get_events('Wing'), [ 'Wing reached destination: waypoint scorpio' ]);
