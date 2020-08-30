@@ -501,6 +501,7 @@ sub add_command
     my $secondary_command = $command_mongo->{secondarycommand};
     my $secondary_params = $command_mongo->{secondaryparams};
     my $velocity = $command_mongo->{velocity};
+    $velocity = undef if $secondary_command && $secondary_command eq 'boost';
     my $m = $self->get_mecha_by_name($mecha);
     eval {
         if($m->inertia == 0 || ! $self->inertia)
@@ -728,7 +729,7 @@ sub action
                                     }
                                     if($m->energy < $needed_energy)
                                     {
-                                        $self->event($m->name . " has no energy for boost", { $m->name => 0 });
+                                        $self->event($m->name . " has no energy for boost", { $m->name => 1 });
                                     }
                                     else
                                     {

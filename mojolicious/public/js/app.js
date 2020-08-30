@@ -308,14 +308,13 @@ App = {
         fetch('/game/available-commands?game='+App.game+'&mecha='+name+'&command=boost')
             .then(function(response) { return response.json(); })
             .then(function(data) { 
-                var limit_velocity = mecha.max_velocity - data.command.velocity;
+                var limit_velocity = mecha.max_velocity - data.command.velocity; //data.command.velocity is just a delta
                 if(mecha.velocity < limit_velocity ||
                    ( mecha.velocity < mecha.max_velocity && mecha.energy >= data.command.energy_needed.step2 ) || 
-                   ( mecha.velocity = mecha.max_velocity && mecha.energy >= data.command.energy_needed.step1 ) )
+                   ( mecha.velocity == mecha.max_velocity && mecha.energy >= data.command.energy_needed.step1 ) )
                 {
                     form = form +
                         '<label class="radio-inline"> <input type="radio" name="velocity" id="velocityboost" value="boost">'+data.command.label+'</label>';
-                    console.log("Boost enabled");
                 }
                 else
                 {

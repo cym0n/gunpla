@@ -1,6 +1,7 @@
 WP;center;0;0;0
 WP;blue;80000;0;0;wolf
 WP;red;-80000;0;0;eagle
+WP;farpoint;-160000;0;0
 MEC;Diver;wolf
 MEC;Zaku;eagle
 PLY;Diver;amuro

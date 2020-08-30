@@ -596,11 +596,20 @@ sub command
     my $command = shift;
     my $target = shift;
     my $velocity = shift;
-    $velocity = $self->velocity_target if(! $velocity);
+    my $action_filter;
+    if(! $velocity)
+    {
+        $velocity = $self->velocity_target;
+        $action_filter = ['BOOST'];
+    }
+    else
+    {
+        $action_filter = [];
+    }
     if($command eq 'flywp')
     {
         $self->stop_attack();    
-        $self->stop_action(['BOOST']);    
+        $self->stop_action($action_filter);    
         $self->set_destination($target->{position}->clone());
         $self->movement_target({ type => 'WP', 'name' => $target->{name}, class => 'fixed'  });
         $self->velocity_target($velocity);
@@ -608,7 +617,7 @@ sub command
     elsif($command eq 'flyhot')
     {
         $self->stop_attack();    
-        $self->stop_action(['BOOST']);    
+        $self->stop_action($action_filter);    
         $self->set_destination($target->{position}->clone());
         $self->movement_target({ type => $target->{type}, 'name' => $target->{id}, class => 'fixed', nearby => 1  });
         $self->velocity_target($velocity);
@@ -616,7 +625,7 @@ sub command
     elsif($command eq 'flymec')
     {
         $self->stop_attack();    
-        $self->stop_action(['BOOST']);    
+        $self->stop_action($action_filter);    
         $self->set_destination($target->position->clone());
         $self->movement_target({ type => 'MEC', 'name' => $target->name, class => 'dynamic', nearby => 1  });
         $self->velocity_target($velocity);
@@ -654,7 +663,7 @@ sub command
         {
             $position = $target->position;
         }
-        $self->stop_action(['BOOST']);    
+        $self->stop_action($action_filter);    
         $self->stop_attack();    
         my $destination = $self->position->away_from($position, $self->config->{GET_AWAY_DISTANCE});
         $self->set_destination($destination);
@@ -735,7 +744,7 @@ sub command
         }
         $true_destination = $self->destination;
         $self->stop_attack();    
-        $self->stop_action(['BOOST']);    
+        $self->stop_action($action_filter);    
         $self->set_destination($true_destination->clone());
         $self->movement_target({ type => 'LMEC', 'name' => $target->{name}, class => 'fixed'  });
         $self->velocity_target($velocity);
