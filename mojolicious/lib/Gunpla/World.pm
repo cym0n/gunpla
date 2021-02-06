@@ -853,7 +853,11 @@ sub action
             $self->save_light();
         }
     }
-    return 0 if($self->ia_only);
+    if($self->ia_only)
+    {
+        $self->log(undef, "### PLAYER DEFEATED ###");
+        return 0;
+    }
     $self->cmd_index_up();
     $self->ia(1) unless $steps && $counter == $steps;
     return $self->generated_events();
