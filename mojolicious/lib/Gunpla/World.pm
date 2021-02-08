@@ -855,7 +855,7 @@ sub action
     }
     if($self->ia_only)
     {
-        $self->log(undef, "### PLAYER DEFEATED ###");
+        $self->log('STY', "### PLAYER DEFEATED ###");
         return 0;
     }
     $self->cmd_index_up();

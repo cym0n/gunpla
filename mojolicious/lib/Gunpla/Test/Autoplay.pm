@@ -208,7 +208,14 @@ sub run
             }
         }
         $events = $world->action();
-        say "$events events generated" if $events;
+        if($events)
+        {
+            say "$events events generated";
+        }
+        else
+        {
+            $world->log('STY', "### LACK OF EVENTS ###");
+        } 
         $world->save;
     }
     Gunpla::Test::clean_db('autotest', 1);

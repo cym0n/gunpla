@@ -1,0 +1,9 @@
+WP;center;0;0;0
+WP;red;-10000;0;0;wolf
+WP;blue;7000;0;0;eagle
+WP;venice;100;0;0
+WP;barcelona;-100;0;0
+WP;paris;0;100;0
+WP;rome;0;-100;0
+MEC;Leo-1;eagle;Gunpla::Mecha::IA::Patrol;arena-0.json
+MEC;Wing;wolf
