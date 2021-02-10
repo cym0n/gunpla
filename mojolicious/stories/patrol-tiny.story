@@ -16,3 +16,5 @@ Wing;flywp;WP-blue;;;4
 #Wing;flywp;WP-blue;;;4
 TRACING
 Wing;0;Wing,Leo-1
+TARGETS
+wolf;CONQ WP-blue

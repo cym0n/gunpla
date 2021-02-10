@@ -77,6 +77,9 @@ has cemetery => (
     is => 'rw',
     default => sub { [] }
 );
+has targets => (
+    is => 'rw'
+);
 
 #Only for test purpose
 has dice_results => (
@@ -169,11 +172,34 @@ sub get_mecha_by_name
     {
         return $m if($m->name eq $name);
     }
-    foreach my $m (@{$self->cemetery})
+    if($dead_or_alive)
     {
-        return $m if($m->name eq $name);
+        foreach my $m (@{$self->cemetery})
+        {
+            return $m if($m->name eq $name);
+        }
     }
     return undef;
+}
+
+sub get_mechas_by_faction
+{
+    my $self = shift;
+    my $faction = shift;
+    my $dead_or_alive = shift;
+    my @out = ();
+    foreach my $m (@{$self->armies})
+    {
+        push @out, $m if($m->faction eq $faction);
+    }
+    if($dead_or_alive)
+    {
+        foreach my $m (@{$self->cemetery})
+        {
+            push @out, $m if($m->faction eq $faction);
+        }
+    }
+    return @out;
 }
 
 sub configure_command
@@ -362,7 +388,9 @@ sub init_scenario
     my $file = shift;
     my $config = shift;
     my $templates = shift;
+    my $targets = shift;
     $self->load_config($config);
+    $self->targets($targets);
     my $module_file_path = __FILE__;
     my $root_path = abs_path($module_file_path);
     $root_path =~ s/World\.pm//;
@@ -852,6 +880,12 @@ sub action
         {
             $self->save_light();
         }
+        my $winner = $self->check_targets();
+        if($winner)
+        {
+            $self->log('STY', "### $winner WINS ###");
+            return 0;
+        }
     }
     if($self->ia_only)
     {
@@ -860,6 +894,7 @@ sub action
     }
     $self->cmd_index_up();
     $self->ia(1) unless $steps && $counter == $steps;
+    $self->log('STY', "### LACK OF EVENTS ###") if($self->generated_events == 0);
     return $self->generated_events();
 }
 
@@ -1312,6 +1347,38 @@ sub is_spawn_point
         }
     }
     return 0;
+}
+
+sub check_targets
+{
+    my $self = shift;
+    return undef if ! $self->targets;
+    foreach my $f (keys %{$self->targets})
+    {
+        my $victory = 1;
+        foreach my $t (keys %{$self->targets->{$f}})
+        {
+            next if($self->targets->{$f}->{$t} == 1);
+            if($t =~ /^CONQ (.*)$/)
+            {
+                my $to_conq = $self->get_target_from_world_id($1);
+                my @mechas = $self->get_mechas_by_faction($f);
+                my $reached = 0;
+                for(@mechas)
+                {
+                    if($to_conq->{position}->distance($_->position) < 10)
+                    {
+                        $self->targets->{$f}->{$t} = 1;
+                        $reached = 1;
+                        last;
+                    }
+                }
+                $victory = $reached;
+            }
+            return $f if $victory;
+        }   
+    }
+    return undef;
 }
 
 

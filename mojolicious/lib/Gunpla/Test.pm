@@ -12,13 +12,14 @@ sub test_bootstrap
     my $name = shift || 'autotest';
     my $config_file = shift;
     my $templates = shift;
+    my $targets = shift;
     my $logfile = shift || "$name.log";
 
     clean_db($name);
     my $world = Gunpla::World->new(name => $name, dice_results => $dice, log_file => $logfile);
     $world->log("INI","--- BOOSTRAP --- Scenario: $scenario");
     $world->log("DIC", "Tampered dice values: " . @{$dice}) if @{$dice};
-    $world->init_scenario($scenario, $config_file, $templates);
+    $world->init_scenario($scenario, $config_file, $templates, $targets);
     $world->save();
     return $world;
 }

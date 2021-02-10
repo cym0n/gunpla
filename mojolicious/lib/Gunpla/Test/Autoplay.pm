@@ -35,6 +35,9 @@ has tracing => (
 has snapshots => (
     is => 'rw'
 );
+has targets => (
+    is => 'rw'
+);
 has templates => (
     is => 'rw',
     default => undef
@@ -50,9 +53,11 @@ sub load
     my $commands = {};
     my $tracing = {};
     my $snapshots = {};
+    my $targets = {};
     my $reading_commands = 0;
     my $reading_tracing = 0;
     my $reading_snapshots = 0;
+    my $reading_targets = 0;
     for(<$story>)
     {
         chomp;
@@ -63,18 +68,28 @@ sub load
             $reading_commands = 1;
             $reading_tracing = 0;
             $reading_snapshots = 0;
+            $reading_targets = 0;
         }
         elsif($line eq 'TRACING')
         {
             $reading_tracing = 1;
             $reading_commands = 0;
             $reading_snapshots = 0;
+            $reading_targets = 0;
         }
         elsif($line eq 'SNAPSHOTS')
         {
             $reading_tracing = 0;
             $reading_commands = 0;
             $reading_snapshots = 1;
+            $reading_targets = 0;
+        }
+        elsif($line eq 'TARGETS')
+        {
+            $reading_tracing = 0;
+            $reading_commands = 0;
+            $reading_snapshots = 0;
+            $reading_targets = 1;
         }
         else
         {
@@ -97,6 +112,11 @@ sub load
             {
                 my @values = split ';', $line;
                 $snapshots->{$values[0]}->{$values[1]} = $values[2];
+            }
+            elsif($reading_targets)
+            {
+                my ($faction, $target) = split ';', $line;
+                $targets->{$faction}->{$target} = 0;
             }
             else
             {
@@ -151,6 +171,7 @@ sub load
     }
     $self->tracing($tracing);
     $self->snapshots($snapshots);
+    $self->targets($targets);
 }
 
 sub run
@@ -173,7 +194,7 @@ sub run
     }
     else
     {
-        $world = Gunpla::Test::test_bootstrap($self->map, $self->dice, $self->name, $self->configuration, $self->templates, $logfile);
+        $world = Gunpla::Test::test_bootstrap($self->map, $self->dice, $self->name, $self->configuration, $self->templates, $self->targets, $logfile);
     }
     $world->log(undef, ">>>>>>>>>>\n>>> " . $self->title . "\n>>>>>>>>>>", 1) if $self->title;
     my $events = 1;
@@ -212,15 +233,13 @@ sub run
         {
             say "$events events generated";
         }
-        else
-        {
-            $world->log('STY', "### LACK OF EVENTS ###");
-        } 
         $world->save;
     }
     Gunpla::Test::clean_db('autotest', 1);
     say `cat $logfile`;
 }
+
+
 
 sub take_snapshot
 {
