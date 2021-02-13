@@ -236,7 +236,37 @@ sub run
         $world->save;
     }
     Gunpla::Test::clean_db('autotest', 1);
-    say `cat $logfile`;
+    print "\n";
+    $self->show_log($logfile, ['CMD', 'EVN']);
+    say "\n>>> cat " . $logfile . " for the whole log\n";;
+}
+
+sub show_log
+{
+    my $self = shift;
+    my $log = shift;
+    my $tags = shift;
+
+    my $message = "--- Story log ";  
+        $message .= $tags ? "(TAGS: " . join(",", @{$tags}) . ")" : ""; 
+            $message .= ":";
+                say $message;
+
+    open(my $lfh, "< $log");
+    foreach my $line (<$lfh>)
+    {
+        if(! $tags)
+        {
+            print $line;
+        }
+        else
+        {
+            if(grep { $line =~ /\[$_\]/ } @{$tags})
+            {
+                print $line;
+            }
+        }
+    }
 }
 
 
