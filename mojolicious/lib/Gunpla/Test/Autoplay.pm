@@ -207,7 +207,7 @@ sub run
                 if(exists $self->commands->{$m->name}->[$m->cmd_index])
                 {
                     my $c = $self->commands->{$m->name}->[$m->cmd_index];
-                    say "Orders for " . $m->name . ": ". $world->command_string($c);
+                    say  "Orders for " . $m->name . " (" . $m->cmd_index . "): ". $world->command_string($c);
                     $m->waiting(0);
                     $m->cmd_fetched(1);
                     $world->add_command($m->name, $c);
@@ -237,7 +237,7 @@ sub run
     }
     Gunpla::Test::clean_db('autotest', 1);
     print "\n";
-    $self->show_log($logfile, ['CMD', 'EVN']);
+    $self->show_log($logfile, ['CMD', 'EVN', 'STY', 'MCL', 'REM']);
     say "\n>>> cat " . $logfile . " for the whole log\n";;
 }
 

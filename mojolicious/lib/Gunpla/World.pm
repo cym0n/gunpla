@@ -1222,7 +1222,7 @@ sub collect_dead
             my @out_events = $self->sighting_matrix->remove_from_matrix($m, $self->armies);
             $self->process_sight_events(@out_events);
             push @{$self->cemetery}, $m;
-            $self->log(undef, $m->name . " removed from game");
+            $self->log('REM', $m->name . " removed from game");
         }
         else
         {
@@ -1606,7 +1606,14 @@ sub collect_mecha_logs
     {
         for(@{$m->log_lines})
         {
-            $self->log("MEC", $m->name . ": " . $_);
+            if($_ =~ /Life now is/)
+            {
+                $self->log("MCL", $m->name . ": " . $_);
+            }
+            else
+            {
+                $self->log("MEC", $m->name . ": " . $_);
+            }
         }
         $m->log_lines([]);
     }
