@@ -14,6 +14,6 @@ GetOptions( "snapshot=s" => \$snapshot, "title=s" => \$title_message);
 
 my $story = shift;
 my $game = Gunpla::Test::Autoplay->new();
-$game->load('stories/' . $story, $title_message);
+$game->load('data/stories/' . $story, $title_message);
 $game->run($snapshot);
 

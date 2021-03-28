@@ -1,7 +1,7 @@
 package GunplaServer;
 use Mojo::Base 'Mojolicious';
 
-use lib "../../";
+use lib "../stand-alone/lib";
 
 use MongoDB;
 use Gunpla::Utils qw(controlled);

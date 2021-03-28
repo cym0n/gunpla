@@ -6,6 +6,7 @@ use Test::More;
 use Test::Mojo;
 
 use lib 'lib';
+use lib '../stand-alone/lib';
 use Data::Dumper;
 use Gunpla::World;
 use Gunpla::Test;

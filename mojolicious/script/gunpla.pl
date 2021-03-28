@@ -3,6 +3,7 @@
 use strict;
 use v5.10;
 use lib 'lib';
+use lib '../stand-alone/lib';
 use MongoDB;
 use Gunpla::World;
 use Getopt::Long;

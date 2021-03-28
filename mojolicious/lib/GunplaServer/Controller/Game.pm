@@ -1,7 +1,7 @@
 package GunplaServer::Controller::Game;
 use Mojo::Base 'Mojolicious::Controller';
 
-use lib "../../";
+use lib "../../stand-alone/lib";
 
 use MongoDB;
 use Gunpla::Constants ':all';

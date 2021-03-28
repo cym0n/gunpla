@@ -112,7 +112,7 @@ sub load_config
     my $module_file_path = __FILE__;
     my $root_path = abs_path($module_file_path);
     $root_path =~ s/World\.pm//;
-    my $data_directory = $root_path . "../../config";
+    my $data_directory = $root_path . "../../data/config";
 
     my @files = ( "$data_directory/default.yaml" );
     push @files, "$data_directory/$cfg_file" if($cfg_file);
@@ -362,7 +362,7 @@ sub init_mecha_templates
     my $module_file_path = __FILE__;
     my $root_path = abs_path($module_file_path);
     $root_path =~ s/World\.pm//;
-    my $data_directory = $root_path . "../../scenarios/mechas";
+    my $data_directory = $root_path . "../../data/scenarios/mechas";
     open(my $fh, "< $data_directory/$file") || die "Impossible to open $data_directory/$file";
     my $header = <$fh>;
     $self->log("INI", "Mecha templates: " . $file);
@@ -394,7 +394,7 @@ sub init_scenario
     my $module_file_path = __FILE__;
     my $root_path = abs_path($module_file_path);
     $root_path =~ s/World\.pm//;
-    my $data_directory = $root_path . "../../scenarios";
+    my $data_directory = $root_path . "../../data/scenarios";
     $self->build_commands();
     $self->init_mecha_templates($templates);
     my %counters = ( "MEC" => 0,
